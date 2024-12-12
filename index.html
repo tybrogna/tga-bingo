@@ -8,7 +8,10 @@
             crossorigin="anonymous"></script>
         <script src="data/2024-tiles.js"></script>
         <script src="js/functionhider.js"></script>
+        <title>Bingo: The Game Awards 2024</title>
+        <link rel="icon" href="img/favicon24.ico"></link>
         <style>
+
             @media (max-width: 992px) {
                 .widener {
                     transition: all .5s;
@@ -110,6 +113,23 @@
             .win {
                 background-color: gold;
             }
+
+            input {
+                border-style: none;
+                background-color: #D4BEE4;
+                border-top-left-radius: 10px;
+                border-bottom-right-radius: 10px;
+                padding-left: 5px;
+                padding-right: 5px;
+            }
+
+            button {
+                background-color: #D4BEE4;
+                border-top-left-radius: 10px;
+                border-bottom-right-radius: 10px;
+                padding-left: 5px;
+                padding-right: 5px;
+            }
         </style>
         <script>
 
@@ -179,11 +199,20 @@
                 }
             }();
 
+            // i did make my own here. seems to work fine
             function salt(val) {
                 let rem2 = val % 100
                 let rem4 = val % 10000
                 let mult = Math.abs(rem2).toString() + Math.abs(rem4).toString()
                 return val * Number(mult)
+            }
+
+            function getPRNG() {
+                let seedText = document.querySelector('#seed-box').value
+                localStorage.setItem('seed', seedText)
+                let v = crc32(seedText)
+                v = salt(v)
+                return jsf32b(0xF1EA5EED,v,v,v)
             }
 
             window.onload = async () => {
@@ -313,14 +342,6 @@
                 omg.src = './img/correct24.png'
                 imgbox.appendChild(omg)
                 return imgbox
-            }
-
-            function getPRNG() {
-                let seedText = document.querySelector('#seed-box').value
-                localStorage.setItem('seed', seedText)
-                let v = crc32(seedText)
-                v = salt(v)
-                return jsf32b(0xF1EA5EED,v,v,v)
             }
 
             async function regenerateCard() {
