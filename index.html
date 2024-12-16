@@ -6,7 +6,7 @@
         <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
             integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
             crossorigin="anonymous"></script>
-        <script src="data/2024-tiles.js"></script>
+        <!-- <script src="data/2024-tiles.js"></script> -->
         <script src="js/functionhider.js"></script>
         <title>Bingo: The Game Awards 2024</title>
         <link rel="icon" href="img/favicon24.ico"></link>
@@ -17,6 +17,10 @@
                     transition: all .5s;
                     max-width: 100%;
                 }
+            }
+
+            h2 {
+                font-family: Arial black, sans-serif;
             }
 
             .widener {
@@ -133,7 +137,7 @@
         </style>
         <script>
 
-            let loadTiles = function(events) {
+            function loadTiles(events) {
                 let eventId = events.find(ele => ele.name == 'E3 2019 - Microsoft').id
                 let url = './eventTiles/' + eventId
 
@@ -148,14 +152,11 @@
                 tilesxhr.send()
             }
 
-            function shuffle(list, random) {
-                if (random == null) {
-                    random = Math.random
-                }
+            // I also got this from somewhere. Classic shuffle algo
+            function shuffle(list, random=Math.random) {
                 let shuffleList = [...list]
                 let a = shuffleList.length;
-                let tval;
-                let rand;
+                let tval, rand;
 
                 while (a != 0) {
                     rand = Math.floor(random() * a);
@@ -216,9 +217,16 @@
             }
 
             window.onload = async () => {
+                let year = "2024"
+                let event = "TGA".toLocaleLowerCase()
+                let eventTitle = "Geoff Keighley's The Game Awards 2024".toUpperCase()
+                document.querySelector("#event-title").innerHTML = eventTitle
+                let cardCode = year + event
+                console.log(`http://localhost:8000/data/${cardCode}.js`)
+                let { freeTile, tileDataList } = await import(`http://localhost:8000/data/${cardCode}.js`)
                 fillSeedBox()
                 await buildCardHtml()
-                await buildCardContent()
+                await buildCardContent(freeTile, tileDataList)
                 revealTiles()
             }
 
@@ -257,7 +265,7 @@
                         sortTiles(tileEle)
                         bingoRowEle.appendChild(tileEle)
                     })
-                    document.querySelector('.shell').appendChild(bingoRowEle)
+                    document.querySelector('#tile-zone').append(bingoRowEle)
                 })
                 document.querySelector('#seed-box').addEventListener("keypress", function(event) {
                     if (event.key === "Enter") {
@@ -355,13 +363,18 @@
                         }
                     })
                 })
+                let year = "2024"
+                let event = "TGA".toLocaleLowerCase()
+                let cardCode = year + event
+                console.log(`http://localhost:8000/data/${cardCode}.js`)
+                let { freeTile, tileDataList } = await import(`http://localhost:8000/data/${cardCode}.js`)
                 checkBingo()
-                await buildCardContent()
+                await buildCardContent(freeTile, tileDataList)
                 revealTiles()
             }
 
             let ticking = 0
-            async function buildCardContent() {
+            async function buildCardContent(freeTile, tileDataList) {
                 let random = getPRNG()
                 let shuffled = shuffle(tileDataList, random)
                 let count = 0
@@ -457,11 +470,7 @@
     <body>
         <div id="main" class="container widener">
             <div class="shell pl-5 pr-5">
-                <div class="row pt-3">
-                    <span class='pr-2'>Card Seed</span>
-                    <input id="seed-box" class='mr-2' value=""></input>
-                    <button id="regen" onclick="regenerateCard()">Regenerate</button>
-                </div>
+                <h2 id="event-title" class="text-center">HEY KID WANNA PLAY BINGO</h3>
                 <div class="row pt-2 pb-2">
                     <div class="text-center txt-header-widen box-shadow">
                         <span class="geoff-text">G</span>
@@ -479,6 +488,12 @@
                         <span class="geoff-text">F</span>
                     </div>
                 </div>
+                <div id="tile-zone"></div>
+                <div class="row pt-3">
+                    <span class='pr-2'>Card Seed</span>
+                    <input id="seed-box" class='mr-2' value=""></input>
+                    <button id="regen" onclick="regenerateCard()">Regenerate</button>
+                </div>    
             </div>
         </div>
     </body>

@@ -1,4 +1,4 @@
-class Tile {
+export class Tile {
     text = ''
     imgLoc = ''
     constructor(text, imgLoc) {
@@ -15,8 +15,8 @@ class Tile {
     }
 }
 
-const freeTile = new Tile('Tekken 8 Not Nominated for Best Score and Music', 'jamz')
-const tileDataList = [
+export const freeTile = new Tile('Tekken 8 Not Nominated for Best Score and Music', 'jamz')
+export const tileDataList = [
     [
         new Tile('Switch 2?!?!!?', 'switch2'), new Tile('no switch 2', 'noswitch2')
     ],
