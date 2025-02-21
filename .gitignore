@@ -1,4 +1,7 @@
 bingo-ssh.pem
+oracle-bingo-ssh.pem
 aws cmds.txt
 Caddyfile
 server.py
+oracle cmds.txt
+node_modules/

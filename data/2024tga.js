@@ -5,13 +5,17 @@ export class Tile {
         this.text = text
         this.imgLoc = imgLoc
         if (this.imgLoc != null) {
-            if (!this.imgLoc.startsWith('./img/bingo-24/')) {
-                this.imgLoc = './img/bingo-24/' + this.imgLoc
+            if (!this.imgLoc.startsWith('./bingo-24/')) {
+                this.imgLoc = './bingo-24/' + this.imgLoc
             }
             if (!this.imgLoc.endsWith('.jpg')) {
                 this.imgLoc = this.imgLoc + '.jpg'
             }
         }
+    }
+
+    toString() {
+        return `${this.imgLoc} for "${this.text}"`
     }
 }
 

@@ -6,17 +6,58 @@
         <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
             integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
             crossorigin="anonymous"></script>
-        <!-- <script src="data/2024-tiles.js"></script> -->
-        <script src="js/functionhider.js"></script>
+        <script src="/functionhider.js"></script>
         <title>Bingo: The Game Awards 2024</title>
         <link rel="icon" href="img/favicon24.ico"></link>
         <style>
+            #overlay {
+                position: fixed;
+                display: none;
+                width: 100%;
+                height: 100%;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background-color: rgba(0, 0, 0, 0.5);
+                z-index: 2;
+                cursor: pointer;
+            }
+
+            #tile-list-zone {
+                display: none;
+                position: fixed;
+                z-index: 50;
+                padding: 10px;
+                width: 725px;
+                max-width: 1140px;
+                height: 10%;
+                background: rgb(255, 255, 255);
+                color: #be0d0d;
+            }
+
+            #tile-zone {
+                position: relative;
+            }
 
             @media (max-width: 992px) {
                 .widener {
                     transition: all .5s;
                     max-width: 100%;
                 }
+
+                #tile-list-zone {
+                    display: none;
+                    position: fixed;
+                    z-index: 50;
+                    padding: 10px;
+                    width: 550px;
+                    max-width: 1140px;
+                    height: 10%;
+                    background: rgb(255, 255, 255);
+                    color: #be0d0d;
+                }
+
             }
 
             h2 {
@@ -31,9 +72,16 @@
                 background-color: #3B1E54;
             }
 
-            .shell {
+            #content {
                 height: 100vh;
+            }
+
+            .shell {
                 background-color: #9B7EBD;
+            }
+
+            .shell-dim {
+                background-color: #00000077;
             }
 
             .imgop {
@@ -77,6 +125,11 @@
             }
             .br-round {
                 border-radius: 0 0 25px 0;
+            }
+
+            .img-in-view {
+                object-fit: contain;
+                height: 100px;
             }
 
             .txt-header-widen {
@@ -216,14 +269,16 @@
                 return jsf32b(0xF1EA5EED,v,v,v)
             }
 
+            let freeTile, tileDataList
             window.onload = async () => {
                 let year = "2024"
                 let event = "TGA".toLocaleLowerCase()
                 let eventTitle = "Geoff Keighley's The Game Awards 2024".toUpperCase()
                 document.querySelector("#event-title").innerHTML = eventTitle
+
                 let cardCode = year + event
-                console.log(`http://localhost:8000/data/${cardCode}.js`)
-                let { freeTile, tileDataList } = await import(`http://localhost:8000/data/${cardCode}.js`)
+                console.log(`/${cardCode}.js`)
+                let { freeTile, tileDataList } = await import(`/${cardCode}.js`)                
                 fillSeedBox()
                 await buildCardHtml()
                 await buildCardContent(freeTile, tileDataList)
@@ -347,7 +402,7 @@
                 omg.id = "tick"
                 // omg.classList += 'tick-hidden tick-anim'
                 omg.classList += 'tick-standard tick-hidden'
-                omg.src = './img/correct24.png'
+                omg.src = './correct24.png'
                 imgbox.appendChild(omg)
                 return imgbox
             }
@@ -366,8 +421,8 @@
                 let year = "2024"
                 let event = "TGA".toLocaleLowerCase()
                 let cardCode = year + event
-                console.log(`http://localhost:8000/data/${cardCode}.js`)
-                let { freeTile, tileDataList } = await import(`http://localhost:8000/data/${cardCode}.js`)
+                console.log(`/${cardCode}.js`)
+                let { freeTile, tileDataList } = await import(`/${cardCode}.js`)
                 checkBingo()
                 await buildCardContent(freeTile, tileDataList)
                 revealTiles()
@@ -420,7 +475,7 @@
                 for (const [key, value] of Object.entries(bingoObj)) {
                     value.forEach(tile => {
                         tile.classList.remove('win')
-                        tile.querySelector('#tick').src = './img/correct24.png'
+                        tile.querySelector('#tick').src = './correct24.png'
                     })
                 }
 
@@ -441,11 +496,11 @@
                 }
                 if (tickCount == 4) {
                     for (let a = 0; a < tileArr.length; a ++) {
-                        tileArr[a].querySelector('#tick').src = './img/close.png'
+                        tileArr[a].querySelector('#tick').src = './close.png'
                     }
                 } else if (tickCount == 5) {
                     for (let a = 0; a < tileArr.length; a ++) {
-                        tileArr[a].querySelector('#tick').src = './img/bingo.png'
+                        tileArr[a].querySelector('#tick').src = './bingo.png'
                         tileArr[a].classList.add('win')
                     }
                 }
@@ -465,11 +520,22 @@
                 }
             }
 
+            async function displayOverlay() {
+                console.log('showing')
+                document.querySelector("#overlay").style.display = "block"
+                document.querySelector("#tile-list-zone").style.display = "block"
+            }
+            
+            async function hideOverlay() {
+                console.log('hiding')
+                document.querySelector("#overlay").style.display = "none"
+                document.querySelector("#tile-list-zone").style.display = "none"
+            }
         </script>
     </head>
     <body>
         <div id="main" class="container widener">
-            <div class="shell pl-5 pr-5">
+            <div id="content" class="shell pl-5 pr-5">
                 <h2 id="event-title" class="text-center">HEY KID WANNA PLAY BINGO</h3>
                 <div class="row pt-2 pb-2">
                     <div class="text-center txt-header-widen box-shadow">
@@ -488,12 +554,30 @@
                         <span class="geoff-text">F</span>
                     </div>
                 </div>
-                <div id="tile-zone"></div>
+                <div id="tile-zone">
+                        
+                </div>
+                <div>
+                    <div id="tile-list-zone">
+                        <div class="row full-tile-info">
+                            <img src="./img/bingo-24/bot.jpg">
+                            <div class="p-2">info text</div>
+                        </div>
+                    </div>
+                </div>
                 <div class="row pt-3">
-                    <span class='pr-2'>Card Seed</span>
-                    <input id="seed-box" class='mr-2' value=""></input>
-                    <button id="regen" onclick="regenerateCard()">Regenerate</button>
-                </div>    
+                    <div class="col">
+                        <span class='pr-2'>Card Seed</span>
+                        <input id="seed-box" class='mr-2' value=""></input>
+                        <button id="regen" onclick="regenerateCard()">Regenerate</button>
+                    </div>
+                    <div class="col justify-content-end d-flex">
+                        <button id="listTiles" onclick="displayOverlay()">List tiles</span>
+                    </div>
+                </div>
+            </div>
+            <div id="overlay" onclick="hideOverlay()">
+                boi what up
             </div>
         </div>
     </body>

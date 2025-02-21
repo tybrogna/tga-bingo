@@ -5,8 +5,8 @@ export class Tile {
         this.text = text
         this.imgLoc = imgLoc
         if (this.imgLoc != null) {
-            if (!this.imgLoc.startsWith('./img/bingo-25/')) {
-                this.imgLoc = './img/bingo-24/' + this.imgLoc
+            if (!this.imgLoc.startsWith('./bingo-25/')) {
+                this.imgLoc = './bingo-25/' + this.imgLoc
             }
             if (!this.imgLoc.endsWith('.jpg')) {
                 this.imgLoc = this.imgLoc + '.jpg'
@@ -21,8 +21,8 @@ export class Tile {
 //  surprise celeb guest is becoming a pattern (pacino, ford)
 //  try not to "predict" the goty, make a tile for categories that are either/or (eg, japanese game/non-j game wins)
 //  
-export const freeTile = new Tile('Tekken 8 Not Nominated for Best Score and Music', 'jamz')
-export const tileDataList = [
+export const freeTile = new Tile('', '')
+const initalList = [
     [
         new Tile('Sydnee Goodman wears a sparkly dress', 'sparkle'), new Tile('Sydnee Goodman wears a non-sparkly dress', 'matte')
     ],
@@ -35,5 +35,16 @@ export const tileDataList = [
     new Tile('Silksong', 'clown'),
     new Tile('Update/expansion for game that DIDN\'T come out this year', ''),
     new Tile('Update/expansion for game that came out this year', ''),
+]
+const yearEndList = [
 
 ]
+
+let combinedLists = []
+export const tileDataList = (() => {
+    if (combinedLists.length > 0) {
+        return combinedLists
+    }
+    combinedLists.push(...initalList).push(...yearEndList)
+    return combinedLists
+})()
