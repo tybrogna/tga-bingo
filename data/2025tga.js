@@ -31,7 +31,7 @@ const initalList = [
     new Tile('Mobile service game from last year reappears (Steel Paws, ARAD DnF, GoT Kingsroad)', ''),
     new Tile('Minor celebrity announces game they\'re acting in', ''),
     new Tile('Dead franchise gets revived (no release in 7+ years)', ''),
-    new Tile('Personnel from last year\'s winner presents/appears (Astrobot, Metaphor, )', ''),
+    new Tile('Personnel from last year\'s winner presents/appears (Astrobot, Metaphor)', ''),
     new Tile('Silksong', 'clown'),
     new Tile('Update/expansion for game that DIDN\'T come out this year', ''),
     new Tile('Update/expansion for game that came out this year', ''),
