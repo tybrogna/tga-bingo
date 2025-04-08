@@ -9,6 +9,10 @@ app.get('/', (req, res) => {
     res.status(200).sendFile('./index.html', {root: __dirname})
 })
 
+app.get('/testimg', (req, res) => {
+    res.status(200).sendFile('./img/bingo-24/2k4.jpg', {root: __dirname})
+})
+
 app.use(express.static('img'))
 app.use(express.static('data'))
 app.use(express.static('js'))
@@ -16,8 +20,14 @@ app.use(express.static('js'))
 const [server, port] = (() => {
     let server, port
     try {
-        let certLoc = fs.readFileSync('/etc/letsencrypt/live/tga.bingo/fullchain.pem')
-        let keyLoc = fs.readFileSync('/etc/letsencrypt/live/tga.bingo/privkey.pem')
+        let keyFile = fs.readFileSync('/etc/letsencrypt/live/tga.bingo/privkey.pem')
+        let certFile = fs.readFileSync('/etc/letsencrypt/live/tga.bingo/cert.pem')
+        let chainFile = fs.readFileSync('/etc/letsencrypt/live/tga.bingo/fullchain.pem')
+        let options = {
+            key: keyFile,
+            cert: certFile,
+            ca: chainFile
+        }
         server = https.createServer(options, app)
         port = 443
         return [server, port]
