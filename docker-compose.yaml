@@ -1,0 +1,25 @@
+services:
+  db:
+    container_name: database
+    image: postgres
+    ports:
+      - $POSTGRES_LOCAL_PORT:$POSTGRES_IMAGE_PORT
+    volumes:
+      - db:/var/lib/postgres
+    restart: unless-stopped
+    env_file: ./image.env
+  app:
+    container_name: app
+    build: ./bingo-app
+    depends_on:
+      - db  # "db" has to be done first for "app" to build
+    links:
+      - db  # this makes the host have a name "db" in the image
+    ports:
+      - $APP_LOCAL_PORT:$APP_IMAGE_PORT
+    env_file: ./image.env
+    restart: unless-stopped
+    tty: true
+
+volumes:
+  db:

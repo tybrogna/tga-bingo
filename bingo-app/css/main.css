@@ -1,0 +1,44 @@
+#content {
+    min-height: 100vh;
+    height: 100%;
+}
+
+.widener {
+    transition: all .5s;
+}
+
+@media (max-width: 992px) {
+    .widener {
+        transition: all .5s;
+        max-width: 100%;
+    }
+}
+
+body {
+    background-color: #3B1E54;
+}
+
+.shell {
+    background-color: #9B7EBD;
+}
+
+.shell-dim {
+    background-color: #00000077;
+}
+
+input[type="textarea"], input[type="text"] {
+    border-style: none;
+    background-color: #D4BEE4;
+    border-top-left-radius: 10px;
+    border-bottom-right-radius: 10px;
+    padding-left: 5px;
+    padding-right: 5px;
+}
+
+button, input[type=button] {
+    background-color: #D4BEE4;
+    border-top-left-radius: 10px;
+    border-bottom-right-radius: 10px;
+    padding-left: 5px;
+    padding-right: 5px;
+}

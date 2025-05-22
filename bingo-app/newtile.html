@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+            integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
+            integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
+            crossorigin="anonymous"></script>
+        <link rel="stylesheet" href="./css/main.css"></link>
+        <script src="/functionhider.js"></script>
+        <style>
+            #file-input {
+                display: none;
+            }
+
+            #file-button {
+                display: none;
+            }
+
+            #submit-button {
+                background-color: #FFF;
+            }
+
+            textarea {
+                width: inherit;
+                border-style: none;
+                background-color: #D4BEE4;
+                border-top-left-radius: 10px;
+                border-bottom-right-radius: 10px;
+                padding-left: 5px;
+                padding-right: 5px;
+                resize: none;
+            }
+
+            #display-text-input {
+                height: 100px;
+            }
+
+            #desc-text-input {
+                height: 200px;
+            }
+
+            .input-field {
+                margin: auto;
+                text-align: center;
+                width: inherit;
+            }
+
+            .text-field {
+                width: 600px;
+            }
+
+            #drop-area {
+                width: 400px;
+                height: 400px;
+                /* line-height: 200px; */
+                border: 2px dashed #cfb4ed;
+                cursor: pointer;
+            }
+
+            #drop-text {
+                /* position: absolute; */
+                width: inherit;
+                font-weight: bold;
+            }
+
+            .reset-button-container {
+                text-align: right;
+            }
+
+            #reset-button {
+                /* float: right; */
+                transform: translate(110px, -27px);
+            }
+
+            .pic-info-padding {
+                height: 50%;
+                padding-top: 20%;
+            }
+
+            .preview-image {
+                display: none;
+                object-fit: cover;
+                width: 400px;
+                height: 400px;
+                /* margin: 10px; */
+            }
+
+            @keyframes text-flash {
+                0% {
+                    color: white;
+                }
+
+                5% {
+                    color: red;
+                }
+
+                100% {
+                    color: inherit;
+                }
+            }
+
+            .warning {
+                animation: text-flash 5s ease;
+            }
+
+            #drop-area.drag-over {
+                background-color: #a188bd;
+            }
+        </style>
+        <script>
+            let dropAreaEle, fileInputEle
+
+            window.onload = async () => {
+                dropAreaEle = document.querySelector('#drop-area')
+                fileInputEle = document.querySelector('#file-input')
+                document.querySelector('#submit-button').addEventListener('click', postData)
+                document.querySelector('#reset-button').addEventListener('click', unhandleImage)
+
+                fileInputEle.addEventListener('change', clickFileUpload)
+                document.querySelector('#url-textbox').addEventListener('change', handleUrl)
+
+                //click the hidden file input
+                dropAreaEle.addEventListener('click', (e) => {
+                    if (e.target.id != 'url-textbox' && e.target.id != 'reset-button') {
+                        document.querySelector('#file-input').click()
+                    }
+                })
+
+                dropAreaEle.addEventListener('dragover', () => dropAreaEle.classList.add('drag-over'))
+                dropAreaEle.addEventListener('dragleave', () => dropAreaEle.classList.remove('drag-over'))
+
+                dropAreaEle.addEventListener('dragover', preventDefaults)
+                dropAreaEle.addEventListener('dragenter', preventDefaults)
+                dropAreaEle.addEventListener('dragleave', preventDefaults)
+                dropAreaEle.addEventListener('drop', onDroppedFile)
+            }
+
+            function handleUrl(event) {
+                try {
+                    let url = new URL(event.target.value);
+                } catch (_) {
+                    displayWarning("Not a URL")
+                    return
+                }
+
+                applyImage(event.target.value)
+            }
+
+            function clickFileUpload(uploadEvent) {
+                if (uploadEvent.target.files.length > 1) {
+                    displayWarning("Too many files")
+                    return
+                }
+                handleFile(uploadEvent.target.files[0])
+            }
+
+            function onDroppedFile(dropEvent) {
+                dropEvent.preventDefault()
+                if (dropEvent.dataTransfer.files.length > 1) {
+                    displayWarning("Too many files")
+                    return
+                }
+                handleFile(dropEvent.dataTransfer.files[0])
+            }
+
+            function handleFile(fileIn) {
+                if (!isAPicture(fileIn)) {
+                    displayWarning("That file isn't a png or jpg")
+                    return
+                }
+
+                if (fileIn.size >= 4999999) {
+                    displayWarning("Too big, keep it under 5 MB")
+                    return
+                }
+
+                let reader = new FileReader()
+                reader.readAsDataURL(fileIn)
+                reader.onloadend = (loadedEvent) => {
+                    applyImage(loadedEvent.target.result)
+                    // let zone = document.querySelector("#preview-zone")
+                    // document.querySelector("#drop-text").innerHTML = ""
+                    // zone.src = loadedEvent.target.result
+                    // zone.style.display = "block"
+                    // dropAreaEle.style.border = "none"
+                    // document.querySelector('#url-text-area').style.display = "none"
+                    // document.querySelector('#drop-text').style.display = "none"
+                }
+            }
+
+            function applyImage(imgSrc) {
+                let zone = document.querySelector("#preview-zone")
+                document.querySelector("#drop-text").innerHTML = ""
+                zone.src = imgSrc
+                zone.style.display = "block"
+                dropAreaEle.style.borderColor = "none"
+                document.querySelector('#url-text-area').style.display = "none"
+                document.querySelector('#drop-text').style.display = "none"
+            }
+
+            function unhandleImage() {
+                let zone = document.querySelector("#preview-zone")
+                document.querySelector("#drop-text").innerHTML = "drop image here, or click here to upload..."
+                zone.src = ""
+                zone.style.display = "none"
+                dropAreaEle.style.border = "2px dashed #cfb4ed"
+                document.querySelector('#url-text-area').style.display = "block"
+                document.querySelector('#drop-text').style.display = "block"
+            }
+
+            function preventDefaults(event) {
+                event.preventDefault()
+                event.stopPropagation()
+            }
+
+            function isAPicture(file) {
+                return ['image/jpeg', 'image/png'].includes(file.type)
+            }
+
+            function displayWarning(text = "something went wrong...I'm not sure what") {
+                let dropText = document.querySelector("#drop-text")
+                dropText.innerHTML = text
+                if (dropText.classList.contains('warning')) {
+                    dropText.style.animation = 'none'
+                    dropText.offsetHeight;
+                    dropText.style.animation = null;
+                } else {
+                    dropText.classList.add("warning")
+                }
+            }
+
+            function postData(event) {
+                console.log(document.querySelector("#preview-zone").src)
+                let jsObj = {}
+                let displayText = document.querySelector('#display-text-input').value
+                let descText = document.querySelector('#desc-text-input').value
+                displayText = displayText.replace('\n', '')
+                let imgName = displayText
+                                .split(' ')
+                                .map((word) => word[0])
+                                .reduce((acronym, letter) => acronym += letter)
+                if (imgName.length < 15) {
+                    let garboNumber = Math.abs(salt(crc32(imgName))).toString()
+                    if (imgName.length + garboNumber.length < 15) {
+                        imgName += garboNumber
+                    } else {
+                        imgName += garboNumber.substr(0, Math.abs(garboNumber.length - imgName.length))
+                    }
+                }
+                jsObj.image = document.querySelector("#preview-zone").src
+                jsObj.displayText = displayText
+                jsObj.descText = descText
+                fetch('/post-new-tile', {
+                    method: 'POST',
+                    body: JSON.stringify(jsObj),
+                    
+                })
+            }
+
+        </script>
+    </head>
+    <body>
+        <div id="main" class="container widener">
+            <div id="content" class="shell pl-5 pr-5 pt-2">
+                <div id="drop-area" class="input-field">
+                    <input type="file" id="file-input">
+                    <img id="preview-zone" class="preview-image"></img>
+                    <div id="drop-text" class="pic-info-padding">
+                        drop image here, or click here to upload...
+                    </div>
+                    <div id="url-text-area" class="pic-info-padding">
+                        <input id="url-textbox" type="text" value="https://url.to/img">
+                        <input id="url-submit" type="button" value="Submit">
+                    </div>
+                    <div class="reset-button-container">
+                        <input id="reset-button" type="button" value="Reset Image">
+                    </div>
+                </div>
+                <br/>
+                <div class="input-field text-field">
+                    <div>Display Text</div>
+                    <textarea id="display-text-input"></textarea>
+                </div>
+                <br/>
+                <div class="input-field text-field">
+                    <div>Description</div>
+                    <textarea id="desc-text-input"></textarea>
+                </div>
+                <br/>
+                <div class="input-field">
+                    <input type="button" id="submit-button" value="Upload for Approval">
+                </div>
+            </div>
+        </div>
+    </body>
+</html>

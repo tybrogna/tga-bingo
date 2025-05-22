@@ -2,6 +2,8 @@ bingo-ssh.pem
 oracle-bingo-ssh.pem
 aws cmds.txt
 Caddyfile
-server.py
+bingo-app/server.py
 oracle cmds.txt
-node_modules/
+bingo-app/node_modules/
+.env
+docker.env
