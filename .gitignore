@@ -5,5 +5,6 @@ Caddyfile
 bingo-app/server.py
 oracle cmds.txt
 bingo-app/node_modules/
+node_modules/
 .env
 docker.env

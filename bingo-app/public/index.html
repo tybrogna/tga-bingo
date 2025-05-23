@@ -6,9 +6,9 @@
         <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
             integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
             crossorigin="anonymous"></script>
-        <script src="/functionhider.js"></script>
+        <script src="./js/functionhider.js"></script>
         <title>Bingo: The Game Awards 2024</title>
-        <link rel="icon" href="favicon24.ico"></link>
+        <link rel="icon" href="./img/favicon24.ico"></link>
         <link rel="stylesheet" href="./css/main.css"></link>
         <style>
             html {
@@ -300,8 +300,8 @@
                 document.querySelector("#event-title").innerHTML = eventTitle
 
                 let cardCode = year + event
-                console.log(`/${cardCode}.js`)
-                let { freeTile, tileDataList } = await import(`/${cardCode}.js`)        
+                console.log(`./js/${cardCode}.js`)
+                let { freeTile, tileDataList } = await import(`./js/${cardCode}.js`)        
                 
                 setupEventListeners()
                 fillSeedBox()

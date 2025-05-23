@@ -1,6 +1,6 @@
 services:
   db:
-    container_name: database
+    container_name: tga-database
     image: postgres
     ports:
       - $POSTGRES_LOCAL_PORT:$POSTGRES_IMAGE_PORT
@@ -9,7 +9,7 @@ services:
     restart: unless-stopped
     env_file: ./image.env
   app:
-    container_name: app
+    container_name: tga-app
     build: ./bingo-app
     depends_on:
       - db  # "db" has to be done first for "app" to build

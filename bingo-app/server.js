@@ -1,21 +1,39 @@
-let fs = require('fs')
-let express = require('express')
-let https = require('https')
-let http = require('http')
+import Database from './db/database.js'
+import express from 'express'
+import http from 'http'
+import https from 'https'
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+// console.log(process.env)
+
 let app = express()
+app.use(express.json())
+app.use(express.static('public'))
+app.use(express.static('public/img'))
 
-app.get('/', (req, res) => {
-    res.set('Content-Type', 'text/html')
-    res.status(200).sendFile('./index.html', {root: __dirname})
+let db = new Database()
+await db.connect()
+process.on('exit', async () => {
+    await db.disconnect();
 })
 
-app.get('/testimg', (req, res) => {
-    res.status(200).sendFile('./img/bingo-24/2k4.jpg', {root: __dirname})
+app.get('/', async (req, res) => {
+    console.log("pls update")
+    res.sendFile('./public/index.html', {root: __dirname})
 })
 
-app.use(express.static('img'))
-app.use(express.static('data'))
-app.use(express.static('js'))
+app.get('/testAdd', async(req, res) => {
+    await db.qaAdd('Briblham')
+    res.send('yep ok')
+})
+
+app.get('/testRead', async (req, res) => {
+    res.send(await db.queryAllTiles())
+})
 
 const [server, port] = (() => {
     let server, port
