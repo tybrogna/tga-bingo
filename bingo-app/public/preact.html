@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+            integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
+            integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
+            crossorigin="anonymous"></script>
+        <link rel="stylesheet" href="./css/main.css"></link>
+        <script src="./js/functionhider.js"></script>
+        <style>
+            #file-input {
+                display: none;
+            }
+
+            [id^="file-input"] {
+                display: none;
+            }
+
+            #file-button {
+                display: none;
+            }
+
+            #submit-button {
+                background-color: #FFF;
+            }
+
+            textarea {
+                width: inherit;
+                border-style: none;
+                background-color: #D4BEE4;
+                border-top-left-radius: 10px;
+                border-bottom-right-radius: 10px;
+                padding-left: 5px;
+                padding-right: 5px;
+                resize: none;
+            }
+
+            #display-text-input {
+                height: 100px;
+            }
+
+            #desc-text-input {
+                height: 200px;
+            }
+
+            .input-field {
+                margin: auto;
+                text-align: center;
+                width: inherit;
+                height: inherit;
+            }
+
+            [id^="drop-area"] {
+                border: 2px dashed #cfb4ed;
+                cursor: pointer;
+            }
+
+            .drop-one-col {
+                width: 400px;
+                height: 400px;
+            }
+
+            .drop-two-col {
+                width: 350px;
+                height: 350px;
+
+            }
+
+            .drop-three-col {
+                width: 300px;
+                height: 300px;
+            }
+
+            .text-one-col {
+                width: 600px;
+            }
+
+            .text-two-col {
+                width: 400px;
+            }
+
+            .text-three-col {
+                width: 300px;
+            }
+
+            [id^="drop-text"] {
+                width: inherit;
+                font-weight: bold;
+            }
+
+            .reset-button-container {
+                margin: auto;
+                text-align: right;
+                width: inherit;
+            }
+
+            .pic-info-padding {
+                height: 50%;
+                padding-top: 20%;
+            }
+
+            .preview-image {
+                display: none;
+                object-fit: cover;
+                width: 400px;
+                height: 400px;
+                /* margin: 10px; */
+            }
+
+            @keyframes text-flash {
+                0% {
+                    color: white;
+                }
+
+                5% {
+                    color: red;
+                }
+
+                100% {
+                    color: inherit;
+                }
+            }
+
+            .warning {
+                animation: text-flash 5s ease;
+            }
+
+            #drop-area.drag-over {
+                background-color: #a188bd;
+            }
+        </style>
+        <script type="module">
+            import { h, render, Component } from 'https://esm.sh/preact';
+            import htm from 'https://esm.sh/htm';
+
+            // Initialize htm with Preact
+            const html = htm.bind(h);
+
+            class App2 extends Component { 
+                render() {
+                    return html`<h1>hiya</h1>`;
+                }
+            }
+
+            function App (props) {
+                return html`<h1>Hello ${props.name}!</h1>`;
+            }
+
+            function MainShell() {
+                return html`<div id="main" class="container widener">`;
+            }
+
+            function PicUploader(options) {
+                return html`
+                <div id="pic-uploader-${options.id}" class="col-12 drop-one-col">
+                    <div id="drop-area-${options.id}" class="input-field w-inherit h-inherit">
+                        <input type="file" id="file-input-${options.id}" />
+                        <img id="preview-zone-${options.id}" class="preview-image"></img>
+                        <div id="drop-text-${options.id}" class="pic-info-padding">
+                            drop image here, or click here to upload...
+                        </div>
+                        <div id="url-text-area-${options.id}" class="pic-info-padding">
+                            <input id="url-textbox-${options.id}" type="text" value="https://url.to/img" />
+                            <input id="url-submit-${options.id}" type="button" value="Submit" />
+                        </div>
+                    </div>
+                    <div class="reset-button-container">
+                        <input id="reset-button-${options.id}" type="button" value="Reset Image" />
+                    </div>
+                </div>`
+                // return retval
+            }
+
+            function PieceUploader(options) {
+                return html`
+                <div id="pic-uploader-${options.id}" class="col-12 drop-one-col">
+                    <div id="drop-area-${options.id}" class="input-field w-inherit h-inherit">
+                        <input type="file" id="file-input-${options.id}" />
+                    </div>
+                </div>`
+            }
+
+            // render(html`<${App} name="Bitch" />`, document.querySelector("#pic-uploader-zone"))
+            // render(html`<${PicUploader} id="1" />`, document.querySelector("#pic-uploader-zone"))
+            render(html`<${PicUploader} id="1" />`, document.querySelector("#pic-uploader-zone"))
+        </script>
+    </head>
+    <title>TGABingo // Preact Practice</title>
+    <body>
+        <div id="main" class="container widener">
+            <div id="content" class="shell pl-5 pr-5 pt-2">
+                <div id="event-area" class="input-field">
+                    <label>Event </label>
+                    <select name="events" id="event-select">
+                        <option value="__default">-</option>
+                        <option value="sfg2025">Summer Games Fest 2025</option>
+                    </select>
+                    <label class="pl-4">Mutually-Exclusive Combos <a href="./" style="color:#3b1e54"><sup><u>?</u></sup></a> </label>
+                    <select name="combos" id="combo-select">
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                    </select>
+                </div>
+                <div id="pic-uploader-zone" class="row">
+
+                </div>
+            </div>
+        </div>
+    </body>
+</html>

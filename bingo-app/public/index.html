@@ -313,13 +313,15 @@
             }
 
             function setupEventListeners() {
-                let overlayEle = document.querySelector('#overlay')
+                // let overlayEle = document.querySelector('#overlay')
+                let overlayEle = document.querySelector('body')
                 document.querySelector('#listTiles').addEventListener('click', event => {
                     displayOverlay()
                 })
                 overlayEle.addEventListener('click', event => {
                     console.log(event.target)
-                    if (event.target.id == 'tile-list-empty' || event.target.id == 'overlay') {
+                    console.log(event.target.tagName)
+                    if (event.target.tagName == 'BODY' || event.target.id == 'tile-list-empty' || event.target.id == 'overlay') {
                         hideOverlay()
                     }
                 })

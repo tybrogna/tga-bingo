@@ -1,4 +1,4 @@
-import Database from './db/database.js'
+import Database from './database.js'
 import express from 'express'
 import http from 'http'
 import https from 'https'
@@ -33,6 +33,13 @@ app.get('/testAdd', async(req, res) => {
 
 app.get('/testRead', async (req, res) => {
     res.send(await db.queryAllTiles())
+})
+
+app.post('/SubmitTile', async(req, res) => {
+    console.log(req.body)
+    let tileUpload = JSON.parse(req.body)
+
+    res.send('got a post. check logs')
 })
 
 const [server, port] = (() => {
