@@ -137,6 +137,33 @@
             // Initialize htm with Preact
             const html = htm.bind(h);
 
+            function Zpp() {
+                const [myBool, setmyBool] = useState(true);
+
+                function toggleBool() {
+                    setmyBool(!myBool)
+                }
+
+                return (
+                    myBool ? html`<Landing toggleBool=${toggleBool} />` : html`<Marketing />`
+                );
+            }
+
+            function Landing(props) {
+                return html`
+                    <div>
+                        <h1>Landing</h1>
+                        <button onClick={props.toggleBool}>Button</button>
+                    </div>
+                `
+            }
+
+            function Marketing(props) {
+                return html`
+                    <h1>Marketing</h1>
+                `
+            }
+
             class App2 extends Component { 
                 render() {
                     return html`<h1>hiya</h1>`;
@@ -147,8 +174,12 @@
                 return html`<h1>Hello ${props.name}!</h1>`;
             }
 
-            function MainShell() {
-                return html`<div id="main" class="container widener">`;
+            function UrlTextArea(options) {
+                return html`
+                <div id="url-text-area-${options.id}" class="pic-info-padding">
+                    <input id="url-textbox-${options.id}" type="text" value="https://url.to/img" />
+                    <input id="url-submit-${options.id}" type="button" value="Submit" />
+                </div>`
             }
 
             function PicUploader(options) {
@@ -160,10 +191,7 @@
                         <div id="drop-text-${options.id}" class="pic-info-padding">
                             drop image here, or click here to upload...
                         </div>
-                        <div id="url-text-area-${options.id}" class="pic-info-padding">
-                            <input id="url-textbox-${options.id}" type="text" value="https://url.to/img" />
-                            <input id="url-submit-${options.id}" type="button" value="Submit" />
-                        </div>
+                        <${UrlTextArea} id=${options.id} />
                     </div>
                     <div class="reset-button-container">
                         <input id="reset-button-${options.id}" type="button" value="Reset Image" />
@@ -184,6 +212,7 @@
             // render(html`<${App} name="Bitch" />`, document.querySelector("#pic-uploader-zone"))
             // render(html`<${PicUploader} id="1" />`, document.querySelector("#pic-uploader-zone"))
             render(html`<${PicUploader} id="1" />`, document.querySelector("#pic-uploader-zone"))
+            // render(html`<${Zpp} />`, document.querySelector("#pic-uploader-zone"))
         </script>
     </head>
     <title>TGABingo // Preact Practice</title>

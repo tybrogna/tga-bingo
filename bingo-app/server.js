@@ -12,13 +12,19 @@ const __dirname = dirname(__filename);
 
 let app = express()
 app.use(express.json())
-app.use(express.static('public'))
-app.use(express.static('public/img'))
+// app.use(express.static('public'))
+// app.use(express.static('public/img'))
+app.use(express.static('dist'))
+app.use(express.static('dist/img'))
 
 let db = new Database()
 await db.connect()
 process.on('exit', async () => {
     await db.disconnect();
+})
+
+app.get('/vitezone', async (req, res) => {
+    res.sendFile('./index.html', {root: __dirname})
 })
 
 app.get('/', async (req, res) => {

@@ -4,4 +4,5 @@ RUN mkdir /bingo-app
 WORKDIR /bingo-app
 COPY . .
 RUN npm install
-CMD npm start
+RUN npm run vite-build
+CMD ["node", "./server.js"]

@@ -3,17 +3,28 @@
   "version": "1.0.0",
   "description": "",
   "main": "server.js",
+  "type": "module",
   "scripts": {
+    "dev": "vite",
+    "vite-build": "vite build",
     "start": "node ./server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@popperjs/core": "^2.11.8",
+    "bootstrap": "^4.6.0",
     "dotenv": "^16.4.5",
     "express": "^4.21.2",
     "pg": "^8.11.3",
     "pg-hstore": "^2.3.4",
+    "preact": "^10.26.5",
     "sequelize": "^6.37.1"
+  },
+  "devDependencies": {
+    "@preact/preset-vite": "^2.10.1",
+    "sass": "^1.89.2",
+    "vite": "^6.3.5"
   }
 }
