@@ -1,4 +1,12 @@
-@import "~bootstrap/scss/bootstrap";
+@use "~bootstrap/scss/bootstrap";
+// @use "croppie/croppie.css";
+@use 'cropt/src/cropt.css';
+
+// https://colorhunt.co/palette/3b1e549b7ebdd4bee4eeeeee
+$color_first: #3B1E54;
+$color_second: #9B7EBD;
+$color_third: #D4BEE4;
+$color_fourth: #EEEEEE;
 
 #content {
     min-height: 100vh;
@@ -17,11 +25,11 @@
 }
 
 body {
-    background-color: #3B1E54;
+    background-color: $color_first;
 }
 
 .shell {
-    background-color: #9B7EBD;
+    background-color: $color_second;
 }
 
 .shell-dim {
@@ -30,7 +38,7 @@ body {
 
 input[type=text], input[type=textbox] {
     border-style: none;
-    background-color: #D4BEE4;
+    background-color: $color_third;
     border-top-left-radius: 10px;
     border-bottom-right-radius: 10px;
     padding-left: 5px;
@@ -38,9 +46,13 @@ input[type=text], input[type=textbox] {
 }
 
 button, input[type=button] {
-    background-color: #D4BEE4;
+    background-color: $color_third;
     border-top-left-radius: 10px;
     border-bottom-right-radius: 10px;
     padding-left: 5px;
     padding-right: 5px;
+}
+
+.help-link {
+    color: $color_first;
 }

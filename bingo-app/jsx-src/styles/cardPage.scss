@@ -1,3 +1,5 @@
+@use './main.scss' as main;
+
 html {
     position: relative;
 }
@@ -124,7 +126,7 @@ h2 {
 }
 
 .tile-standard {
-    background-color: #FFFFFF;
+    background-color: main.$color_fourth;
     position: relative;
     top: 0;
     left: 0;

@@ -2,10 +2,12 @@ services:
   db:
     container_name: tga-database
     image: postgres
+    build: ./bingo-app/db
     ports:
       - $POSTGRES_LOCAL_PORT:$POSTGRES_IMAGE_PORT
     volumes:
-      - db:/var/lib/postgres
+      - ./bingo-app/db:/docker-entrypoint-initdb.d
+      # - ./bingo-app/db:/var/lib/postgres
     restart: unless-stopped
     env_file: ./image.env
   app:
@@ -18,7 +20,7 @@ services:
     ports:
       - $APP_LOCAL_PORT:$APP_IMAGE_PORT
     volumes:
-      - ./bingo-app/public:/bingo-app/public
+      - ./bingo-app/jsx-src:/bingo-app/jsx-src
     env_file: ./image.env
     restart: unless-stopped
     tty: true

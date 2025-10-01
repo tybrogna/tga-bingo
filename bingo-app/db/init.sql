@@ -16,8 +16,10 @@ CREATE TABLE events (
 
 CREATE TABLE tiles (
     id SERIAL PRIMARY KEY,
+    event_index INTEGER SERIAL,
     title TEXT NOT NULL,
     desciption TEXT,
+    img_loc TEXT,
     submitter_id INTEGER REFERENCES submitter(id),
     event_id INTEGER REFERENCES events(id),
     isVerified BOOLEAN,
@@ -25,3 +27,4 @@ CREATE TABLE tiles (
 );
 
 INSERT INTO submitter(email, nickname) values ('test@qa.com', 'Nick Quality');
+INSERT INTO tiles(title, desciption) values ('a tile', 'why would you put this in here');

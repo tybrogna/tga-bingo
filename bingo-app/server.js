@@ -1,5 +1,6 @@
-import Database from './database.js'
+import Database from './db/database.js'
 import express from 'express'
+// import bodyParser from 'body-parser'
 import http from 'http'
 import https from 'https'
 import { fileURLToPath } from 'url';
@@ -7,29 +8,20 @@ import { dirname } from 'path';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-
 // console.log(process.env)
 
 let app = express()
+// app.use(bodyParser.json())
+// app.use(bodyParser.urlencoded({ extended: true}))
 app.use(express.json())
-// app.use(express.static('public'))
-// app.use(express.static('public/img'))
+app.use(express.urlencoded({ extended: true }))
 app.use(express.static('dist'))
 app.use(express.static('dist/img'))
 
 let db = new Database()
 await db.connect()
 process.on('exit', async () => {
-    await db.disconnect();
-})
-
-app.get('/vitezone', async (req, res) => {
-    res.sendFile('./index.html', {root: __dirname})
-})
-
-app.get('/', async (req, res) => {
-    console.log("pls update")
-    res.sendFile('./public/index.html', {root: __dirname})
+    await db.disconnect()
 })
 
 app.get('/testAdd', async(req, res) => {
@@ -41,11 +33,29 @@ app.get('/testRead', async (req, res) => {
     res.send(await db.queryAllTiles())
 })
 
+app.get('/testReadUserTiles', async (req, res) => {
+    res.send(await db.allTilesFromUser('test@qa.com'))
+})
+
 app.post('/SubmitTile', async(req, res) => {
     console.log(req.body)
-    let tileUpload = JSON.parse(req.body)
+    for (let [key, val] of Object.entries(req.body)) {
+        console.log(key, ':', val)
+    }
+    res.send('got it')
+})
 
-    res.send('got a post. check logs')
+app.post('/getTiles', async (req, res) => {
+    let id = req.query.id
+    let event = req.query.event
+    let queryStr
+})
+
+// Order DOES matter, everything before this will be prioritized
+// and this basically means that anything that isn't apart of the api
+//   falls onto the preact router to handle
+app.get('*', async (req, res) => {
+    res.sendFile('./dist/index.html', {root: __dirname})
 })
 
 const [server, port] = (() => {

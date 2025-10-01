@@ -19,3 +19,15 @@ function eleCreator(ele, id, cssClasses) {
 
     return newEle
 }
+
+export function $(cssSelector) {
+    return document.querySelector(cssSelector)
+}
+
+
+export function range(from, to = null) {
+    if (to == null) { to = from; from = 0 }
+    let init = from, retArr = new Array(to - from)
+    while (from < to) { retArr[from - init] = ++from }
+    return retArr
+}

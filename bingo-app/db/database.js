@@ -32,8 +32,26 @@ export default class Database {
 
     async queryAllTiles() {
         let res = await this.client.query(
-            'select title from tiles'
+            'select * from tiles'
         )
         return res.rows
+    }
+
+    async queryAllSubmitters() {
+        let res = await this.client.query(
+            'select * from submitter'
+        )
+        return res.rows
+    }
+
+
+    async allTilesFromUser(email) {
+        let res = await this.client.query(
+            `select * from tiles
+            join submitter on submitter.id=tiles.submitter_id
+            where submitter.email='${email}'`
+        )
+        return res.rows
+
     }
 }

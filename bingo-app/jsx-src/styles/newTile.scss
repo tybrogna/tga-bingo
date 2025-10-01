@@ -1,0 +1,175 @@
+@use './main.scss' as main;
+
+ #overlay {
+    position: fixed;
+    display: none;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0,0,0,0.5);
+    z-index: 2;
+    cursor: pointer;
+}
+
+#options-area { 
+    display: none;
+}
+
+#overlay-text-box {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    margin-right: -50%;
+    transform: translate(-50%, -50%);
+    background: main.$color_fourth;
+    padding: 1em;
+}
+
+.help-link {
+    cursor: help;
+}
+
+#file-input {
+    display: none;
+}
+
+[id^="file-input"] {
+    display: none;
+}
+
+#file-button {
+    display: none;
+}
+
+#submit-button {
+    background-color: main.$color_fourth;
+}
+
+textarea {
+    width: inherit;
+    border-style: none;
+    background-color: main.$color_third;
+    border-top-left-radius: 10px;
+    border-bottom-right-radius: 10px;
+    padding-left: 5px;
+    padding-right: 5px;
+    resize: none;
+}
+
+#display-text-input {
+    height: 100px;
+}
+
+#desc-text-input {
+    height: 200px;
+}
+
+.input-field {
+    margin: auto;
+    text-align: center;
+    width: inherit;
+    height: inherit;
+}
+
+[id^="drop-area"] {
+    border: 2px dashed #cfb4ed;
+    cursor: pointer;
+}
+
+.drop-1-col {
+    width: 400px;
+    height: 400px;
+}
+
+.drop-2-col {
+    width: 350px;
+    height: 350px;
+
+}
+
+.drop-3-col {
+    width: 300px;
+    height: 300px;
+}
+
+.text-1-col {
+    width: 600px;
+}
+
+.text-2-col {
+    width: 400px;
+}
+
+.text-3-col {
+    width: 300px;
+}
+
+[id^="drop-text"] {
+    width: inherit;
+    font-weight: bold;
+}
+
+.reset-button-container {
+    margin: auto;
+    text-align: right;
+    width: inherit;
+}
+
+.pic-info-padding {
+    height: 50%;
+    padding-top: 20%;
+}
+
+.preview-box-1-col {
+    display: none;
+    clip-path: rect(0px 400px 400px 0px);
+    width: inherit;
+    height: inherit;
+}
+.preview-box-2-col {
+    display: none;
+    clip-path: rect(0px 350px 350px 0px);
+    width: inherit;
+    height: inherit;
+}
+.preview-box-3-col {
+    display: none;
+    clip-path: rect(0px 300px 300px 0px);
+    width: inherit;
+    height: inherit;
+}
+
+.preview-image {
+    // display: none;
+    object-fit: cover;
+    width: inherit;
+    height: inherit;
+    scale: 100%;
+    object-position: 50% 100%;
+    /* margin: 10px; */
+}
+
+@keyframes text-flash {
+    0% {
+        color: main.$color_fourth;
+    }
+
+    5% {
+        color: red;
+    }
+
+    100% {
+        color: inherit;
+    }
+}
+
+.warning {
+    animation: text-flash 5s ease;
+}
+
+.drag-over {
+    background-color: #a188bd;
+}

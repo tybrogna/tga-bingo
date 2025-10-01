@@ -1,16 +1,20 @@
 import { render } from 'preact'
-import { getPRNG, shuffle } from './randomHelper.js'
-import { freeTile, tileDataList } from './2024tga.js'
-import { delay } from './functionhider.js'
+import { getPRNG, shuffle } from '../js/randomHelper.js'
+import { freeTile, tileDataList } from '../js/2024tga.js'
+import { delay } from '../js/functionhider.js'
 import correctImg from '../bingo-24/correct.png'
 import closeImg from '../bingo-24/close.png'
 import bingoImg from '../bingo-24/bingo.png'
 
-// let year = "2024"
-// let event = "TGA".toLocaleLowerCase()
-// let cardCode = year + event
-// console.log(`./js/${cardCode}.js`)
-// import { freeTile, tileDataList } from cardCode
+import '../styles/cardPage.scss'
+
+import { BingoSkeleton } from './bingoSkeleton.jsx'
+import { TileViewer } from './TileViewer.jsx'
+
+let year = "2024"
+let event = "TGA".toLocaleLowerCase()
+let cardCode = year + event
+console.log(`./js/${cardCode}.js`)
 
 let bingoObj = {
     'B': [], 'I': [], 'N': [], 'G': [], 'O': [],
@@ -29,7 +33,7 @@ export function generateCard(zone) {
 }
 
 export function regenerateCard(zone) {
-    if (zone == null) zone = lastZone
+    if (zone == null) { zone = lastZone }
     colNumbers.forEach((num) => {
         bingoLetters.forEach((letter) => {
             let tileEle = document.querySelector('#' + letter + num)
@@ -47,7 +51,6 @@ export function regenerateCard(zone) {
 }
 
 function BingoCard(props) {
-    console.log(props)
     let shuffled = getShuffleTiles(props)
     return (
         <>
@@ -174,7 +177,6 @@ function sortTiles() {
 }
 
 export async function revealTiles() {
-    console.log('tada')
     let tileAs2DArray = Array.from([bingoObj[1], bingoObj[2], bingoObj[3], bingoObj[4], bingoObj[5]])
     let flatArray = [].concat(...tileAs2DArray)
     flatArray = shuffle(flatArray)
@@ -229,6 +231,22 @@ function checkBingoTiles(tileArr) {
     }
 }
 
+async function getShuffleTilesServerSide() {
+    let seed = localStorage.getItem('seed')
+    let random = getPRNG(seed)
+    let eventMarkedTilesSize = await fetch(`/tiles/eventid/${eventId}`,).then(res => res.json())
+    return shuffle([...Array(eventMarkedTilesSize).keys()], random).map(async id => {
+        let tile, reducedTile
+        tile = await fetch(`/tiles/id/${id}`).then(res => res.json())
+        if (tile.length > 0) {
+            let pick = Math.floor(random() * tile.length)
+            reducedTile = tile[pick]
+        } else {
+            reducedTile = tile
+        }
+        return reducedTile
+    })
+}
 
 function getShuffleTiles(tilesToShuffle) {
     let seed = localStorage.getItem('seed')
@@ -258,7 +276,10 @@ function swapTickVisibility(event) {
     setTimeout(checkBingo, 500)
 }
 
-// export async function BingoCardOnload() {
-//     sortTiles()
-//     revealTiles()
-// }
+export default function() {
+    render(BingoSkeleton(), document.querySelector('body'))
+    let eventTitle = "Geoff Keighley's The Game Awards 2024".toUpperCase()
+    document.querySelector("#event-title").innerHTML = eventTitle
+    generateCard(document.querySelector('#tile-zone'))
+    render(TileViewer(), document.querySelector('#tile-list-zone'))
+}

@@ -1,4 +1,4 @@
-import { freeTile, tileDataList } from './2024tga.js'
+import { freeTile, tileDataList } from '../js/2024tga.js'
 
 export function TileViewer(props) {
     return (
@@ -64,5 +64,4 @@ function compressImage(imgEle) {
     imgEle.classList.remove('col-12', 'img-in-view-zoom')
     imgEle.classList.add('col-4', 'img-in-view')
     imgEle.parentElement.querySelector('.tile-viewer-text').style = ''
-
 }
