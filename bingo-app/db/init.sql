@@ -11,15 +11,22 @@ CREATE TABLE submitter (
 CREATE TABLE events (
     id SERIAL PRIMARY KEY,
     name TEXT NOT NULL,
-    year INTEGER
+    year INTEGER,
+    active BOOLEAN
 );
 
 CREATE TABLE tiles (
     id SERIAL PRIMARY KEY,
-    event_index INTEGER SERIAL,
-    title TEXT NOT NULL,
-    desciption TEXT,
-    img_loc TEXT,
+    -- event_index INTEGER SERIAL,
+    title_1 TEXT NOT NULL,
+    title_2 TEXT,
+    title_3 TEXT,
+    description_1 TEXT,
+    description_2 TEXT,
+    description_3 TEXT,
+    img_loc_1 TEXT,
+    img_loc_2 TEXT,
+    img_loc_3 TEXT,
     submitter_id INTEGER REFERENCES submitter(id),
     event_id INTEGER REFERENCES events(id),
     isVerified BOOLEAN,
@@ -27,4 +34,5 @@ CREATE TABLE tiles (
 );
 
 INSERT INTO submitter(email, nickname) values ('test@qa.com', 'Nick Quality');
-INSERT INTO tiles(title, desciption) values ('a tile', 'why would you put this in here');
+-- INSERT INTO tiles(title, desciption) values ('a tile', 'why would you put this in here');
+INSERT INTO events (name, year, active) VALUES ('Summer Games Fest', 2025, TRUE)

@@ -15,17 +15,21 @@
   "dependencies": {
     "@popperjs/core": "^2.11.8",
     "@preact/signals": "^2.3.1",
+    "@types/multer": "^2.0.0",
     "body-parser": "^2.2.0",
     "bootstrap": "^4.6.0",
+    "cors": "^2.8.5",
     "croppie": "^2.6.5",
     "cropt": "^1.0.0",
     "dotenv": "^16.4.5",
     "express": "^4.21.2",
+    "multer": "^2.0.2",
     "pg": "^8.11.3",
     "pg-hstore": "^2.3.4",
     "preact": "^10.26.5",
     "preact-iso": "^2.9.2",
     "sequelize": "^6.37.1",
+    "sharp": "^0.34.5",
     "vite-express": "^0.21.1"
   },
   "devDependencies": {

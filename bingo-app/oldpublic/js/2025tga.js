@@ -35,6 +35,7 @@ const initalList = [
     new Tile('Silksong', 'clown'),
     new Tile('Update/expansion for game that DIDN\'T come out this year', ''),
     new Tile('Update/expansion for game that came out this year', ''),
+    new Tile('Someone makes reference to the "what really is an indie game" debate', ''),
 ]
 const yearEndList = [
 

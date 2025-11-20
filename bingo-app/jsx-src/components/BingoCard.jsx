@@ -24,9 +24,10 @@ const bingoLetters = ['B','I','N','G','O']
 const colNumbers = [1,2,3,4,5]
 let lastZone = ""
 
-export function generateCard(zone) {
+export async function generateCard(zone) {
     if (zone == null) return
     lastZone = zone
+    let tiles = await fetch('/getTiles')
     render(BingoCard(tileDataList), zone)
     sortTiles()
     revealTiles()

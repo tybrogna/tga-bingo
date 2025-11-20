@@ -21,6 +21,7 @@ services:
       - $APP_LOCAL_PORT:$APP_IMAGE_PORT
     volumes:
       - ./bingo-app/jsx-src:/bingo-app/jsx-src
+      - ./bingo-app/db:/bingo-app/db
     env_file: ./image.env
     restart: unless-stopped
     tty: true

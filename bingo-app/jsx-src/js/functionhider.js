@@ -20,14 +20,41 @@ function eleCreator(ele, id, cssClasses) {
     return newEle
 }
 
+/***
+ * Jquery style $
+ * @param {string} cssSelector - CSS selector string
+ * @return {Element} - first matching Element
+ * should probably just use jquery, its small enough. im just not clear on the other benefits
+ * i just remembered i used it in the nominees portion, so itll be in later anyways
+ * TODO delete this
+ */
 export function $(cssSelector) {
     return document.querySelector(cssSelector)
 }
 
-
+/***
+ * Python style range function
+ * @param {number} from - start value, default 0
+ * @param {number} to - optional end value, exclusive
+ * range(5) -> [0,1,2,3,4], range(2,5) -> [2,3,4]
+ */
 export function range(from, to = null) {
     if (to == null) { to = from; from = 0 }
     let init = from, retArr = new Array(to - from)
-    while (from < to) { retArr[from - init] = ++from }
+    while (from < to) { retArr[from - init] = from++ }
     return retArr
+}
+
+// Claude AI helped me with this one
+export function urlToPNGFile(dataUrl) {
+    let [ header, body ] = dataUrl.split(',')
+    let mime = header.match(/:.*?;/)[0];
+    mime = mime.slice(1, -1);
+    let binary = atob(body);
+    let a = binary.length;
+    let u8arr = new Uint8Array(a);
+    while (a--) {
+        u8arr[a] = binary.charCodeAt(a);
+    }
+    return new File([u8arr], 'image.png', { type: mime });
 }

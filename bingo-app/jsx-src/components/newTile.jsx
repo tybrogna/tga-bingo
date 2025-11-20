@@ -1,10 +1,16 @@
 import { render } from 'preact'
 import { useState } from 'preact/hooks'
-import { $, range } from '../js/functionhider.js'
+import { $, range, urlToPNGFile } from '../js/functionhider.js'
 import { Cropt } from 'cropt'
 
 import '../styles/newTile.scss'
 import { useEffect } from 'react'
+
+let cropts = {
+    'box': null,
+    'options': {},
+    'filled': false
+}
 
 let croptBoxes = [null, null, null, null]
 let croptOptions = [null, null, null, null]
@@ -44,50 +50,80 @@ function textUploaderClasses(numCols) {
     return retVal
 }
 
+
 function NewTileContent(props) {
-    const [ val, setVal ] = useState('')
-    if (!val) { setVal("1") }
+    console.log('hello')
+    const [ numUploaders, setNumUploaders ] = useState('1')
+    const [ isEventDropdownFilled, setIsEventDropdownFilled ] = useState('')
 
     useEffect(() => {
+        let eventsData = async () => {
+            let res = await fetch('/events/true')
+            let resJson = await res.json()
+            range(resJson.length).forEach(a => {
+                let optionEle = document.createElement('option')
+                optionEle.innerText = resJson[a].name + ' ' + resJson[a].year
+                // optionEle.value = optionEle.innerText.toLowerCase().replace(/\s+/g, '')
+                optionEle.value = optionEle.innerText
+                document.querySelector('#event-select').appendChild(optionEle)
+            })
+            setIsEventDropdownFilled('done')
+        }
+        if (isEventDropdownFilled == '') {
+            eventsData()
+        }
+
         // after page is (re)rendered, make one, two, or three cropt boxes
         // and since there's so few paths, this is more readable than a loop
-        croptBoxes[1] = new Cropt($('#preview-box-1'), croptOptions[val])
-        if (val == 2) {
-            croptBoxes[2] = new Cropt($('#preview-box-2'), croptOptions[val])
-        } else if (val == 3) {
-            croptBoxes[2] = new Cropt($('#preview-box-2'), croptOptions[val])
-            croptBoxes[3] = new Cropt($('#preview-box-3'), croptOptions[val])
+        if (!croptBoxes[1]) {
+            console.log('making boxes')
+            croptBoxes[1] = new Cropt($('#preview-box-1'), croptOptions[numUploaders])
+            if (numUploaders == 2) {
+                croptBoxes[2] = new Cropt($('#preview-box-2'), croptOptions[numUploaders])
+            } else if (numUploaders == 3) {
+                croptBoxes[2] = new Cropt($('#preview-box-2'), croptOptions[numUploaders])
+                croptBoxes[3] = new Cropt($('#preview-box-3'), croptOptions[numUploaders])
+            }
         }
     })
 
+    let tileIdLimit = 2
+    if (numUploaders != '') {
+        tileIdLimit = parseInt(numUploaders) + 1
+    }
+
     let picUploaderCode =
-        range(val).map(id => {
-                return (
-                <>
-                    <PictureUploader items={{'id':id, 'numCols':val}}/>
-                </>
-                )
-            })
+        range(1, tileIdLimit).map(id => {
+            return (
+            <>
+                <PictureUploader items={{'id':id, 'numCols':numUploaders}}/>
+            </>
+            )
+        })
     
     let textUploadCode =
-        range(val).map(id => {
-                return (
-                <>
-                    <TextUploader items={{'id':id, 'numCols':val}}/>
-                </>
-                )
-            })
+        range(1, tileIdLimit).map(id => {
+            return (
+            <>
+                <TextUploader items={{'id':id, 'numCols':numUploaders}}/>
+            </>
+            )
+        })
+    
+    // console.log('picuplodadlen', picUploaderCode.length)
+    // console.log('txtuplodadlen', textUploadCode.length)
     
     return (
     <>
     <div id="options-area">
         <label class='pr-1'>Event </label>
         <select name="events" id="event-select">
-            <option value="__default">-</option>
-            <option value="sfg2025">Summer Games Fest 2025</option>
+            {/* {eventOptions} */}
+            {/* <option value="__default">-</option> */}
+            {/* <option value="sgf2025">{tv}</option> */}
         </select>
         <label class="pl-4 pr-1">Mutually-Exclusive Combos <a class="help-link" onClick={activateOverlay}><sup><u>?</u></sup></a> </label>
-        <select name="combos" id="combo-select" onChange={event => { resetAllImages(); setVal(event.currentTarget.value);} }>
+        <select name="combos" id="combo-select" onChange={event => { resetAllImages(); setNumUploaders(event.currentTarget.value);} }>
             <option value="1" selected>1</option>
             <option value="2">2</option>
             <option value="3">3</option>
@@ -236,13 +272,13 @@ function clickFileInput(event, id) {
     }
 
     while (!eventTarget.id.startsWith('drop-area')) {
+        console.log('goin up')
         eventTarget = eventTarget.parentElement
     }
 
-    if (croptBoxes[id] != null) {
+    if (croptBoxes[id] == null) {
         return
     }
-
     eventTarget.querySelector('[id^=\'file-input\']').click()
 }
 
@@ -353,25 +389,49 @@ async function submitForApproval() {
     //  set up submitter id somehow
     //    don't bother with passwords, just use email key
     //  Destroy Quality (might have to be done serverside?)
-    //  split into three
 
-    let uploadJson = await getUploadJsonOnce()
-    console.log(uploadJson)
-    console.log(uploadJson.items)
-    console.log(uploadJson.items[0])
-    console.log(uploadJson.items[0].image)
-    $('#overlay-image').src = uploadJson.items[0].image.toDataURL()
-    activateOverlay()
+    let tileForm = await getUploadForm()
 
+    console.log(tileForm)
+    console.log(tileForm.get('title1'))
+    console.log(tileForm.get('description1'))
 
-    // let res = await fetch('/SubmitTile', {
-    //     method: 'post',
-    //     headers: {
-    //         //this is fucking required it took entirely too long to figure out
-    //         'content-type': 'application/json'
-    //     },
-    //     body: JSON.stringify(uploadJson)
-    // })
+    let res = await fetch('/SubmitTile', {
+        method: 'post',
+        body: tileForm
+    })
+    // console.log(res, res.ok, res.status)
+}
+
+async function getUploadForm() {
+    let formData = new FormData()
+    let event = document.querySelector('#event-select').value
+    formData.append('eventName', event.substring(0, event.lastIndexOf(' ')) )
+    formData.append('eventYear', event.substring(event.lastIndexOf(' ') + 1))
+    formData.append('combo', document.querySelector('#combo-select').value)
+    formData.append('submitter', 'test@qa.com')
+
+    let titles = []
+    let descriptions = []
+    // let imgLocs = []
+
+    for (let a = 0; a < croptBoxes.length; a++) {
+    // croptBoxes.forEach(async box => {
+        let box = croptBoxes[a]
+        if (!box) { continue }
+
+        let canvas = await box.toCanvas(400)
+        if (!canvas) { continue }
+        let blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+        if (!blob) { continue }
+        formData.append('images', blob)
+
+        formData.append('title' + a, document.querySelector('#display-text-input-' + a).value)
+        formData.append('description' + a, document.querySelector('#desc-text-input-' + a).value)
+    }
+
+    return formData
+
 }
 
 async function getUploadJsonOnce() {
@@ -380,33 +440,29 @@ async function getUploadJsonOnce() {
         combo: document.querySelector('#combo-select').value,
         items: []
     }
+    let imageData = []
 
     croptBoxes.forEach(async box => {
         if (!box) { return }
 
         let res = await box.toCanvas(400)
         if (!res) { return }
+
+        res.toBlob(blob => {
+            imageData.push(new File([blob], 'aw4rhsr.png', { type: 'image/png' }))
+        })
         
         uploadJson.items.push({
-            image: res,
             title: document.querySelector('#display-text-input-1').value,
             descrpition: document.querySelector('#desc-text-input-1').value,
             submitter: 'test@qa.com'
         })
-    }) 
+    })
 
-    // res = await getUploadJson(croppieBoxes[2])
-    // if (res) {
-    //     uploadJson.items.push(res)
-    // }
-
-    // res = await getUploadJson(croppieBoxes[3])
-    // if (res) {
-    //     uploadJson.items.push(res)
-    // }
-
-    return uploadJson
+    return [ uploadJson, imageData ]
 }
+
+
 
 function activateOverlay() {
   document.getElementById("overlay").style.display = "block";
@@ -417,6 +473,7 @@ function disableOverlay() {
 }
 
 export default function() {
+
     render(NewTileSkeleton(), document.querySelector('body'))
     $('#options-area').style.display = 'block' 
 }
