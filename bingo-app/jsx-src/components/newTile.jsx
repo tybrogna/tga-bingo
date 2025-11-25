@@ -140,6 +140,7 @@ function NewTileContent(props) {
             <div class='input-field'>
                 <input class='mr-3' type='text' id='submit-code' placeholder='required upload code' />
                 <input type='button' id='submit-button' value='Upload for Approval' onClick={submitForApproval}/>
+                <input type='button' id='submit-and-clear-button' value='Upload and Clear' onClick={submitForApproval(true)}/>
             </div>
         </div>
     </div>
@@ -222,6 +223,15 @@ function resetAllImages() {
             croptBoxes[index].destroy()
             unhandleImage($('#reset-button-' + index))
             croptBoxes[index] = null
+        }
+    }
+}
+
+function resetText() {
+    for (let index = 1; index < croptBoxes.length; index ++) {
+        if (croptBoxes[index] != null) {
+            $(`#display-text-input-${index}`).value = ''
+            $(`#desc-text-input-${index}`).value = ''
         }
     }
 }
@@ -384,7 +394,7 @@ function displayWarning(eventTarget, text = "something went wrong...I'm not sure
     }
 }
 
-async function submitForApproval() {
+async function submitForApproval(clear=false) {
     //TODO in order
     //  set up submitter id somehow
     //    don't bother with passwords, just use email key
@@ -400,6 +410,12 @@ async function submitForApproval() {
         method: 'post',
         body: tileForm
     })
+
+    if (clear) {
+        resetAllImages()
+        resetText()
+    }
+
     // console.log(res, res.ok, res.status)
 }
 
@@ -473,7 +489,6 @@ function disableOverlay() {
 }
 
 export default function() {
-
     render(NewTileSkeleton(), document.querySelector('body'))
     $('#options-area').style.display = 'block' 
 }

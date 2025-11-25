@@ -58,17 +58,17 @@ app.get('/events/:active', async (req, res) => {
     res.send(await db.queryAllEvents(req.params.active))
 })
 
-let upload = multer({ dest: './uploads/' })
+let upload = multer({ dest: '/uploads/' })
 let imageUpload = upload.array('images')
 app.post('/SubmitTile', imageUpload, async(req, res) => {
     //TODO: data validation
     let imgLocArr = []
-    console.log(req.body)
+    // console.log(req.body)
     for (let a = 0; a < req.files.length; a++) {
         console.log(req.files[a].path)
-        fs.stat(req.files[a].path, (err, stats) => {
-            console.log(stats)
-        })
+        // fs.stat(req.files[a].path, (err, stats) => {
+        //     console.log(stats.size)
+        // })
         let betterName = ""
         req.body[`title${a+1}`].split(' ').forEach(word => betterName += word[0])
         betterName += (new Date().valueOf() % 100000).toString()
@@ -78,22 +78,60 @@ app.post('/SubmitTile', imageUpload, async(req, res) => {
             .jpeg({ quality: 60, mozjpeg: true })
             .toFile(betterName)
             .then(() => fs.unlinkSync(req.files[a].path))
-        fs.stat(betterName, (err, stats) => {
-            console.log(stats)
-        })
+        // fs.stat(betterName, (err, stats) => {
+        //     console.log(stats.size)
+        // })
 
         imgLocArr.push(betterName)
     }
     
-    db.addTile(req.body, imgLocArr)
-    // console.log(req.body)
-    // console.log(req.files)
+    db.addTileNormalized(req.body, imgLocArr)
 })
 
-// Remove-Item $img
-// $img = Get-ChildItem $newname
-// magick $img.name -resize 400x400 -strip -interlace Plane -quality 50 $img.name
+app.get('/getTilesNormalized/active/:seed', async (req, res) => {
+    let latestEvent = await db.queryAllEvents(true)
+    res.send(
+        await getTilesNormalized(latestEvent.name, latestEvent.year, req.params.seed)
+    )
+})
 
+app.get('/getTilesNormalized/:eventName/:eventYear/:seed', async (req, res) => {
+    res.send(await getTilesNormalized(req.params.eventName, req.params.eventYear, req.params.seed))
+    // let random = getPRNG(req.params.seed)
+    // let tileClusters = await db.queryTileClustersForCard(req.params.eventName, req.params.eventYear)
+    // console.log(tileClusters)
+    // tileClusters = shuffle(tileClusters, random)
+    // tileClusters = tileClusters.slice(0, 24)
+    // let tilesToSend = tileClusters.map(cluster => {
+    //     let tileIds = cluster.tile_ids.split(',')
+    //     if (tileIds.length == 1) {
+    //         return tileIds[0]
+    //     }
+    //     let pick = Math.floor(random() * tileIds.length)
+    //     return tileIds[pick]
+    // })
+
+    // let tileData = await db.getAllTilesById(tilesToSend)
+    // res.send(tileData)
+})
+
+async function getTilesNormalized(eventName, eventYear, seed) {
+    let random = getPRNG(seed)
+    let tileClusters = await db.queryTileClustersForCard(eventName, eventYear)
+    console.log(tileClusters)
+    tileClusters = shuffle(tileClusters, random)
+    tileClusters = tileClusters.slice(0, 24)
+    let tilesToSend = tileClusters.map(cluster => {
+        let tileIds = cluster.tile_ids.split(',')
+        if (tileIds.length == 1) {
+            return tileIds[0]
+        }
+        let pick = Math.floor(random() * tileIds.length)
+        return tileIds[pick]
+    })
+
+    return await db.getAllTilesById(tilesToSend)
+}
 
 app.get('/getTiles/:eventName/:eventYear/:seed', async (req, res) => {
     let random = getPRNG(req.params.seed)

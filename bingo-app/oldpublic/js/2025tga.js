@@ -21,6 +21,15 @@ export class Tile {
 //  surprise celeb guest is becoming a pattern (pacino, ford)
 //  try not to "predict" the goty, make a tile for categories that are either/or (eg, japanese game/non-j game wins)
 //  
+// things CONFIRMED at the show:
+// exodus trailer 
+//
+// things LIKELY at the show:
+// prince of persia sands of time remake
+// marathon to be re-revealed
+//
+// long shots:
+// 
 export const freeTile = new Tile('', '')
 const initalList = [
     [
@@ -32,7 +41,7 @@ const initalList = [
     new Tile('Minor celebrity announces game they\'re acting in', ''),
     new Tile('Dead franchise gets revived (no release in 7+ years)', ''),
     new Tile('Personnel from last year\'s winner presents/appears (Astrobot, Metaphor)', ''),
-    new Tile('Silksong', 'clown'),
+    // new Tile('Silksong', 'clown'),
     new Tile('Update/expansion for game that DIDN\'T come out this year', ''),
     new Tile('Update/expansion for game that came out this year', ''),
     new Tile('Someone makes reference to the "what really is an indie game" debate', ''),

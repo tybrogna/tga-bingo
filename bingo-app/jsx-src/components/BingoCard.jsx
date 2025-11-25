@@ -2,6 +2,7 @@ import { render } from 'preact'
 import { getPRNG, shuffle } from '../js/randomHelper.js'
 import { freeTile, tileDataList } from '../js/2024tga.js'
 import { delay } from '../js/functionhider.js'
+import { Tile } from '../js/Tile.js'
 import correctImg from '../bingo-24/correct.png'
 import closeImg from '../bingo-24/close.png'
 import bingoImg from '../bingo-24/bingo.png'
@@ -27,8 +28,9 @@ let lastZone = ""
 export async function generateCard(zone) {
     if (zone == null) return
     lastZone = zone
-    let tiles = await fetch('/getTiles')
-    render(BingoCard(tileDataList), zone)
+    // let tiles = await fetch('/getTiles')
+    let shuffled = await fetch(`/getNormalizedTiles/active/${localStorage.getItem('seed')}`)
+    render(BingoCard(shuffled), zone)
     sortTiles()
     revealTiles()
 }
@@ -52,7 +54,10 @@ export function regenerateCard(zone) {
 }
 
 function BingoCard(props) {
-    let shuffled = getShuffleTiles(props)
+    // let shuffled = getShuffleTiles(props)
+    // let shuffled = getShuffleTilesServerSide(props)
+    // let activeEvent = await fetch('/events/true')
+    
     return (
         <>
             <BingoRow num={1} tiles={shuffled.slice(0, 5)} />
@@ -94,12 +99,26 @@ function BingoRow(props) {
     )
 }
 
-function BingoTile(props) {
+// function BingoTile(props) {
+//     let { id, tileClasses, imgClasses, tileData } = props.items
+//     let tile = (
+//         <div id={id} class={tileClasses} onclick={swapTickVisibility}>
+//             <img id='imgbox' class={imgClasses} src={tileData.url} />
+//             <div id='title-text-box' class='tile-text'>{tileData.text}</div>
+//             <div id='checkbox'>
+//                 <img id='tick' class='tick-standard tick-hidden' src={correctImg} />
+//             </div>
+//         </div>
+//     )
+//     return tile
+// }
+
+function BingoTileForDB(props) {
     let { id, tileClasses, imgClasses, tileData } = props.items
     let tile = (
         <div id={id} class={tileClasses} onclick={swapTickVisibility}>
-            <img id='imgbox' class={imgClasses} src={tileData.url} />
-            <div id='title-text-box' class='tile-text'>{tileData.text}</div>
+            <img id='imgbox' class={imgClasses} src={'https://tga.bingo/' + tileData.url} />
+            <div id='title-text-box' class='tile-text'>{tileData.title}</div>
             <div id='checkbox'>
                 <img id='tick' class='tick-standard tick-hidden' src={correctImg} />
             </div>
@@ -236,17 +255,32 @@ async function getShuffleTilesServerSide() {
     let seed = localStorage.getItem('seed')
     let random = getPRNG(seed)
     let eventMarkedTilesSize = await fetch(`/tiles/eventid/${eventId}`,).then(res => res.json())
-    return shuffle([...Array(eventMarkedTilesSize).keys()], random).map(async id => {
-        let tile, reducedTile
-        tile = await fetch(`/tiles/id/${id}`).then(res => res.json())
-        if (tile.length > 0) {
-            let pick = Math.floor(random() * tile.length)
-            reducedTile = tile[pick]
-        } else {
-            reducedTile = tile
+
+    return eventMarkedTilesSize.map(dbData => {
+        let tiles = []
+        tiles[0] = new Tile(dbData.title_1)
+        if (dbData.description_1 != null) { tiles[0].description = dbData.description_1 }
+        if (dbData.imgLoc != null) { tiles[0].description = dbData.description_1 }
+        tiles[0].imgLoc = dbData.img_loc_1 != null ? dbData.img_loc_1 : ""
+        if (dbData.title_2 != null) {
+            tiles[1] = new Tile(dbData.title_2, dbData.img_loc_2, dbData.description_2)
         }
-        return reducedTile
+        if (dbData.title_3 != null) {
+            tiles[1] = new Tile(dbData.title_3, dbData.img_loc_3, dbData.description_3)
+        }
+
     })
+    // return shuffle([...Array(eventMarkedTilesSize).keys()], random).map(async id => {
+    //     let tile, reducedTile
+    //     tile = await fetch(`/tiles/id/${id}`).then(res => res.json())
+    //     if (tile.length > 0) {
+    //         let pick = Math.floor(random() * tile.length)
+    //         reducedTile = tile[pick]
+    //     } else {
+    //         reducedTile = tile
+    //     }
+    //     return reducedTile
+    // })
 }
 
 function getShuffleTiles(tilesToShuffle) {
