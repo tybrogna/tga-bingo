@@ -9,6 +9,10 @@ export function delay(ms) {
     return new Promise(resolve => { setTimeout(resolve, ms) })
 }
 
+export function isLocalhost() {
+    return location.hostname === "localhost" || location.hostname === "127.0.0.1" || location.hostname === ""
+}
+
 function eleCreator(ele, id, cssClasses) {
     let newEle = document.createElement(ele)
     newEle.id = id

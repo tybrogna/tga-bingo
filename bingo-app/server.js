@@ -24,7 +24,7 @@ app.use(express.urlencoded({ extended: true }))
 app.use(express.static('dist'))
 app.use(express.static('dist/img'))
 // app.use(express.static('dist/img'))
-app.use(express.static('uploads'))
+app.use(express.static('../uploads'))
 
 let db = new Database()
 await db.connect()
@@ -61,61 +61,46 @@ app.get('/events/:active', async (req, res) => {
 let upload = multer({ dest: '/uploads/' })
 let imageUpload = upload.array('images')
 app.post('/SubmitTile', imageUpload, async(req, res) => {
-    //TODO: data validation
     let imgLocArr = []
-    // console.log(req.body)
     for (let a = 0; a < req.files.length; a++) {
-        console.log(req.files[a].path)
-        // fs.stat(req.files[a].path, (err, stats) => {
-        //     console.log(stats.size)
-        // })
-        let betterName = ""
-        req.body[`title${a+1}`].split(' ').forEach(word => betterName += word[0])
-        betterName += (new Date().valueOf() % 100000).toString()
+        let file = req.files[a].path
+        console.log(file)
+        // fs.stat(req.files[a].path, (err, stats) => { console.log(stats.size) })
+        let betterName = file
+        betterName = betterName.replace(/[^a-z0-9\ ]/gi, '')
+        betterName = betterName.trim()
+        betterName = betterName.toLowerCase()
+        betterName = betterName.split(' ').reduce((acc, word) => acc += word[0], "")
+        betterName += (new Date().valueOf() % 100000).toString().padStart(5, '0')
         betterName += ".jpg"
         console.log(betterName)
-        sharp(req.files[a].path)
+        sharp(file)
             .jpeg({ quality: 60, mozjpeg: true })
-            .toFile(betterName)
-            .then(() => fs.unlinkSync(req.files[a].path))
-        // fs.stat(betterName, (err, stats) => {
-        //     console.log(stats.size)
-        // })
+            .toFile(file.slice(0, file.lastIndexOf('/')+1) + betterName)
+            .then(() => fs.unlinkSync(file))
+        // fs.stat(req.files[a].path, (err, stats) => { console.log(stats.size) })
 
         imgLocArr.push(betterName)
     }
-    
-    db.addTileNormalized(req.body, imgLocArr)
+    if (req.body.isFreeTile) {
+        db.addOrUpdateFree(req.body, imgLocArr)
+    } else {
+        db.addTile(req.body, imgLocArr)
+    }
 })
 
-app.get('/getTilesNormalized/active/:seed', async (req, res) => {
+app.get('/getTiles/active/:seed', async (req, res) => {
     let latestEvent = await db.queryAllEvents(true)
     res.send(
-        await getTilesNormalized(latestEvent.name, latestEvent.year, req.params.seed)
+        await getTiles(latestEvent.name, latestEvent.year, req.params.seed)
     )
 })
 
-app.get('/getTilesNormalized/:eventName/:eventYear/:seed', async (req, res) => {
-    res.send(await getTilesNormalized(req.params.eventName, req.params.eventYear, req.params.seed))
-    // let random = getPRNG(req.params.seed)
-    // let tileClusters = await db.queryTileClustersForCard(req.params.eventName, req.params.eventYear)
-    // console.log(tileClusters)
-    // tileClusters = shuffle(tileClusters, random)
-    // tileClusters = tileClusters.slice(0, 24)
-    // let tilesToSend = tileClusters.map(cluster => {
-    //     let tileIds = cluster.tile_ids.split(',')
-    //     if (tileIds.length == 1) {
-    //         return tileIds[0]
-    //     }
-    //     let pick = Math.floor(random() * tileIds.length)
-    //     return tileIds[pick]
-    // })
-
-    // let tileData = await db.getAllTilesById(tilesToSend)
-    // res.send(tileData)
+app.get('/getTiles/:eventName/:eventYear/:seed', async (req, res) => {
+    res.send(await getTiles(req.params.eventName, req.params.eventYear, req.params.seed))
 })
 
-async function getTilesNormalized(eventName, eventYear, seed) {
+async function getTiles(eventName, eventYear, seed) {
     let random = getPRNG(seed)
     let tileClusters = await db.queryTileClustersForCard(eventName, eventYear)
     console.log(tileClusters)
@@ -132,29 +117,6 @@ async function getTilesNormalized(eventName, eventYear, seed) {
 
     return await db.getAllTilesById(tilesToSend)
 }
-
-app.get('/getTiles/:eventName/:eventYear/:seed', async (req, res) => {
-    let random = getPRNG(req.params.seed)
-    let tilesToShuffle = await db.queryTilesForCard(req.params.eventName, req.params.eventYear)
-    console.log(tilesToShuffle)
-    // let tilesToSendIdxes = range(tilesToShuffle.length)
-    tilesToShuffle = shuffle(tilesToShuffle, random)
-    console.log(tilesToShuffle)
-    let tilesToSend = []
-    for (let a = 0; a < 24; a++) {
-        tilesToSend.push(tilesToShuffle[a])
-    }
-
-    console.log(tilesToSend)
-    
-    res.send(tilesToSend)
-})
-
-// app.get('/images/:imgLoc', async (req, res) => {
-//     console.log(req.params.imgLoc)
-//     console.log(`./uploads/${req.params.imgLoc}`)
-//     res.sendFile(`./uploads/${req.params.imgLoc}`, {root: __dirname})
-// })
 
 // Order DOES matter, everything before this will be prioritized
 // and this basically means that anything that isn't apart of the api

@@ -10,8 +10,10 @@ let App = () => (
     <LocationProvider>
         <Router>
             <BingoCard path='/' />
+            <BingoCard path='/past/:eventName?/:eventYear?' />
             <NewTile path='/newtile' />
             {/* <Viewer path='/tiles' /> */}
+            {/* <YouLost default /> */}
         </Router>
     </LocationProvider>
 )

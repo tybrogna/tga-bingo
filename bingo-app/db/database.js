@@ -75,7 +75,7 @@ export default class Database {
 
     async getAllTilesById(idList) {
         let cmd = `
-            select * from tiles_normalized
+            select * from tiles
             where id in (${idList.toString()})`
         let res = await this.#runCmd(cmd)
         return res.rows
@@ -109,49 +109,20 @@ export default class Database {
     }
 
     async addTile(reqBody, imageLocations) {
-        let event_id = await this.eventIdByName(reqBody.eventName, reqBody.eventYear)
-        let query = '' 
-        query += 'insert into tiles (event_id, '
-        if (reqBody.combo == 1) {
-            query += 'title_1, description_1, img_loc_1) '
-            query += `values (${event_id}, `
-            query += `"${reqBody.title1}", "${reqBody.description1}", "${imageLocations[0]}")`
-        } else if (reqBody.combo == 2) {
-            query += "title_1, description_1, img_loc_1, "
-            query += "title_2, description_2, img_loc_2) "
-            query += `values (${event_id}, `
-            query += `"${reqBody.title1}", "${reqBody.description1}", "${imageLocations[0]}", `
-            query += `"${reqBody.title2}", "${reqBody.description2}", "${imageLocations[1]}")`
-        } else if (reqBody.combo == 3) {
-            query += "title_1, description_1, img_loc_1, "
-            query += "title_2, description_2, img_loc_2, "
-            query += "title_3, description_3, img_loc_3) "
-            query += `values (${event_id}, `
-            query += `"${reqBody.title1}", "${reqBody.description1}", "${imageLocations[0]}", `
-            query += `"${reqBody.title2}", "${reqBody.description2}", "${imageLocations[1]}", `
-            query += `"${reqBody.title3}", "${reqBody.description3}", "${imageLocations[2]}")`
-        }
-
-        let res = await this.#runCmd(cmd)
-        console.log(res)
-        return res
-    }
-
-    async addTileNormalized(reqBody, imageLocations) {
         let eventId = await this.eventIdByName(reqBody.eventName, reqBody.eventYear)
         let tileQueries = []
-        tileQueries[0] = "insert into tiles_normalized (title, description, img_loc) "
+        tileQueries[0] = "insert into tiles (title, description, img_loc) "
         tileQueries[0] += `values ('${sqlize(reqBody.title1)}', '${sqlize(reqBody.description1)}', '${sqlize(imageLocations[0])}') `
         tileQueries[0] += "returning id"
         // console.log(tileQueries[0])
         if (reqBody.title2 != null) {
-            tileQueries[1] = 'insert into tiles_normalized (title, description, img_loc) '
+            tileQueries[1] = 'insert into tiles (title, description, img_loc) '
             tileQueries[1] += `values ('${sqlize(reqBody.title2)}', '${sqlize(reqBody.description2)}', '${sqlize(imageLocations[1])}') `
             tileQueries[1] += "returning id"
         }
 
         if (reqBody.title3 != null) {
-            tileQueries[2] = 'insert into tiles_normalized (title, description, img_loc) '
+            tileQueries[2] = 'insert into tiles (title, description, img_loc) '
             tileQueries[2] += `values ('${sqlize(reqBody.title3)}', '${sqlize(reqBody.description3)}', '${sqlize(imageLocations[2])}') `
             tileQueries[2] += "returning id"
         }
@@ -168,9 +139,29 @@ export default class Database {
 
         clusterIds = clusterIds.substring(0, clusterIds.length - 1)
         let clusterQuery = `
-            insert into tile_clusters (event_id, tile_ids)
-            values (${eventId}, '${clusterIds}')`
+            insert into tile_clusters (event_id, tile_ids, is_free)
+            values (${eventId}, '${clusterIds}', FALSE)`
         let clusterRes = await this.#runCmd(clusterQuery)
         return clusterRes
+    }
+
+    async addOrUpdateFreeTile(reqBody, imageLocations) {
+        let eventId = await this.eventIdByName(reqBody.eventName, reqBody.eventYear)
+        let cmd = 'insert into tiles (title, description, img_loc '
+        cmd += `values ('${squlize(reqBody.title1)}', '${sqlize(reqBody.description1)}', '${squlize(imageLocations[0])})`
+        cmd += 'returing id'
+        let tileRes = await this.#runCmd(cmd)
+        clusterId = tileRes.rows[0].id
+
+        let freeTile = await this.#runCmd(`select * from tile_clusters where event_id=${eventId} and are_free=TRUE`)
+        if (freeTile.rows.length == 0) {
+            cmd = 'insert into tile_clusters (event_id, tile_ids, is_free)'
+            cmd += `values (${eventId}, '${clusterId}', TRUE)`
+            let clusterRes = await this.#runCmd(cmd)
+            return clusterRes
+        } else {
+            let idsUpdate = freeTile.rows[0].tile_ids + ',' + clusterId
+            cmd = `update tile_clusters set tile_ids=${idsUpdate} where id=${freeTile.rows[0].id}`
+        }
     }
 }

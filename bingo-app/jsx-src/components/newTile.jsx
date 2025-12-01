@@ -76,7 +76,7 @@ function NewTileContent(props) {
         // after page is (re)rendered, make one, two, or three cropt boxes
         // and since there's so few paths, this is more readable than a loop
         if (!croptBoxes[1]) {
-            console.log('making boxes')
+            console.log('making boxes', croptOptions[numUploaders])
             croptBoxes[1] = new Cropt($('#preview-box-1'), croptOptions[numUploaders])
             if (numUploaders == 2) {
                 croptBoxes[2] = new Cropt($('#preview-box-2'), croptOptions[numUploaders])
@@ -139,8 +139,10 @@ function NewTileContent(props) {
             {textUploadCode}
             <div class='input-field'>
                 <input class='mr-3' type='text' id='submit-code' placeholder='required upload code' />
-                <input type='button' id='submit-button' value='Upload for Approval' onClick={submitForApproval}/>
-                <input type='button' id='submit-and-clear-button' value='Upload and Clear' onClick={submitForApproval(true)}/>
+                <input class='mr-3' type='button' id='submit-button' value='Upload for Approval' onClick={event => submitForApproval(event)}/>
+                <input type='checkbox' id='is-free-checkbox' />
+                <label>Used for free tile</label>
+                {/* <input type='button' id='submit-and-clear-button' value='Upload and Clear' onClick={console.log('submitforapproval')}/> */}
             </div>
         </div>
     </div>
@@ -394,7 +396,7 @@ function displayWarning(eventTarget, text = "something went wrong...I'm not sure
     }
 }
 
-async function submitForApproval(clear=false) {
+async function submitForApproval() {
     //TODO in order
     //  set up submitter id somehow
     //    don't bother with passwords, just use email key
@@ -411,10 +413,10 @@ async function submitForApproval(clear=false) {
         body: tileForm
     })
 
-    if (clear) {
-        resetAllImages()
-        resetText()
-    }
+    // if (clear) {
+    //     resetAllImages()
+    //     resetText()
+    // }
 
     // console.log(res, res.ok, res.status)
 }
@@ -426,13 +428,9 @@ async function getUploadForm() {
     formData.append('eventYear', event.substring(event.lastIndexOf(' ') + 1))
     formData.append('combo', document.querySelector('#combo-select').value)
     formData.append('submitter', 'test@qa.com')
-
-    let titles = []
-    let descriptions = []
-    // let imgLocs = []
+    formData.append('isFree', document.querySelector('#is-free-checkbox').checked)
 
     for (let a = 0; a < croptBoxes.length; a++) {
-    // croptBoxes.forEach(async box => {
         let box = croptBoxes[a]
         if (!box) { continue }
 
@@ -450,42 +448,13 @@ async function getUploadForm() {
 
 }
 
-async function getUploadJsonOnce() {
-    let uploadJson = {
-        event: document.querySelector('#event-select').value,
-        combo: document.querySelector('#combo-select').value,
-        items: []
-    }
-    let imageData = []
-
-    croptBoxes.forEach(async box => {
-        if (!box) { return }
-
-        let res = await box.toCanvas(400)
-        if (!res) { return }
-
-        res.toBlob(blob => {
-            imageData.push(new File([blob], 'aw4rhsr.png', { type: 'image/png' }))
-        })
-        
-        uploadJson.items.push({
-            title: document.querySelector('#display-text-input-1').value,
-            descrpition: document.querySelector('#desc-text-input-1').value,
-            submitter: 'test@qa.com'
-        })
-    })
-
-    return [ uploadJson, imageData ]
-}
-
-
-
 function activateOverlay() {
-  document.getElementById("overlay").style.display = "block";
+    console.log('activate overlay running')
+    document.getElementById("overlay").style.display = "block";
 }
 
 function disableOverlay() {
-  document.getElementById("overlay").style.display = "none";
+    document.getElementById("overlay").style.display = "none";
 }
 
 export default function() {

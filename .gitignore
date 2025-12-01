@@ -11,3 +11,4 @@ node_modules/
 docker.env
 bingo-app/db/Beekeeper.lnk
 bingo-app/.oci/
+uploads/

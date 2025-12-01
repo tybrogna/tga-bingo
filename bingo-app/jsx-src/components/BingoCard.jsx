@@ -1,7 +1,8 @@
 import { render } from 'preact'
+import { useRoute } from 'preact-iso'
 import { getPRNG, shuffle } from '../js/randomHelper.js'
 import { freeTile, tileDataList } from '../js/2024tga.js'
-import { delay } from '../js/functionhider.js'
+import { isLocalhost, delay } from '../js/functionhider.js'
 import { Tile } from '../js/Tile.js'
 import correctImg from '../bingo-24/correct.png'
 import closeImg from '../bingo-24/close.png'
@@ -12,10 +13,10 @@ import '../styles/cardPage.scss'
 import { BingoSkeleton } from './bingoSkeleton.jsx'
 import { TileViewer } from './TileViewer.jsx'
 
-let year = "2024"
-let event = "TGA".toLocaleLowerCase()
-let cardCode = year + event
-console.log(`./js/${cardCode}.js`)
+let path = ""
+let eventName = ""
+let eventYear = ""
+let isLocal = isLocalhost()
 
 let bingoObj = {
     'B': [], 'I': [], 'N': [], 'G': [], 'O': [],
@@ -26,17 +27,18 @@ const colNumbers = [1,2,3,4,5]
 let lastZone = ""
 
 export async function generateCard(zone) {
-    if (zone == null) return
+    if (zone == null)
+        return
     lastZone = zone
-    // let tiles = await fetch('/getTiles')
-    let shuffled = await fetch(`/getNormalizedTiles/active/${localStorage.getItem('seed')}`)
+    let shuffled = await fetchShuffledTiles()
     render(BingoCard(shuffled), zone)
     sortTiles()
     revealTiles()
 }
 
-export function regenerateCard(zone) {
-    if (zone == null) { zone = lastZone }
+export async function regenerateCard(zone) {
+    if (zone == null)
+        { zone = lastZone }
     colNumbers.forEach((num) => {
         bingoLetters.forEach((letter) => {
             let tileEle = document.querySelector('#' + letter + num)
@@ -48,23 +50,31 @@ export function regenerateCard(zone) {
         })
     })
     localStorage.setItem('seed', document.querySelector('#seed-box').value)
-    render(BingoCard(tileDataList), zone)
+    let shuffled = await fetchShuffledTiles()
+    render(BingoCard(shuffled), zone)
     checkBingo()
     revealTiles()
 }
 
+async function fetchShuffledTiles() {
+    let seed = localStorage.getItem('seed')
+    let shuffledRes
+    if (path.startsWith('/past')) {
+        shuffledRes = await fetch(`/getTiles/${eventName}/${eventYear}/${seed}`)
+    } else {
+        shuffledRes = await fetch(`/getTiles/active/${seed}`)
+    }
+    return await shuffledRes.json()
+}
+
 function BingoCard(props) {
-    // let shuffled = getShuffleTiles(props)
-    // let shuffled = getShuffleTilesServerSide(props)
-    // let activeEvent = await fetch('/events/true')
-    
     return (
         <>
-            <BingoRow num={1} tiles={shuffled.slice(0, 5)} />
-            <BingoRow num={2} tiles={shuffled.slice(6, 11)} />
-            <BingoRow num={3} tiles={shuffled.slice(11, 16)} />
-            <BingoRow num={4} tiles={shuffled.slice(16, 21)} />
-            <BingoRow num={5} tiles={shuffled.slice(-5)} />
+            <BingoRow num={1} tiles={props.slice(0, 5)} />
+            <BingoRow num={2} tiles={props.slice(6, 11)} />
+            <BingoRow num={3} tiles={props.slice(11, 16)} />
+            <BingoRow num={4} tiles={props.slice(16, 21)} />
+            <BingoRow num={5} tiles={props.slice(-5)} />
         </>
     )
 }
@@ -99,25 +109,12 @@ function BingoRow(props) {
     )
 }
 
-// function BingoTile(props) {
-//     let { id, tileClasses, imgClasses, tileData } = props.items
-//     let tile = (
-//         <div id={id} class={tileClasses} onclick={swapTickVisibility}>
-//             <img id='imgbox' class={imgClasses} src={tileData.url} />
-//             <div id='title-text-box' class='tile-text'>{tileData.text}</div>
-//             <div id='checkbox'>
-//                 <img id='tick' class='tick-standard tick-hidden' src={correctImg} />
-//             </div>
-//         </div>
-//     )
-//     return tile
-// }
-
-function BingoTileForDB(props) {
+function BingoTile(props) {
     let { id, tileClasses, imgClasses, tileData } = props.items
+    let imgURL = (isLocal ? 'http://localhost:3001/' : 'https://tga.bingo/') + tileData.img_loc
     let tile = (
         <div id={id} class={tileClasses} onclick={swapTickVisibility}>
-            <img id='imgbox' class={imgClasses} src={'https://tga.bingo/' + tileData.url} />
+            <img id='imgbox' class={imgClasses} src={imgURL} />
             <div id='title-text-box' class='tile-text'>{tileData.title}</div>
             <div id='checkbox'>
                 <img id='tick' class='tick-standard tick-hidden' src={correctImg} />
@@ -270,17 +267,6 @@ async function getShuffleTilesServerSide() {
         }
 
     })
-    // return shuffle([...Array(eventMarkedTilesSize).keys()], random).map(async id => {
-    //     let tile, reducedTile
-    //     tile = await fetch(`/tiles/id/${id}`).then(res => res.json())
-    //     if (tile.length > 0) {
-    //         let pick = Math.floor(random() * tile.length)
-    //         reducedTile = tile[pick]
-    //     } else {
-    //         reducedTile = tile
-    //     }
-    //     return reducedTile
-    // })
 }
 
 function getShuffleTiles(tilesToShuffle) {
@@ -312,6 +298,9 @@ function swapTickVisibility(event) {
 }
 
 export default function() {
+    path = useRoute().path
+    eventName = useRoute().params.eventName
+    eventYear = useRoute().params.eventYear
     render(BingoSkeleton(), document.querySelector('body'))
     let eventTitle = "Geoff Keighley's The Game Awards 2024".toUpperCase()
     document.querySelector("#event-title").innerHTML = eventTitle

@@ -22,6 +22,7 @@ services:
     volumes:
       - ./bingo-app/jsx-src:/bingo-app/jsx-src
       - ./bingo-app/db:/bingo-app/db
+      - ./uploads:/uploads/
     env_file: ./image.env
     restart: unless-stopped
     tty: true
