@@ -89,20 +89,21 @@ app.post('/SubmitTile', imageUpload, async(req, res) => {
 })
 
 app.get('/getTiles/active/:seed', async (req, res) => {
-    let latestEvent = await db.queryAllEvents(true)
+    let latestEvent = (await db.queryAllEvents(true))[0]
     res.send(
         await getTiles(latestEvent.name, latestEvent.year, req.params.seed)
     )
 })
 
 app.get('/getTiles/:eventName/:eventYear/:seed', async (req, res) => {
-    res.send(await getTiles(req.params.eventName, req.params.eventYear, req.params.seed))
+    res.send(
+        await getTiles(req.params.eventName, req.params.eventYear, req.params.seed)
+    )
 })
 
 async function getTiles(eventName, eventYear, seed) {
     let random = getPRNG(seed)
     let tileClusters = await db.queryTileClustersForCard(eventName, eventYear)
-    console.log(tileClusters)
     tileClusters = shuffle(tileClusters, random)
     tileClusters = tileClusters.slice(0, 24)
     let tilesToSend = tileClusters.map(cluster => {
@@ -115,6 +116,44 @@ async function getTiles(eventName, eventYear, seed) {
     })
 
     return await db.getAllTilesById(tilesToSend)
+}
+
+app.get('/getAllTiles/active', async (req, res) => {
+    let latestEvent = (await db.queryAllEvents(true))[0]
+    res.send(
+        await getAllTiles(latestEvent.name, latestEvent.year)
+    )
+})
+
+app.get('/getAllTiles/:eventName/:eventYear/', async (req, res) => {
+    res.send(
+        await getAllTiles(req.params.eventName, req.params.eventYear)
+    )
+})
+
+async function getAllTiles(eventName, eventYear, seed) {
+    let tileClusters = await db.queryTileClustersForCard(eventName, eventYear)
+    let tilesToGet = []
+    let tilesInClusterIds = tileClusters.map(cluster => {
+        let tileIds = cluster.tile_ids.split(',')
+        if (tileIds.length == 1) {
+            tilesToGet.push(tileIds[0])
+            return tileIds[0]
+        }
+        tilesToGet.push(...tileIds)
+        return tileIds
+    })
+    let allTilesForEvent = await db.getAllTilesById(tilesToGet)
+    let tilesToSend = tilesInClusterIds.map(idArr => {
+        console.log(idArr)
+        console.log(idArr.length)
+        if (idArr.length == 1) {
+            return allTilesForEvent.find(tile => tile.id == idArr)
+        } else {
+            return idArr.map(id => allTilesForEvent.find(tile => tile.id == id))
+        }
+    })
+    return tilesToSend
 }
 
 // Order DOES matter, everything before this will be prioritized

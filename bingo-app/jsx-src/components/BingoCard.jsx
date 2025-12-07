@@ -64,7 +64,15 @@ async function fetchShuffledTiles() {
     } else {
         shuffledRes = await fetch(`/getTiles/active/${seed}`)
     }
-    return await shuffledRes.json()
+    let shuffled = await shuffledRes.json()
+    while (shuffled.length < 24) {
+        shuffled.push({
+            "title": "Data Missing",
+            "description": "Doesn't exist",
+            "img_loc": ""
+        })
+    }
+    return shuffled
 }
 
 function BingoCard(props) {
@@ -111,10 +119,10 @@ function BingoRow(props) {
 
 function BingoTile(props) {
     let { id, tileClasses, imgClasses, tileData } = props.items
-    let imgURL = (isLocal ? 'http://localhost:3001/' : 'https://tga.bingo/') + tileData.img_loc
+    let imgUrl = (isLocal ? 'http://localhost:3001/' : 'https://tga.bingo/') + tileData.img_loc
     let tile = (
         <div id={id} class={tileClasses} onclick={swapTickVisibility}>
-            <img id='imgbox' class={imgClasses} src={imgURL} />
+            <img id='imgbox' class={imgClasses} src={imgUrl} />
             <div id='title-text-box' class='tile-text'>{tileData.title}</div>
             <div id='checkbox'>
                 <img id='tick' class='tick-standard tick-hidden' src={correctImg} />
@@ -300,10 +308,9 @@ function swapTickVisibility(event) {
 export default function() {
     path = useRoute().path
     eventName = useRoute().params.eventName
-    eventYear = useRoute().params.eventYear
-    render(BingoSkeleton(), document.querySelector('body'))
-    let eventTitle = "Geoff Keighley's The Game Awards 2024".toUpperCase()
+    eventYear = useRoute().params.eventYear // #TODO this is caveman shit
+    render(BingoSkeleton({eventName, eventYear}), document.querySelector('body'))
+    let eventTitle = "Geoff Keighley's The Game Awards 2025".toUpperCase()
     document.querySelector("#event-title").innerHTML = eventTitle
     generateCard(document.querySelector('#tile-zone'))
-    render(TileViewer(), document.querySelector('#tile-list-zone'))
 }

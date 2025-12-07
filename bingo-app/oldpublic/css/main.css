@@ -42,3 +42,9 @@ button, input[type=button] {
     padding-left: 5px;
     padding-right: 5px;
 }
+
+.cropt-container .cr-boundary 
+.cropt-container .cr-boundary,
+.cropt-container .cr-slider-wrap {
+    width: 100%;
+}

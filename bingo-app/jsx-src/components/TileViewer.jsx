@@ -1,10 +1,30 @@
-import { freeTile, tileDataList } from '../js/2024tga.js'
+import { render } from 'preact'
+import { path } from './BingoCard.jsx'
+import { isLocalhost } from '../js/functionhider.js'
+// import { freeTile, tileDataList } from '../js/2024tga.js'
+
+let isLocal = isLocalhost()
+
+export async function renderTileViewer(zone, eventName, eventYear) {
+    let eventTiles = await fetchAllTiles(eventName, eventYear)
+    render(TileViewer(eventTiles), zone)
+}
+
+async function fetchAllTiles(eventName, eventYear) {
+    let eventTiles
+    if (path.startsWith('/past')) {
+        eventTiles = await fetch(`/getAllTiles/${eventName}/${eventYear}`)
+    } else {
+        eventTiles = await fetch(`/getAllTiles/active`)
+    }
+    return await eventTiles.json()
+}
 
 export function TileViewer(props) {
     return (
         <>
-        <TileViewerSingleRow tileData={freeTile} />
-        {tileDataList.map(tileData => {
+        {/* <TileViewerSingleRow tileData={freeTile} /> */}
+        {props.map(tileData => {
             if (tileData.length > 0) {
                 return (
                     <div class='linked-tile-binding'>
@@ -22,12 +42,13 @@ export function TileViewer(props) {
 }
 
 function TileViewerSingleRow(props) {
+    let imgUrl = (isLocal ? 'http://localhost:3001/' : 'https://tga.bingo/') + props.tileData.img_loc
     return (
         <div class='row full-tile-info'>
-            <img class='col-4 img-in-view' src={props.tileData.url} onclick={toggleImageZoom} />
+            <img class='col-4 img-in-view' src={imgUrl} onclick={toggleImageZoom} />
             <div class='col-8 p-2 tile-viewer-text'>
                 <div class='tile-viewer-text-title'>
-                    {props.tileData.text}
+                    {props.tileData.title}
                 </div>
                 <div class='tile-viewer-text-description'>
                     {props.tileData.description}

@@ -10,6 +10,7 @@ node_modules/
 .env
 docker.env
 other.yaml
+docker cmds.txt
 bingo-app/db/Beekeeper.lnk
 bingo-app/.oci/
 uploads/

@@ -1,6 +1,9 @@
-import { compressAllImages } from './TileViewer'
+import { compressAllImages, renderTileViewer } from './TileViewer'
 import { regenerateCard } from './BingoCard'
+import { $ } from '../js/functionhider.js'
 
+let eventName = ''
+let eventYear = ''
 
 function TitleAndHeader(props) {
     let titleClasses = "row pt-2 pb-2".concat(props.visible ? "" : " vis-hidden")
@@ -45,6 +48,9 @@ function Footer(props) {
 }
 
 export function BingoSkeleton(props) {
+    eventName = props.eventName
+    eventYear = props.eventYear
+    console.log(eventName, eventYear)
     document.querySelector('body').addEventListener('click', event => {
         if (event.target.tagName == 'BODY' || event.target.id == 'tile-list-empty' || event.target.id == 'overlay') {
             hideOverlay()
@@ -90,6 +96,7 @@ async function displayOverlay() {
     console.log('overlay popping up')
     document.querySelector("#overlay").style.display = "block"
     document.querySelector("#tile-list-zone").style.display = "block"
+    renderTileViewer($('#tile-list-zone'), eventName, eventYear)
 }
 
 async function hideOverlay() {

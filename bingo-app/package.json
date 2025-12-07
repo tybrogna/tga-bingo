@@ -19,7 +19,6 @@
     "body-parser": "^2.2.0",
     "bootstrap": "^4.6.0",
     "cors": "^2.8.5",
-    "croppie": "^2.6.5",
     "cropt": "^1.0.0",
     "dotenv": "^16.4.5",
     "express": "^4.21.2",

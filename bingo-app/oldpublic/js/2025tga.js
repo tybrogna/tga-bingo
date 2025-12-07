@@ -23,12 +23,35 @@ export class Tile {
 //  
 // things CONFIRMED at the show:
 // exodus trailer 
+// neon giant's new game (The Ascent studio) (likely to be a first person imsim)
+// re requiem shows a classic character (leon, jill, chris)
+// phantom blade 0 release date
 //
 // things LIKELY at the show:
+// Silent Hill remake reveal
 // prince of persia sands of time remake
+// control 2, or something called control resonant
 // marathon to be re-revealed
+// fornite chapter 8
+// diablo 4 expansion
+// cod blops 7 zombies
+// 007 first light (jsut a guess)
+// crimson desert (very close to release)
+// resident evil 9 (very close to release)
+// playground's fable 2026
+// RGG studios project century
+// eidos montreal new game
+// acknowledgement of hololive partnership
+// 2XKO console trailer/new character
+// larian new game, releated to statue
+// tainted grail fall of avalon dlc
+//
+// NOT APPEARING:
+// the witcher 4
+// assassin's creed black flag remake
 //
 // long shots:
+// saros (release date is close)
 // 
 export const freeTile = new Tile('', '')
 const initalList = [
