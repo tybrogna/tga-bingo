@@ -22,7 +22,6 @@ app.use(express.json())
 app.use(cors())
 app.use(express.urlencoded({ extended: true }))
 app.use(express.static('dist'))
-app.use(express.static('dist/img'))
 // app.use(express.static('dist/img'))
 app.use(express.static('../uploads'))
 
@@ -126,12 +125,16 @@ app.get('*', async (req, res) => {
 })
 
 const [server, port] = (() => {
+    return [http.createServer(app), 3000]
     let server, port
     try {
-        let keyFile = fs.readFileSync('/etc/letsencrypt/live/tga.bingo/privkey.pem')
-        let certFile = fs.readFileSync('/etc/letsencrypt/live/tga.bingo/cert.pem')
-        let chainFile = fs.readFileSync('/etc/letsencrypt/live/tga.bingo/fullchain.pem')
-        let options = {
+        let keyFile = fs.readFileSync('/etc/letsencrypt/live/tga.zone/privkey.pem')
+        console.log(keyFile)
+        let certFile = fs.readFileSync('/etc/letsencrypt/live/tga.zone/cert.pem')
+	console.log(certFile)
+        let chainFile = fs.readFileSync('/etc/letsencrypt/live/tga.zone/fullchain.pem')
+	console.log(chainfile)
+	let options = {
             key: keyFile,
             cert: certFile,
             ca: chainFile
@@ -140,7 +143,8 @@ const [server, port] = (() => {
         port = 443
         return [server, port]
     } catch (err) {
-        server = http.createServer(app)
+        console.log(err)
+	server = http.createServer(app)
         port = 3000
         return [server, port]
     }

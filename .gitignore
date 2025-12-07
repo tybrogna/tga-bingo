@@ -9,6 +9,9 @@ oracle cmds.txt
 node_modules/
 .env
 docker.env
+other.yaml
 bingo-app/db/Beekeeper.lnk
 bingo-app/.oci/
 uploads/
+certbot/
+
