@@ -63,9 +63,8 @@ app.post('/SubmitTile', imageUpload, async(req, res) => {
     let imgLocArr = []
     for (let a = 0; a < req.files.length; a++) {
         let file = req.files[a].path
-        console.log(file)
         // fs.stat(req.files[a].path, (err, stats) => { console.log(stats.size) })
-        let betterName = file
+        let betterName = req.body[`title${a+1}`]
         betterName = betterName.replace(/[^a-z0-9\ ]/gi, '')
         betterName = betterName.trim()
         betterName = betterName.toLowerCase()
@@ -81,6 +80,7 @@ app.post('/SubmitTile', imageUpload, async(req, res) => {
 
         imgLocArr.push(betterName)
     }
+    
     if (req.body.isFreeTile) {
         db.addOrUpdateFree(req.body, imgLocArr)
     } else {

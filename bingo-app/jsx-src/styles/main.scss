@@ -3,10 +3,15 @@
 @use 'cropt/src/cropt.css';
 
 // https://colorhunt.co/palette/3b1e549b7ebdd4bee4eeeeee
-$color_first: #3B1E54;
-$color_second: #9B7EBD;
-$color_third: #D4BEE4;
-$color_fourth: #EEEEEE;
+// $color_2024_first: #3B1E54;
+// $color_2024_second: #9B7EBD;
+// $color_2024_third: #D4BEE4;
+// $color_2024_fourth: #EEEEEE;
+
+$color_first: #1b263b;
+$color_second: #415a77;
+$color_third: #778da9;
+$color_fourth: #e0e1dd;
 
 #content {
     min-height: 100vh;

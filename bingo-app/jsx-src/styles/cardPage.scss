@@ -4,7 +4,32 @@ html {
     position: relative;
 }
 
-#overlay {
+#helper-overlay {
+    position: fixed;
+    display: none;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0,0,0,0.5);
+    z-index: 1000;
+    cursor: pointer;
+}
+
+#helper-overlay-box {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    margin-right: -50%;
+    transform: translate(-50%, -50%);
+    background: main.$color_fourth;
+    padding: 1em;
+}
+
+
+#viewer-overlay {
     cursor: default;
     position: absolute;
     display: none;
@@ -15,12 +40,21 @@ html {
     right: 0;
     bottom: 0;
     background-color: rgba(0, 0, 0, 0.5);
-    z-index: 2;
+    z-index: 1000;
     cursor: pointer;
 }
 
-#overlay:hover {
+#viewer-overlay:hover {
     cursor: default;
+}
+
+.helper-target {
+    transform: translate(40%, 40%);
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    cursor: help;
+    z-index: 668;
 }
 
 .vis-hidden {
@@ -34,7 +68,7 @@ html {
     padding: 10px;
     width: 725px;
     max-width: 1140px;
-    background: rgb(255, 255, 255);
+    background: main.$color_fourth;
     color: #be0d0d;
     max-height: inherit;
     overflow-y: scroll;
@@ -105,7 +139,7 @@ html {
         width: 800px;
         /* max-width: 1140px; */
         height: 10%;
-        background: rgb(255, 255, 255);
+        background: main.$color_fourth;
         color: #be0d0d;
     }
 
@@ -172,7 +206,7 @@ h2 {
     left: 5%;
     right: 5%;
     transform: translate(-0%, -50%);
-    text-shadow: #CB9DF0 1px 0 10px;
+    text-shadow: main.$color_third 1px 0 10px;
     max-width: 187.93px;
 }
 

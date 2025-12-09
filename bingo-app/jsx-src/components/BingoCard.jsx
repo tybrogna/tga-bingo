@@ -10,7 +10,7 @@ import bingoImg from '../bingo-24/bingo.png'
 
 import '../styles/cardPage.scss'
 
-import { BingoSkeleton } from './bingoSkeleton.jsx'
+import { BingoSkeleton, displayHelperOverlay } from './bingoSkeleton.jsx'
 import { TileViewer } from './TileViewer.jsx'
 
 let path = ""
@@ -21,6 +21,14 @@ let isLocal = isLocalhost()
 let bingoObj = {
     'B': [], 'I': [], 'N': [], 'G': [], 'O': [],
     '1': [], '2': [], '3': [], '4': [], '5': []
+}
+
+let bingoDesc = {
+    'B1': [], 'I1': [], 'N1': [], 'G1': [], 'O1': [],
+    'B2': [], 'I2': [], 'N2': [], 'G2': [], 'O2': [],
+    'B3': [], 'I3': [], 'N3': [], 'G3': [], 'O3': [],
+    'B4': [], 'I4': [], 'N4': [], 'G4': [], 'O4': [],
+    'B5': [], 'I5': [], 'N5': [], 'G5': [], 'O5': [],
 }
 const bingoLetters = ['B','I','N','G','O']
 const colNumbers = [1,2,3,4,5]
@@ -64,7 +72,13 @@ async function fetchShuffledTiles() {
     } else {
         shuffledRes = await fetch(`/getTiles/active/${seed}`)
     }
-    let shuffled = await shuffledRes.json()
+    let shuffled
+    try {
+        shuffled = await shuffledRes.json()
+    } catch (e) {
+        shuffled = []
+    }
+    
     while (shuffled.length < 24) {
         shuffled.push({
             "title": "Data Missing",
@@ -122,6 +136,7 @@ function BingoTile(props) {
     let imgUrl = (isLocal ? 'http://localhost:3001/' : 'https://tga.bingo/') + tileData.img_loc
     let tile = (
         <div id={id} class={tileClasses} onclick={swapTickVisibility}>
+            <div class="helper-target" onclick={showDescription}>?</div>
             <img id='imgbox' class={imgClasses} src={imgUrl} />
             <div id='title-text-box' class='tile-text'>{tileData.title}</div>
             <div id='checkbox'>
@@ -129,7 +144,16 @@ function BingoTile(props) {
             </div>
         </div>
     )
+    bingoDesc[id] = tileData.description
     return tile
+}
+
+function showDescription(event) {
+    event.stopPropagation()
+    console.log(event.target.parentElement.id)
+    console.log(bingoDesc[event.target.parentElement.id])
+    // console.log(text)
+    displayHelperOverlay(bingoDesc[event.target.parentElement.id])
 }
 
 function getTileClassList(letter, num) {
@@ -256,41 +280,41 @@ function checkBingoTiles(tileArr) {
     }
 }
 
-async function getShuffleTilesServerSide() {
-    let seed = localStorage.getItem('seed')
-    let random = getPRNG(seed)
-    let eventMarkedTilesSize = await fetch(`/tiles/eventid/${eventId}`,).then(res => res.json())
+// async function getShuffleTilesServerSide() {
+//     let seed = localStorage.getItem('seed')
+//     let random = getPRNG(seed)
+//     let eventMarkedTilesSize = await fetch(`/tiles/eventid/${eventId}`,).then(res => res.json())
 
-    return eventMarkedTilesSize.map(dbData => {
-        let tiles = []
-        tiles[0] = new Tile(dbData.title_1)
-        if (dbData.description_1 != null) { tiles[0].description = dbData.description_1 }
-        if (dbData.imgLoc != null) { tiles[0].description = dbData.description_1 }
-        tiles[0].imgLoc = dbData.img_loc_1 != null ? dbData.img_loc_1 : ""
-        if (dbData.title_2 != null) {
-            tiles[1] = new Tile(dbData.title_2, dbData.img_loc_2, dbData.description_2)
-        }
-        if (dbData.title_3 != null) {
-            tiles[1] = new Tile(dbData.title_3, dbData.img_loc_3, dbData.description_3)
-        }
+//     return eventMarkedTilesSize.map(dbData => {
+//         let tiles = []
+//         tiles[0] = new Tile(dbData.title_1)
+//         if (dbData.description_1 != null) { tiles[0].description = dbData.description_1 }
+//         if (dbData.imgLoc != null) { tiles[0].description = dbData.description_1 }
+//         tiles[0].imgLoc = dbData.img_loc_1 != null ? dbData.img_loc_1 : ""
+//         if (dbData.title_2 != null) {
+//             tiles[1] = new Tile(dbData.title_2, dbData.img_loc_2, dbData.description_2)
+//         }
+//         if (dbData.title_3 != null) {
+//             tiles[1] = new Tile(dbData.title_3, dbData.img_loc_3, dbData.description_3)
+//         }
 
-    })
-}
+//     })
+// }
 
-function getShuffleTiles(tilesToShuffle) {
-    let seed = localStorage.getItem('seed')
-    let random = getPRNG(seed)
-    return shuffle(tilesToShuffle, random).map(tile => {
-        let reducedTile
-        if (tile.length > 0) {
-            let pick = Math.floor(random() * tile.length)
-            reducedTile = tile[pick]
-        } else {
-            reducedTile = tile
-        }
-        return reducedTile
-    })
-}
+// function getShuffleTiles(tilesToShuffle) {
+//     let seed = localStorage.getItem('seed')
+//     let random = getPRNG(seed)
+//     return shuffle(tilesToShuffle, random).map(tile => {
+//         let reducedTile
+//         if (tile.length > 0) {
+//             let pick = Math.floor(random() * tile.length)
+//             reducedTile = tile[pick]
+//         } else {
+//             reducedTile = tile
+//         }
+//         return reducedTile
+//     })
+// }
 
 function swapTickVisibility(event) {
     let tickTarget = event.target.closest('.tile-standard').querySelector('#tick')

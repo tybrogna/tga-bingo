@@ -41,11 +41,27 @@ function Footer(props) {
                 <button id="regen" onClick={() => regenerateCard(document.querySelector('#tile-zone'))}>Regenerate</button>
             </div>
             <div class="col justify-content-end d-flex">
-                <button id="listTiles" onClick={displayOverlay}>List tiles</button>
+                <button id="listTiles" onClick={displayViewerOverlay}>List tiles</button>
             </div>
         </div>
     )
 }
+
+function HelperOverlay() {
+    return (
+        <>
+        <div id='helper-overlay' onClick={hideHelperOverlay}>
+            <img id='overlay-image' />
+            <div id='helper-overlay-box'>
+                Some bingo boxes have mutually exclusive events ("X game wins" vs "Y game wins").
+                <br />
+                In that case, you can submit multiple tiles (up to three) that can't appear on the same board with each other.
+            </div>
+        </div>
+        </>
+    )
+}
+
 
 export function BingoSkeleton(props) {
     eventName = props.eventName
@@ -53,7 +69,7 @@ export function BingoSkeleton(props) {
     console.log(eventName, eventYear)
     document.querySelector('body').addEventListener('click', event => {
         if (event.target.tagName == 'BODY' || event.target.id == 'tile-list-empty' || event.target.id == 'overlay') {
-            hideOverlay()
+            hideViewerOverlay()
             compressAllImages()
         }
     })
@@ -72,7 +88,7 @@ export function BingoSkeleton(props) {
                 {/* target of generateCard */}
             </div>
             <Footer />
-            <div id="overlay" class="container widener">
+            <div id="viewer-overlay" class="container widener">
                 <div id="content" class="shell pl-5 pr-5" style="visibility: hidden;">
                     <h2 id="event-title" class="text-center" style="visibility: hidden;">GEOFF KEIGHLEY'S THE GAME AWARDS 2024</h2>
                     <TitleAndHeader visible={false} />
@@ -86,20 +102,32 @@ export function BingoSkeleton(props) {
                     </div>
                 </div>
             </div>
+            <HelperOverlay />
         </div>
     </div>
     </>
     )
 }
 
-async function displayOverlay() {
-    console.log('overlay popping up')
-    document.querySelector("#overlay").style.display = "block"
+async function displayViewerOverlay() {
+    console.log('viewerOverlay popping up')
+    document.querySelector("#viewerOverlay").style.display = "block"
     document.querySelector("#tile-list-zone").style.display = "block"
     renderTileViewer($('#tile-list-zone'), eventName, eventYear)
 }
 
-async function hideOverlay() {
-    document.querySelector("#overlay").style.display = "none"
+async function hideViewerOverlay() {
+    document.querySelector("#viewerOverlay").style.display = "none"
     document.querySelector("#tile-list-zone").style.display = "none"
+}
+
+export async function displayHelperOverlay(text) {
+    document.querySelector("#helper-overlay").style.display = "block"
+    document.querySelector("#helper-overlay-box").innerText = text
+    // document.querySelector("#tile-list-zone").style.display = "block"
+}
+
+async function hideHelperOverlay() {
+    document.querySelector("#helper-overlay").style.display = "none"
+    // document.querySelector("#tile-list-zone").style.display = "none"
 }
