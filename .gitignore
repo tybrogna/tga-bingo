@@ -15,4 +15,6 @@ bingo-app/db/Beekeeper.lnk
 bingo-app/.oci/
 uploads/
 certbot/
+safecertbot/
+postgres/
 

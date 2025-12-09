@@ -1,23 +1,20 @@
 services:
   #hiya:
-  #  container_name: biotch
+  #  container_name: hiya 
   #  image: crccheck/hello-world
   db:
     container_name: tga-database
-    image: postgres
+    image: postgres:16-alpine
     build: ./bingo-app/db
     ports:
       - $POSTGRES_LOCAL_PORT:$POSTGRES_IMAGE_PORT
     volumes:
       - ./bingo-app/db:/docker-entrypoint-initdb.d
-      - db:/var/lib/postgresql/data
-    #environment:
-    #  POSTGRES_USER: $POSTGRES_USER
-    #  POSTGRES_PASSWORD: $POSTGRES_PASSWORD
+      - ./postgres:/var/lib/postgresql/data
     restart: unless-stopped
     env_file: ./image.env
-  tgaapp:
-    container_name: tgaapp
+  tga:
+    container_name: tga
     build: ./bingo-app
     depends_on:
       - db  # "db" has to be done first for "app" to build
@@ -36,7 +33,7 @@ services:
     restart: unless-stopped
     ports:
       - 80:80
-      - 443:433
+      - 443:443
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf
       - ./certbot/conf:/etc/letsencrypt
@@ -45,20 +42,20 @@ services:
     #  - app-network
     #depends_on:
     #  - app
-  #certbot:
-  #  container_name: certbot
-  #  image: certbot/certbot
-  #  volumes:
-  #    - ./certbot/conf:/etc/letsencrypt
-  #    - ./certbot/www:/var/www/certbot
-  #  #command: certonly --webroot -w /var/www/certbot --force-renewal --email tybrogna@gmail.com -d tga.zone --agree-tos
-  #  entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+  certbot:
+    container_name: certbot
+    image: certbot/certbot
+    volumes:
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
+  #  command: certonly --webroot -w /var/www/certbot --keep-until-expiring --email tybrogna@gmail.com -d tga.zone --agree-tos
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
 
-volumes:
-  test:
-  db:
-  tgaapp:
-  nginx:
+#volumes:
+  #hiya:
+  #db:
+  #tga:
+  #nginx:
   #certbot:
 
 #networks:

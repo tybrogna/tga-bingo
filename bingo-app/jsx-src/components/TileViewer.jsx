@@ -1,5 +1,4 @@
 import { render } from 'preact'
-import { path } from './BingoCard.jsx'
 import { isLocalhost } from '../js/functionhider.js'
 // import { freeTile, tileDataList } from '../js/2024tga.js'
 
