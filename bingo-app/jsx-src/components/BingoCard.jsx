@@ -1,7 +1,6 @@
 import { render } from 'preact'
 import { useRoute } from 'preact-iso'
 import { getPRNG, shuffle } from '../js/randomHelper.js'
-import { freeTile, tileDataList } from '../js/2024tga.js'
 import { isLocalhost, delay } from '../js/functionhider.js'
 import { Tile } from '../js/Tile.js'
 import correctImg from '../bingo-24/correct.png'
@@ -38,8 +37,8 @@ export async function generateCard(zone) {
     if (zone == null)
         return
     lastZone = zone
-    let shuffled = await fetchShuffledTiles()
-    render(BingoCard(shuffled), zone)
+    let tileData = await fetchShuffledTiles()
+    render(BingoCard(tileData), zone)
     sortTiles()
     revealTiles()
 }
@@ -58,45 +57,46 @@ export async function regenerateCard(zone) {
         })
     })
     localStorage.setItem('seed', document.querySelector('#seed-box').value)
-    let shuffled = await fetchShuffledTiles()
-    render(BingoCard(shuffled), zone)
+    let tileData = await fetchShuffledTiles()
+    render(BingoCard(tileData), zone)
     checkBingo()
     revealTiles()
 }
 
 async function fetchShuffledTiles() {
     let seed = localStorage.getItem('seed')
-    let shuffledRes
+    let shuffledRes, shuffled
+
     if (path.startsWith('/past')) {
         shuffledRes = await fetch(`/getTiles/${eventName}/${eventYear}/${seed}`)
     } else {
         shuffledRes = await fetch(`/getTiles/active/${seed}`)
     }
-    let shuffled
+    
     try {
         shuffled = await shuffledRes.json()
     } catch (e) {
         shuffled = []
     }
-    
-    while (shuffled.length < 24) {
+    while (shuffled.length < 25) {
         shuffled.push({
             "title": "Data Missing",
             "description": "Doesn't exist",
             "img_loc": ""
         })
     }
-    return shuffled
+
+    return {shuffled: shuffled.slice(1), freeTile: shuffled[0]}
 }
 
 function BingoCard(props) {
     return (
         <>
-            <BingoRow num={1} tiles={props.slice(0, 5)} />
-            <BingoRow num={2} tiles={props.slice(6, 11)} />
-            <BingoRow num={3} tiles={props.slice(11, 16)} />
-            <BingoRow num={4} tiles={props.slice(16, 21)} />
-            <BingoRow num={5} tiles={props.slice(-5)} />
+            <BingoRow num={1} tiles={props.shuffled.slice(0, 5)} />
+            <BingoRow num={2} tiles={props.shuffled.slice(6, 11)} />
+            <BingoRow num={3} tiles={props.shuffled.slice(11, 16)} freeTile={props.freeTile} />
+            <BingoRow num={4} tiles={props.shuffled.slice(16, 21)} />
+            <BingoRow num={5} tiles={props.shuffled.slice(-5)} />
         </>
     )
 }
@@ -114,7 +114,7 @@ function BingoRow(props) {
         }
 
         if (nextTileProps.id == 'N3') {
-            nextTileProps.tileData = freeTile
+            nextTileProps.tileData = props.freeTile
         }
 
         tileProps.push(nextTileProps)
@@ -333,7 +333,7 @@ export default function() {
     path = useRoute().path
     eventName = useRoute().params.eventName
     eventYear = useRoute().params.eventYear // #TODO this is caveman shit
-    render(BingoSkeleton({eventName, eventYear}), document.querySelector('body'))
+    render(BingoSkeleton({path, eventName, eventYear}), document.querySelector('body'))
     let eventTitle = "Geoff Keighley's The Game Awards 2025".toUpperCase()
     document.querySelector("#event-title").innerHTML = eventTitle
     generateCard(document.querySelector('#tile-zone'))

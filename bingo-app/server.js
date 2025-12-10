@@ -82,7 +82,7 @@ app.post('/SubmitTile', imageUpload, async(req, res) => {
     }
     
     if (req.body.isFreeTile) {
-        db.addOrUpdateFree(req.body, imgLocArr)
+        db.addOrUpdateFreeTile(req.body, imgLocArr)
     } else {
         db.addTile(req.body, imgLocArr)
     }
@@ -104,16 +104,18 @@ app.get('/getTiles/:eventName/:eventYear/:seed', async (req, res) => {
 async function getTiles(eventName, eventYear, seed) {
     let random = getPRNG(seed)
     let tileClusters = await db.queryTileClustersForCard(eventName, eventYear)
+    let freeTile = tileClusters[0]
+    tileClusters = tileClusters.slice(1)
     tileClusters = shuffle(tileClusters, random)
     tileClusters = tileClusters.slice(0, 24)
-    let tilesToSend = tileClusters.map(cluster => {
+    let tilesToSend = [freeTile.tile_ids].concat(tileClusters.map(cluster => {
         let tileIds = cluster.tile_ids.split(',')
         if (tileIds.length == 1) {
             return tileIds[0]
         }
         let pick = Math.floor(random() * tileIds.length)
         return tileIds[pick]
-    })
+    }))
 
     return await db.getAllTilesById(tilesToSend)
 }

@@ -2,6 +2,7 @@ import { compressAllImages, renderTileViewer } from './TileViewer'
 import { regenerateCard } from './BingoCard'
 import { $ } from '../js/functionhider.js'
 
+let path = ''
 let eventName = ''
 let eventYear = ''
 
@@ -64,6 +65,7 @@ function HelperOverlay() {
 
 
 export function BingoSkeleton(props) {
+    path = props.path
     eventName = props.eventName
     eventYear = props.eventYear
     console.log(eventName, eventYear)
@@ -111,13 +113,13 @@ export function BingoSkeleton(props) {
 
 async function displayViewerOverlay() {
     console.log('viewerOverlay popping up')
-    document.querySelector("#viewerOverlay").style.display = "block"
+    document.querySelector("#viewer-overlay").style.display = "block"
     document.querySelector("#tile-list-zone").style.display = "block"
-    renderTileViewer($('#tile-list-zone'), eventName, eventYear)
+    renderTileViewer($('#tile-list-zone'), path, eventName, eventYear)
 }
 
 async function hideViewerOverlay() {
-    document.querySelector("#viewerOverlay").style.display = "none"
+    document.querySelector("#viewer-overlay").style.display = "none"
     document.querySelector("#tile-list-zone").style.display = "none"
 }
 

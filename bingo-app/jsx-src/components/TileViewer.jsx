@@ -1,15 +1,14 @@
 import { render } from 'preact'
 import { isLocalhost } from '../js/functionhider.js'
-// import { freeTile, tileDataList } from '../js/2024tga.js'
 
 let isLocal = isLocalhost()
 
-export async function renderTileViewer(zone, eventName, eventYear) {
-    let eventTiles = await fetchAllTiles(eventName, eventYear)
+export async function renderTileViewer(zone, path, eventName, eventYear) {
+    let eventTiles = await fetchAllTiles(path, eventName, eventYear)
     render(TileViewer(eventTiles), zone)
 }
 
-async function fetchAllTiles(eventName, eventYear) {
+async function fetchAllTiles(path, eventName, eventYear) {
     let eventTiles
     if (path.startsWith('/past')) {
         eventTiles = await fetch(`/getAllTiles/${eventName}/${eventYear}`)

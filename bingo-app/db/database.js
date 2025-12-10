@@ -58,17 +58,19 @@ export default class Database {
             select *
             from tiles
             join events on events.id=tiles.event_id
-            where events.name='${eventName}' and events.year=${eventYear}`
+            where events.name='${eventName}' and events.year=${eventYear}
+            and tiles.isFree=false`
             // where event_id=${eventId}` // and isVerified=TRUE`
         let res = await this.#runCmd(cmd)
         return res.rows
     }
 
-    async queryTileClustersForCard(eventName, eventYear) {
+    async queryTileClustersForCard(eventName, eventYear, free=false) {
         let cmd = `
             select * from tile_clusters
                 join events on events.id=tile_clusters.event_id
-            where events.name='${eventName}' and events.year=${eventYear}`
+            where events.name='${eventName}' and events.year=${eventYear}
+            order by is_free desc`
         let res = await this.#runCmd(cmd)
         return res.rows
     }
@@ -76,7 +78,8 @@ export default class Database {
     async getAllTilesById(idList) {
         let cmd = `
             select * from tiles
-            where id in (${idList.toString()})`
+            where id in (${idList.toString()})
+            order by array_position(array[${idList.toString()}], id)`
         let res = await this.#runCmd(cmd)
         return res.rows
     }
