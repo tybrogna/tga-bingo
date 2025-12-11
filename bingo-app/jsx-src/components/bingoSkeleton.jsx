@@ -71,7 +71,8 @@ export function BingoSkeleton(props) {
     eventYear = props.eventYear
     console.log(eventName, eventYear)
     document.querySelector('body').addEventListener('click', event => {
-        if (event.target.tagName == 'BODY' || event.target.id == 'tile-list-empty' || event.target.id == 'overlay') {
+        console.log(event.target)
+        if (event.target.tagName == 'BODY' || event.target.id == 'tile-list-empty' || event.target.id == 'viewer-overlay') {
             hideViewerOverlay()
             compressAllImages()
         }

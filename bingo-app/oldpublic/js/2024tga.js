@@ -57,7 +57,7 @@ export const tileDataList = [
     new Tile('One of the celebrity guests says they don\'t play many video games', 'pacino'),
     new Tile('Josef Fares drops an F-Bomb while describing his new game', 'fares'),
     new Tile('New Tekken character is a crossover character', 'gon'),
-    new Tile('Expansion/DLC for a game released this year', 'sblade'),
+    new Tile('Expansion/DLC for a game released this year', 'sblade'), //15
     new Tile('Geoff interviews a cringe content creator (they\'re all cringe)', 'tiktok'),
     new Tile('Geoff interviews an esports dork (they\'re all dorks)', 'mtndew'),
     new Tile('Fortnite collab announcement', 'fnite'),
@@ -75,7 +75,7 @@ export const tileDataList = [
     new Tile('Arknights/Genshin/Star Rail/ZZZ/Nikki', 'gatcha'),
     // new Tile('Geoff Friend™®© (Industry professional who has been onstage before)', 'friends'),
     new Tile('Next Battlefield game', 'bf6'),
-    new Tile('New or Upcoming Konami Game', 'tokimeki'),
+    new Tile('New or Upcoming Konami Game', 'tokimeki'), // 30
     new Tile('Another Fucking MMO (drink if its korean)', 'kmmo'),
     new Tile('Gamepass ad', 'gp'),
     new Tile('Crazy Taxi, Golden Axe, Jet Set, Shinobi or Streets of Rage reappears', 'sega'),
@@ -90,5 +90,5 @@ export const tileDataList = [
     new Tile('VR Game', 'quest'),
     new Tile('Grand Theft Auto 6', 'gta6'),
     new Tile('Crazy looking Chinese AAA game', 'china'),
-    new Tile('Someone references "Please Wrap It Up"', 'wrap')
+    new Tile('Someone references "Please Wrap It Up"', 'wrap') //45
 ]

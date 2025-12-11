@@ -22,37 +22,38 @@ export class Tile {
 //  try not to "predict" the goty, make a tile for categories that are either/or (eg, japanese game/non-j game wins)
 //  
 // things CONFIRMED at the show:
-// exodus trailer 
+// - exodus trailer 
 // neon giant's new game (The Ascent studio) (likely to be a first person imsim)
-// re requiem shows a classic character (leon, jill, chris)
-// phantom blade 0 release date
+// - re requiem shows a classic character (leon, jill, chris)
+// - phantom blade 0 release date
+// - saros (release date is close)
 //
 // things LIKELY at the show:
-// Silent Hill remake reveal
-// prince of persia sands of time remake
-// control 2, or something called control resonant
-// marathon to be re-revealed
-// fornite chapter 8
+// - Silent Hill remake reveal
+// - control 2, or something called control resonant
+// - marathon to be re-revealed
+// - fornite chapter 8
 // diablo 4 expansion
-// cod blops 7 zombies
-// 007 first light (jsut a guess)
-// crimson desert (very close to release)
-// resident evil 9 (very close to release)
-// playground's fable 2026
-// RGG studios project century
-// eidos montreal new game
-// acknowledgement of hololive partnership
-// 2XKO console trailer/new character
-// larian new game, releated to statue
-// tainted grail fall of avalon dlc
-// wolverine release date
+// - cod blops 7 zombies
+// - 007 first light (jsut a guess)
+// - crimson desert (very close to release)
+// - resident evil 9 (very close to release)
+// - playground's fable 2026
+// - RGG studios project century
+// - eidos montreal new game
+// - acknowledgement of hololive partnership
+// - 2XKO console trailer/new character
+// - larian new game, releated to statue
+// - tainted grail fall of avalon dlc
+// - wolverine release date
 //
 // NOT APPEARING:
 // the witcher 4
+// prince of persia sands of time remake
 // assassin's creed black flag remake
 //
 // long shots:
-// saros (release date is close)
+// - ffvii remake 3
 // 
 export const freeTile = new Tile('', '')
 const initalList = [

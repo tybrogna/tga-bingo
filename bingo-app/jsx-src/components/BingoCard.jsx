@@ -150,8 +150,8 @@ function BingoTile(props) {
 
 function showDescription(event) {
     event.stopPropagation()
-    console.log(event.target.parentElement.id)
-    console.log(bingoDesc[event.target.parentElement.id])
+    // console.log(event.target.parentElement.id)
+    // console.log(bingoDesc[event.target.parentElement.id])
     // console.log(text)
     displayHelperOverlay(bingoDesc[event.target.parentElement.id])
 }
