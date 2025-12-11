@@ -147,9 +147,7 @@ async function getAllTiles(eventName, eventYear, seed) {
     })
     let allTilesForEvent = await db.getAllTilesById(tilesToGet)
     let tilesToSend = tilesInClusterIds.map(idArr => {
-        console.log(idArr)
-        console.log(idArr.length)
-        if (idArr.length == 1) {
+        if (typeof idArr === 'string') {
             return allTilesForEvent.find(tile => tile.id == idArr)
         } else {
             return idArr.map(id => allTilesForEvent.find(tile => tile.id == id))
