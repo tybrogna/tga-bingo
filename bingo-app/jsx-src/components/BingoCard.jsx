@@ -3,9 +3,9 @@ import { useRoute } from 'preact-iso'
 import { getPRNG, shuffle } from '../js/randomHelper.js'
 import { isLocalhost, delay } from '../js/functionhider.js'
 import { Tile } from '../js/Tile.js'
-import correctImg from '../bingo-24/correct.png'
-import closeImg from '../bingo-24/close.png'
-import bingoImg from '../bingo-24/bingo.png'
+import correctImg from '../img/correct25.png'
+import closeImg from '../img/close25.png'
+import bingoImg from '../img/bingo25.png'
 
 import '../styles/cardPage.scss'
 
