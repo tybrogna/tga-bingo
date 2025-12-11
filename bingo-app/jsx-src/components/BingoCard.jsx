@@ -37,8 +37,8 @@ export async function generateCard(zone) {
     if (zone == null)
         return
     lastZone = zone
-    let tileData = await fetchShuffledTiles()
-    render(BingoCard(tileData), zone)
+    let shuffled = await fetchShuffledTiles()
+    render(BingoCard(shuffled), zone)
     sortTiles()
     revealTiles()
 }
@@ -57,8 +57,8 @@ export async function regenerateCard(zone) {
         })
     })
     localStorage.setItem('seed', document.querySelector('#seed-box').value)
-    let tileData = await fetchShuffledTiles()
-    render(BingoCard(tileData), zone)
+    let shuffled = await fetchShuffledTiles()
+    render(BingoCard(shuffled), zone)
     checkBingo()
     revealTiles()
 }
@@ -79,24 +79,29 @@ async function fetchShuffledTiles() {
         shuffled = []
     }
     while (shuffled.length < 25) {
+        let len = shuffled.length
         shuffled.push({
-            "title": "Data Missing",
+            "title": "Data Missing" + (len + 1),
             "description": "Doesn't exist",
             "img_loc": ""
         })
     }
 
-    return {shuffled: shuffled.slice(1), freeTile: shuffled[0]}
+    let temp = shuffled[0]
+    shuffled[0] = shuffled[12]
+    shuffled[12] = temp
+
+    return shuffled
 }
 
 function BingoCard(props) {
     return (
         <>
-            <BingoRow num={1} tiles={props.shuffled.slice(0, 5)} />
-            <BingoRow num={2} tiles={props.shuffled.slice(6, 11)} />
-            <BingoRow num={3} tiles={props.shuffled.slice(11, 16)} freeTile={props.freeTile} />
-            <BingoRow num={4} tiles={props.shuffled.slice(16, 21)} />
-            <BingoRow num={5} tiles={props.shuffled.slice(-5)} />
+            <BingoRow num={1} tiles={props.slice(0, 5)} />
+            <BingoRow num={2} tiles={props.slice(5, 10)} />
+            <BingoRow num={3} tiles={props.slice(10, 15)} />
+            <BingoRow num={4} tiles={props.slice(15, 20)} />
+            <BingoRow num={5} tiles={props.slice(-5)} />
         </>
     )
 }
@@ -111,10 +116,6 @@ function BingoRow(props) {
             'tileClasses': getTileClassList(letter, props.num),
             'imgClasses': 'imgop clamp-size ' + getImgClassList(letter, props.num),
             'tileData': tileData
-        }
-
-        if (nextTileProps.id == 'N3') {
-            nextTileProps.tileData = props.freeTile
         }
 
         tileProps.push(nextTileProps)
@@ -150,9 +151,6 @@ function BingoTile(props) {
 
 function showDescription(event) {
     event.stopPropagation()
-    // console.log(event.target.parentElement.id)
-    // console.log(bingoDesc[event.target.parentElement.id])
-    // console.log(text)
     displayHelperOverlay(bingoDesc[event.target.parentElement.id])
 }
 
