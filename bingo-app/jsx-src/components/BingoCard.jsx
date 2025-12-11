@@ -36,16 +36,28 @@ let lastZone = ""
 export async function generateCard(zone) {
     if (zone == null)
         return
+    if (!localStorage.getItem('seed') || localStorage.getItem('seed') == 'Enter your name or email or something') {
+        let randomWords = await fetch('https://random-word-api.herokuapp.com/word?number=4')
+        let rw = await randomWords.json()
+        document.querySelector('#seed-box').value = rw.toString().replaceAll(',',' ')
+    }
     lastZone = zone
     let shuffled = await fetchShuffledTiles()
     render(BingoCard(shuffled), zone)
     sortTiles()
     revealTiles()
+    
 }
 
 export async function regenerateCard(zone) {
     if (zone == null)
         { zone = lastZone }
+    if (!localStorage.getItem('seed') || localStorage.getItem('seed') == 'Enter your name or email or something') {
+        let randomWords = await fetch('https://random-word-api.herokuapp.com/word?number=4')
+        let rw = await randomWords.json()
+        document.querySelector('#seed-box').value = rw.toString().replaceAll(',',' ')
+    }
+
     colNumbers.forEach((num) => {
         bingoLetters.forEach((letter) => {
             let tileEle = document.querySelector('#' + letter + num)

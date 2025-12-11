@@ -31,15 +31,15 @@ function TitleAndHeader(props) {
 }
 
 function Footer(props) {
-    if (!localStorage.getItem('seed')) {
-        localStorage.setItem('seed', 'Enter your name or email or something')
-    }
-    let seedBoxVal = localStorage.getItem('seed')
+    // if (!localStorage.getItem('seed')) {
+    //     localStorage.setItem('seed', 'Enter your name or email or something')
+    // }
+    // let seedBoxVal = localStorage.getItem('seed')
     return (
         <div class="row pt-3 pb-3">
             <div class="col">
                 <span class='pr-2'>Card Seed</span>
-                <input type='text' id="seed-box" class='mr-2' value={seedBoxVal}></input>
+                <input type='text' id="seed-box" class='mr-2' value=''></input>
                 <button id="regen" onClick={() => regenerateCard(document.querySelector('#tile-zone'))}>Regenerate</button>
             </div>
             <div class="col justify-content-end d-flex">
