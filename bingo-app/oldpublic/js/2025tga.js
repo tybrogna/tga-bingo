@@ -45,6 +45,7 @@ export class Tile {
 // 2XKO console trailer/new character
 // larian new game, releated to statue
 // tainted grail fall of avalon dlc
+// wolverine release date
 //
 // NOT APPEARING:
 // the witcher 4
@@ -69,6 +70,7 @@ const initalList = [
     new Tile('Update/expansion for game that came out this year', ''),
     new Tile('Someone makes reference to the "what really is an indie game" debate', ''),
 ]
+
 const yearEndList = [
 
 ]

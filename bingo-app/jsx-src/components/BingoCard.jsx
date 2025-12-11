@@ -133,7 +133,7 @@ function BingoRow(props) {
 
 function BingoTile(props) {
     let { id, tileClasses, imgClasses, tileData } = props.items
-    let imgUrl = (isLocal ? 'http://localhost:3001/' : 'https://tga.bingo/') + tileData.img_loc
+    let imgUrl = (isLocal ? 'http://localhost:3001/' : '/') + tileData.img_loc
     let tile = (
         <div id={id} class={tileClasses} onclick={swapTickVisibility}>
             <div class="helper-target" onclick={showDescription}>?</div>

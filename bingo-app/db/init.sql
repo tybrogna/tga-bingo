@@ -20,7 +20,8 @@ CREATE TABLE tile_clusters (
     tile_ids TEXT NOT NULL,
     submitter_id INTEGER REFERENCES submitters(id),
     event_id INTEGER REFERENCES events(id),
-    is_free BOOLEAN
+    is_verified BOOLEAN DEFAULT FALSE,
+    is_free BOOLEAN DEFAULT FALSE
 );
 
 CREATE TABLE tiles (
@@ -28,7 +29,6 @@ CREATE TABLE tiles (
     title TEXT NOT NULL,
     description TEXT,
     img_loc TEXT,
-    isVerified BOOLEAN,
     gotWrong BOOLEAN
 );
 
