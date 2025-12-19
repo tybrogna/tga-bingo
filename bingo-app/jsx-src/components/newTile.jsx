@@ -1,6 +1,6 @@
 import { render } from 'preact'
 import { useState } from 'preact/hooks'
-import { $, range, urlToPNGFile } from '../js/functionhider.js'
+import { $, range, delay } from '../js/functionhider.js'
 import { Cropt } from 'cropt'
 
 import '../styles/newTile.scss'
@@ -52,9 +52,20 @@ function textUploaderClasses(numCols) {
 
 
 function NewTileContent(props) {
-    console.log('hello')
     const [ numUploaders, setNumUploaders ] = useState('1')
     const [ isEventDropdownFilled, setIsEventDropdownFilled ] = useState('')
+
+    let handleSubmitForApproval = async (event) => {
+        let resultOfUpload = await submitForApproval(event)
+        if (resultOfUpload == 'ok') {
+            resetAllImages()
+            setNumUploaders('0') // TODO might be a better way to do this
+            await delay(250)
+            setNumUploaders('1')
+            await delay(250)
+            displayWarning($('#drop-area-1'), "Upload successful!")
+        }
+    }
 
     useEffect(() => {
         let eventsData = async () => {
@@ -117,11 +128,7 @@ function NewTileContent(props) {
     <>
     <div id="options-area">
         <label class='pr-1'>Event </label>
-        <select name="events" id="event-select">
-            {/* {eventOptions} */}
-            {/* <option value="__default">-</option> */}
-            {/* <option value="sgf2025">{tv}</option> */}
-        </select>
+        <select name="events" id="event-select"> </select>
         <label class="pl-4 pr-1">Mutually-Exclusive Combos <a class="help-link" onClick={activateOverlay}><sup><u>?</u></sup></a> </label>
         <select name="combos" id="combo-select" onChange={event => { resetAllImages(); setNumUploaders(event.currentTarget.value);} }>
             <option value="1" selected>1</option>
@@ -139,7 +146,7 @@ function NewTileContent(props) {
             {textUploadCode}
             <div class='input-field'>
                 <input class='mr-3' type='text' id='submit-code' placeholder='required upload code' />
-                <input class='mr-3' type='button' id='submit-button' value='Upload for Approval' onClick={event => submitForApproval(event)}/>
+                <input class='mr-3' type='button' id='submit-button' value='Upload for Approval' onClick={handleSubmitForApproval}/>
                 <input type='checkbox' id='is-free-checkbox' />
                 <label>Used for free tile</label>
                 {/* <input type='button' id='submit-and-clear-button' value='Upload and Clear' onClick={console.log('submitforapproval')}/> */}
@@ -379,8 +386,17 @@ function unhandleImage(event) {
 
 }
 
+function displaySuccess(eventTarget, text = "A good thing happened! I suppose!") {
+    // #TODO: would be nice to see a happy message
+}
 
-function displayWarning(eventTarget, text = "something went wrong...I'm not sure what") {
+async function displayWarning(eventTarget, text = "something went wrong...I'm not sure what") {
+    // let ticker = 0
+    // while (!eventTarget || ticker > 4) {
+    //     await delay(250)
+    //     console.log('waiting for event target')
+    //     ticker++
+    // }
     while (!eventTarget.id.startsWith('drop-area')) {
         eventTarget = eventTarget.parentElement
     }
@@ -397,21 +413,19 @@ function displayWarning(eventTarget, text = "something went wrong...I'm not sure
 }
 
 async function submitForApproval() {
-    //TODO in order
+
+    // #TODO
+    // fix this function
     //  set up submitter id somehow
-    //    don't bother with passwords, just use email key
-    //  Destroy Quality (might have to be done serverside?)
 
     let tileForm = await getUploadForm()
 
-    console.log(tileForm)
     console.log(tileForm.get('title1'))
-    console.log(tileForm.get('description1'))
 
-    let res = await fetch('/SubmitTile', {
-        method: 'post',
-        body: tileForm
-    })
+    // let res = await fetch('/SubmitTile', {
+    //     method: 'post',
+    //     body: tileForm
+    // })
 
     // if (clear) {
     //     resetAllImages()
@@ -419,6 +433,11 @@ async function submitForApproval() {
     // }
 
     // console.log(res, res.ok, res.status)
+    if (true || res.ok) {
+        // resetAllImages()
+        resetText()
+        return "ok"
+    }
 }
 
 async function getUploadForm() {
@@ -434,7 +453,7 @@ async function getUploadForm() {
         let box = croptBoxes[a]
         if (!box) { continue }
 
-        let canvas = await box.toCanvas(400)
+        let canvas = await box.toCanvas(400) // #TODO crashes when no picture
         if (!canvas) { continue }
         let blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
         if (!blob) { continue }
@@ -459,5 +478,5 @@ function disableOverlay() {
 
 export default function() {
     render(NewTileSkeleton(), document.querySelector('body'))
-    $('#options-area').style.display = 'block' 
+    $('#options-area').style.display = 'block'
 }
