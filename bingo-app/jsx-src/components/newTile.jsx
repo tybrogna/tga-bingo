@@ -1,10 +1,10 @@
 import { render } from 'preact'
-import { useState } from 'preact/hooks'
+import { useState, useEffect } from 'preact/hooks'
 import { $, range, delay } from '../js/functionhider.js'
 import { Cropt } from 'cropt'
 
+import TopMenuBar from './TopMenuBar.jsx'
 import '../styles/newTile.scss'
-import { useEffect } from 'react'
 
 let cropts = {
     'box': null,
@@ -250,6 +250,7 @@ function NewTileSkeleton(props) {
     <>
     <title>TGABingo // New Tile</title>
     <link rel="icon" href="/img/favicon24.ico" />
+    <TopMenuBar />
     <div id="main" className="container widener">
         <div id="content" className="shell pl-5 pr-5">
             <h2 id="event-title" className="text-center">

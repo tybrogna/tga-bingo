@@ -1,6 +1,7 @@
 import { compressAllImages, renderTileViewer } from './TileViewer'
 import { regenerateCard } from './BingoCard'
 import { $ } from '../js/functionhider.js'
+import TopMenuBar from './TopMenuBar.jsx'
 import favicon from '../img/favicon25.ico'
 
 let path = ''
@@ -82,6 +83,7 @@ export function BingoSkeleton(props) {
     <>
     <title>Bingo: The Game Awards 2024</title>
     <link rel="icon" href={favicon} />
+    <TopMenuBar />
     <div id="main" className="container widener">
         <div id="content" className="shell pl-5 pr-5">
             <h2 id="event-title" className="text-center">

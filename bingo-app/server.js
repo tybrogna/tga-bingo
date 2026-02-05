@@ -1,9 +1,5 @@
-import Database from './db/database.js'
 import express from 'express'
 import cors from 'cors'
-import { getPRNG, shuffle } from './jsx-src/js/randomHelper.js'
-import { range } from './jsx-src/js/functionhider.js'
-// import bodyParser from 'body-parser'
 import http from 'http'
 import https from 'https'
 import fs from 'fs'
@@ -11,6 +7,12 @@ import multer from 'multer'
 import sharp from 'sharp'
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
+
+import { getPRNG, shuffle } from './jsx-src/js/randomHelper.js'
+import Database from './db/database.js'
+// import { range } from './jsx-src/js/functionhider.js'
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -31,14 +33,113 @@ process.on('exit', async () => {
     await db.disconnect()
 })
 
+function serverCron() {
+    let now = Math.floor(new Date().getTime() / 1000)
+    let lastWeek = now - 604800
+    
+    // update platform list
+    //   get all platforms
+    //     fields id,name,abbreviation,alternative_name;limit 500; sort id;
+    // get games this week in america
+    //   let now = gmt.now()
+    //   let lastWeek = now - 604800
+    //     fields id,game,date; where date > lastWeek & date < now & release_region = 8; sort date desc; limit 500;
+    // assemble a giant string to get the list of games
+    // get games released this week
+        // fields
+        //   id,
+        //   name,
+        //   cover,
+        //   platforms,
+        //   first_release_date,
+        //   game_type,
+        //   game_status,
+        //   keywords,
+        //   parent_game,
+        //   involved_companies.company.name,
+        //   involved_companies.developer,
+        //   involved_companies.porting,
+        //   involved_companies.publisher;
+        // where [giant list]; sort id desc;
+    // cull by game_type (0, 2, 4, 7, 8, 9, 11)
+    //   main_game, expansion, standalone_expansion, season, remake, remaster, port
+    // cull by game_status (null, 0, 4)
+    //   no value, released, early_access
+    // for each game
+    //   check if igdb_id is already in database
+    //     update from early_access if the game released
+    //     update with VR if VR mode was inexplicalby added
+    //     update publisher/developer if missing
+    //   compile igdb_id, name, release date, developer, publisher, igdb_cover_id
+    //   check if free to play
+    //     keywords contains id 2385
+    //   check if early_access
+    //     game_status = 4
+    //   check if remaster
+    //      game_type = 9
+    //   check if mobile
+    //      platform contains id 34, 39
+    //         android, ios
+    //   check if VR supported
+    //      platform contains id 162, 163, 165, 384, 385, 386, 387, 388, 390, 471, 472,
+    //         Oculus VR, Steam VR, PSVR, Quest, Rift, Quest 2, Go, Gear VR, PSVR2, Quest 3, VisionOS
+    //   check if expansion
+    //      game_type = 2,4
+    //         mark game as ongoing
+    //   check if this game is an update to a f2p game
+    //      check if parent_game is in the database
+    //      record parent game id, get ready for second pass
+    //   second pass, does this again but marks the game as ongoing
+
+
+
+}
+
 // const provider = new ConfigFileAuthenticationDetailsProvider(
 //   "./.oci/config",
 //   "DEFAULT"
 // );
 
-app.get('/testAdd', async(req, res) => {
-    await db.qaAdd('Briblham')
-    res.send('yep ok')
+// app.get('/testAdd', async(req, res) => {
+//     await db.qaAdd('Briblham')
+//     res.send('yep ok')
+// })
+
+app.post('/testadduser', async (req, res) => {
+    try {
+        let hashedPass = await bcrypt.hash(req.body.password, 10)
+        await db.createUser(req.body.email, req.body.userName, hashedPass)
+
+    } catch(err) {
+        console.log(err)
+        res.json({ error: err })
+    }
+})
+
+
+let secret = I7xBbvH0EZIOJ68rT5a8o96wumip77lhW4urADAXd7SiD9dQm1QfMVOT4SgIQd2p
+
+app.post('/testlogin', async (req, res) => {
+    let email = req.body.email
+    let username = req.body.username
+    let password = req.body.password
+    let dbUser = await db.retrieveUser(email, username)
+    if (!dbUser) {
+        return res.json({ error: "User not found" })
+    }
+
+    try {
+        let match = await bcrypt.compare(password, dbUser.password_hash)
+        if (match) {
+            let token = jwt.sign(JSON.stringify(dbUser), secret)
+            res.json({ token: token })
+        } else {
+            res.json({ error: "Password incorrect" })
+        }
+    } catch(err) {
+        console.log(err)
+        res.json({ error: err })
+    }
 })
 
 app.get('/testRead', async (req, res) => {

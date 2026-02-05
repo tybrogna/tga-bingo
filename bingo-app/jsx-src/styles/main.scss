@@ -13,7 +13,12 @@ $color_second: #415a77;
 $color_third: #778da9;
 $color_fourth: #e0e1dd;
 
+#main {
+    padding-top: 38px;
+}
+
 #content {
+    padding-top: 10px;
     min-height: 100vh;
     height: 100%;
 }

@@ -38,6 +38,25 @@ export default class Database {
         // let res = await client.query('select now()')
     }
 
+    async createUser(email, username, passwordHash) {
+        let cmd = `
+            insert into users (email, username, password_hash)
+            values ('${email}', '${username}', '${passwordHash}')`
+        let res = await this.#runCmd(cmd)
+        return res
+    }
+
+    async retrieveUser(email="", username="") {
+        let cmd
+        if (email != "") {
+            cmd = `select * from users where email='${email}'`
+        } else if (username != "") {
+            cmd = `select * from users where username='${username}'`
+        }
+        let res = await this.#runCmd(cmd)
+        return res.rows[0]
+    }
+
     async queryAllTiles() {
         let cmd = 'select * from tiles'
         let res = await this.#runCmd(cmd)
