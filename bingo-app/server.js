@@ -12,7 +12,8 @@ import jwt from 'jsonwebtoken';
 
 import { getPRNG, shuffle } from './jsx-src/js/randomHelper.js'
 import Database from './db/database.js'
-// import { range } from './jsx-src/js/functionhider.js'
+import IGDBJob from './igdbJob.js'
+import { utcNow, utcOneWeek } from './jsx-src/js/functionhider.js'
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -33,10 +34,19 @@ process.on('exit', async () => {
     await db.disconnect()
 })
 
-function serverCron() {
-    let now = Math.floor(new Date().getTime() / 1000)
-    let lastWeek = now - 604800
-    
+async function serverCron() {
+    let now = utcNow
+    let lastWeek = now - utcOneWeek * 4
+
+    // get db connection
+    let igdb = new IGDBJob()
+    igdb.connect()
+    // get games released in the last week in america
+    let gamesThisWeekList = await igdb.getGames(lastWeek, now)
+    let gamesDetailsList = await igdb.getGameDetails(gamesThisWeekList)
+    igdb.organizeGameDetails(gamesDetailsList)
+
+
     // update platform list
     //   get all platforms
     //     fields id,name,abbreviation,alternative_name;limit 500; sort id;
@@ -65,6 +75,13 @@ function serverCron() {
     //   main_game, expansion, standalone_expansion, season, remake, remaster, port
     // cull by game_status (null, 0, 4)
     //   no value, released, early_access
+    /********* HERE ***********/
+    // cull by popularity metrics
+    //   games get a score of popularity
+    //     5 or more points: game goes in my database
+    //     10 points ore more: game gets the notable status
+    //   1 point per hype
+    //   1 point per IGDB popularity source -1 (minus IGDB page views, default metric)
     // for each game
     //   check if igdb_id is already in database
     //     update from early_access if the game released

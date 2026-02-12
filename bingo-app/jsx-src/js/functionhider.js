@@ -62,3 +62,10 @@ export function urlToPNGFile(dataUrl) {
     }
     return new File([u8arr], 'image.png', { type: mime });
 }
+
+export function utcNow() {
+    return Math.floor(new Date().getTime() / 1000)
+}
+
+export const utcOneDay = 24 * 60 * 60 // in seconds
+export const utcOneWeek = 7 * utcOneDay // in seconds

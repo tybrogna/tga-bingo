@@ -45,11 +45,12 @@ CREATE TABLE tiles (
 CREATE TABLE games (
     id SERIAL PRIMARY KEY,
     igdb_id INTEGER,
+    igdb_cover_id INTEGER,
     name TEXT NOT NULL,
     release DATE,
     developer TEXT,
     publisher TEXT,
-    is_notable BOOLEAN DEFAULT FALSE,
+    notability_score BOOLEAN DEFAULT FALSE,
     is_vr BOOLEAN DEFAULT FALSE,
     is_remaster BOOLEAN DEFAULT FALSE,
     is_in_early_access BOOLEAN DEFAULT FALSE,

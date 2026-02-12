@@ -16,6 +16,7 @@
     "@popperjs/core": "^2.11.8",
     "@preact/signals": "^2.3.1",
     "@types/multer": "^2.0.0",
+    "apicalypse": "^1.0.5",
     "bcrypt": "^6.0.0",
     "body-parser": "^2.2.0",
     "bootstrap": "^4.6.0",
