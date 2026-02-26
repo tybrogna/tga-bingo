@@ -13,15 +13,13 @@ export function isLocalhost() {
     return location.hostname === "localhost" || location.hostname === "127.0.0.1" || location.hostname === ""
 }
 
-function eleCreator(ele, id, cssClasses) {
-    let newEle = document.createElement(ele)
-    newEle.id = id
-    if (typeof cssClasses === 'string' && cssClasses != undefined) {
-        cssClasses.split(' ')
-            .forEach(cName => newEle.classList.add(cName))
+export function chunkList(list, size=10) {
+    let chunks = []
+    for (let a = 0; a < list.length; a += size) {
+        let chunk = list.slice(a, a + size)
+        chunks.push(chunk)
     }
-
-    return newEle
+    return chunks
 }
 
 /***

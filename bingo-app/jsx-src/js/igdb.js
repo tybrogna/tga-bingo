@@ -1,7 +1,7 @@
 import 'dotenv/config'
 import pg from 'pg'
 import apicalypse from 'apicalypse'
-import { utcOneWeek, utcNow } from './functionhider.js'
+import { utcOneWeek, utcNow, delay, chunkList } from './functionhider.js'
 
 const Client = pg.Client
 
@@ -133,6 +133,7 @@ class IGDBJob {
                 .offset(offset)
                 .limit(500)
                 .request(igdbUrl + 'release_dates')
+            await delay(1000)
             let gamesJson = await gamesRes.json()
             if (gamesJson.length == 0) { break }
             fullGameList = fullGameList.concat(gamesJson)
@@ -155,11 +156,6 @@ class IGDBJob {
     }
 
     async getGameDetails(gameList) {
-        let detailsIdList = ''
-        for (game of gameList) {
-            detailsIdList += 'id=' + game.id + '|'
-        }
-        detailsIdList = detailsIdList.slice(0, -1)
         let detailsFields = ''
         detailsFields += 'id,'
         detailsFields += 'name,'
@@ -177,28 +173,82 @@ class IGDBJob {
         detailsFields += 'involved_companies.porting,'
         detailsFields += 'involved_companies.publisher'
 
-        let detailsRes = await apicalypse({headers: this.authToken})
-            .fields(detailsFields)
-            .where(detailsIdList)
-            .sort('id','asc')
-            .limit(500)
+        let gameListChunks = chunkList(gameList, 100)
+        let idLists = []
+        for (gameChunk of gameListChunks) {
+            let shortIdsList = ''
+            for (game of gameChunk) {
+                shortIdsList += 'id=' + game.id + '|'
+            }
+            shortIdsList = shortIdsList.slice(0, -1)
+            idLists.push(shortIdsList)
+        }
 
-        // let igdbFields = 
-        //     `fields
-        //         id,
-        //         name,
-        //         cover,
-        //         platforms.name,
-        //         first_release_date,
-        //         game_type,
-        //         game_status,
-        //         keywords,
-        //         parent_game,
-        //         involved_companies.company.name,
-        //         involved_companies.developer,
-        //         involved_companies.supporting,
-        //         involved_companies.porting,
-        //         involved_companies.publisher`
+        // for (let a = 0; a < gameList.length; a += 100) {
+        //     let shortList = gameList.slice(a, a + 99)
+        //     let shortIdsList = ''
+        //     for (game of shortList) {
+        //         shortIdsList += 'id=' + game.id + '|'
+        //     }
+        //     shortIdsList = shortIdsList.slice(0, -1)
+        //     idLists.push(shortIdsList)
+        // }
+
+        for (idList of idLists) {
+            let detailsRes = await apicalypse({headers: this.authToken})
+                .fields(detailsFields)
+                .where(idList)
+                .sort('id','asc')
+                .limit(500)
+            await delay(1000)
+            let detailsJson = await detailsRes.json()
+            // 0 main_game, 2 expansion, 4 standalone_expansion, 7 season, 8 remake, 9 remaster, 11 port
+            let okGameTypes = [0,2,4,7,8,9,11]
+            // 0 means released, 4 means early access. undefined means this value is never set, therefore never had to transition
+            let okGameStatus = [undefined, 0, 4]
+            detailsJson = detailsJson
+                .filter(g => okGameTypes.includes(g.game_type))
+                .filter(g => okGameStatus.includes(g.game_status))
+            
+            let unpopularIds = []
+            for (let a = 0; a < detailsJson.length; a++) {
+                let game = detailsJson[a]
+                if (game.hypes >= 5) {
+                    // this game had any noteriety before release, so its ok to go in
+                    if (game.hypes >= 10) {
+                        // this game had more than usual, its automatically notable
+                        game.notable = true
+                    }
+                    continue 
+                } 
+
+                unpopularIds.push(game.id)
+                // if (idBall.length >= 100) {
+                //     unpopularGameIds.push(idBall)
+                //     idBall = []
+                // }
+            }
+
+            let unpopularIdChunks = chunkList(unpopularIds, 100)
+            // for (let a = 0; a < unpopularIds.length; a += 100) {
+            //     let unpopularChunk = unpopularIds.slice(a, a + 99)
+            //     unpopularIdChunks.push(unpopularChunk)
+            // }
+
+            let popularityMap = {}
+            for (chunk of idChunks) {
+                let popularityChunk = await this.getGamePopularity(chunk)
+                popularityMap = {...popularityMap, ...popularityChunk}
+            }
+
+        }
+
+        // let detailsRes = await apicalypse({headers: this.authToken})
+        //     .fields(detailsFields)
+        //     .where(detailsIdList)
+        //     .sort('id','asc')
+        //     .limit(500)
+
         // igdbFields = igdbFields.replace('\n', '')
         // let igdbBody = 
         //     `${idList};
@@ -211,39 +261,45 @@ class IGDBJob {
         //     body: igdbBody
         // })
 
-        let detailsJson = await detailsRes.json()
-        let okGameTypes = [0,2,4,7,8,9,11]
-        let okGameStatus = [undefined, 0, 4]
-        // 0 main_game, 2 expansion, 4 standalone_expansion, 7 season, 8 remake, 9 remaster, 11 port
-        detailsJson = detailsJson
-            .filter(g => okGameTypes.includes(g.game_type))
-            .filter(g => okGameStatus.includes(g.game_status))
-        let rollingIds = []
-        for (let a = 0; a < detailsJson.length; a++) {
-            let game = detailsJson[a]
-            if (game.hypes >= 10) { continue } // this game is both ok to go in and notable
-            rollingIds.push(game.id)
-            if (rollingIds.length >= 50) {
-                let popIdList = ''
-                for (id of rollingIds) {
-                    popIdList += 'id=' + id + '|'
-                }
-                popIdList = popIdList.slice(0, -1)
-                let popFields = ''
-                popFields += 'game_id,'
-                popFields += 'popularity_type.name,'
-                popFields += 'value,'
-                popFields += 'external_popularity_source.name'
-                let popRes = await apicalypse({headers: this.authToken})
-                    .fields(popFields)
-                    .where(popIdList)
-                    .sort('game_id','asc')
-                    .limit(500)
-                let popJson = await popRes.json()
-                // continue here
+        return detailsJson
+    }
+
+    async getGamePopularity(idBall) {
+        let popIdList = ''
+        for (id of idBall) {
+            popIdList += 'id=' + id + '|'
+        }
+        popIdList = popIdList.slice(0, -1)
+        let popFields = ''
+        popFields += 'game_id,'
+        popFields += 'popularity_type.name,'
+        popFields += 'value,'
+        popFields += 'external_popularity_source.name'
+        let popRes = await apicalypse({headers: this.authToken})
+            .fields(popFields)
+            .where(popIdList)
+            .sort('game_id','asc')
+            .limit(500)
+        await delay(1000)
+        let popJson = await popRes.json()
+        let popularityMap = await this.calculatePopularites(popJson)
+        return popularityMap
+    }
+
+    async calculatePopularites(popularityBall) {
+        let gameScoreMap = {}
+        for (item of popularityBall) {
+            if (gameScoreMap[item.game_id] == undefined) {
+                gameScoreMap[item.game_id] = 0
+            }
+            if (item.external_popularity_source.name == 'IGDB') {
+                gameScoreMap[item.game_id] += 1
+            } else {
+                gameScoreMap[item.game_id] += 2
             }
         }
-        return detailsJson
+
+        return gameScoreMap
     }
 
     async organizeGameDetails(gameDetailsList) {

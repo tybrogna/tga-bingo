@@ -46,7 +46,6 @@ async function serverCron() {
     let gamesDetailsList = await igdb.getGameDetails(gamesThisWeekList)
     igdb.organizeGameDetails(gamesDetailsList)
 
-
     // update platform list
     //   get all platforms
     //     fields id,name,abbreviation,alternative_name;limit 500; sort id;
@@ -78,10 +77,11 @@ async function serverCron() {
     /********* HERE ***********/
     // cull by popularity metrics
     //   games get a score of popularity
-    //     5 or more points: game goes in my database
-    //     10 points ore more: game gets the notable status
+    //     6 or more points: game goes in my database
+    //     11 points ore more: game gets the notable status
     //   1 point per hype
-    //   1 point per IGDB popularity source -1 (minus IGDB page views, default metric)
+    //   1 point per IGDB popularity source
+    //   2 points per non-IGDB popularity source
     // for each game
     //   check if igdb_id is already in database
     //     update from early_access if the game released
