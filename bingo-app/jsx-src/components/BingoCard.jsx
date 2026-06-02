@@ -3,6 +3,8 @@ import { useRoute } from 'preact-iso'
 import { getPRNG, shuffle } from '../js/randomHelper.js'
 import { isLocalhost, delay } from '../js/functionhider.js'
 import { Tile } from '../js/Tile.js'
+import { words } from '../../words.js'
+
 import correctImg from '../img/correct25.png'
 import closeImg from '../img/close25.png'
 import bingoImg from '../img/bingo25.png'
@@ -16,6 +18,7 @@ let path = ""
 let eventName = ""
 let eventYear = ""
 let isLocal = isLocalhost()
+let randomWord = () => { return Math.floor(Math.random() * words.length) }
 
 let bingoObj = {
     'B': [], 'I': [], 'N': [], 'G': [], 'O': [],
@@ -37,9 +40,8 @@ export async function generateCard(zone) {
     if (zone == null)
         return
     if (!localStorage.getItem('seed') || localStorage.getItem('seed') == 'Enter your name or email or something') {
-        let randomWords = await fetch('https://random-word-api.herokuapp.com/word?number=4')
-        let rw = await randomWords.json()
-        document.querySelector('#seed-box').value = rw.toString().replaceAll(',',' ')
+        let defaultSeed = `${randomWord()} ${randomWord()} ${randomWord()} ${randomWord()}`
+        document.querySelector('#seed-box').value = defaultSeed
     }
     lastZone = zone
     let shuffled = await fetchShuffledTiles()
@@ -50,12 +52,12 @@ export async function generateCard(zone) {
 }
 
 export async function regenerateCard(zone) {
-    if (zone == null)
-        { zone = lastZone }
+    if (zone == null) {
+        zone = lastZone
+    }
     if (!localStorage.getItem('seed') || localStorage.getItem('seed') == 'Enter your name or email or something') {
-        let randomWords = await fetch('https://random-word-api.herokuapp.com/word?number=4')
-        let rw = await randomWords.json()
-        document.querySelector('#seed-box').value = rw.toString().replaceAll(',',' ')
+        let defaultSeed = `${randomWord()} ${randomWord()} ${randomWord()} ${randomWord()}`
+        document.querySelector('#seed-box').value = defaultSeed
     }
 
     colNumbers.forEach((num) => {
