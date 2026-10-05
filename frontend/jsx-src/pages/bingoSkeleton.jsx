@@ -1,5 +1,5 @@
-import { compressAllImages, renderTileViewer } from './TileViewer'
-import { regenerateCard } from './BingoCard'
+import { compressAllImages, renderTileViewer } from './TileViewer.jsx'
+import { regenerateCard } from './BingoCard.jsx'
 import { $ } from '../js/functionhider.js'
 // import TopMenuBar from './TopMenuBar.jsx'
 import favicon from '../img/favicon25.ico'

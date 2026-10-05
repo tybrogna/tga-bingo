@@ -1,7 +1,7 @@
 import 'dotenv/config'
 import pg from 'pg'
 import apicalypse from 'apicalypse'
-import { utcOneWeek, utcNow, delay, chunkList } from './functionhider.js'
+import { utcOneWeek, utcNow, delay, chunkList,  } from './functionhider.js'
 
 const Client = pg.Client
 
@@ -19,6 +19,7 @@ detailsFields += 'first_release_date,'
 detailsFields += 'release_dates.release_region'
 detailsFields += 'release_dates.date'
 detailsFields += 'hypes,'
+detailsFields += 'rating_count'
 detailsFields += 'game_type,'
 detailsFields += 'game_status,'
 detailsFields += 'keywords,'
@@ -28,6 +29,13 @@ detailsFields += 'involved_companies.developer,'
 detailsFields += 'involved_companies.supporting,'
 detailsFields += 'involved_companies.porting,'
 detailsFields += 'involved_companies.publisher'
+
+let popFields = ''
+popFields += 'game_id,'
+popFields += 'popularity_type.name,'
+popFields += 'value,'
+popFields += 'external_popularity_source.name'
+
 
 
 // const url = 'https://api.igdb.com/v4/games/';
@@ -41,6 +49,13 @@ detailsFields += 'involved_companies.publisher'
 //   },
 //   body: 'fields *;\nwhere id = 313774;'
 // };
+
+export class UpdateStruct {
+    updateGames = {}
+    addGames = {}
+    updateParents = {}
+    addParents = {}
+}
 
 export class IGDBJob {
     db
@@ -85,15 +100,30 @@ export class IGDBJob {
         console.log('games updated: ' + this.gamesUpdated)
     }
 
+    /**
+     * given a list of igdb game data, return a string that can be used to call MORE igdb data
+     * @param {Array} igdbJsonList a list of objects that contain a igdb game id field called id
+     * @returns a string that looks like this `id=1|id=2|...|id=50`
+     */
+    #apicalypseIdString(igdbJsonList, idName='id') {
+        let apiString = ''
+        for (let item of jsonList) {
+            apiString += `id=${game[idName]}|`
+        }
+        apiString = apiString.slice(0, -1) //remove trailing pipe
+        return apiString
+    }
+
     async #runCmd(cmd) {
         console.log(cmd)
         let res = await this.db.query(cmd)
         return res
     }
 
+    // really should have written down who helped me build this, probably claude
     async #gameIdsExist(idLists) {
         let fullList = idLists.reduce((acc, val) => acc.concat(val))
-        let cmd = `select new_games.id, (games.id is not null) as exists from `
+        let cmd = `select new_games.id, (games.id is not null) as exists, games.notability_score from `
         cmd += `unnest(array[${fullList}]) as new_games(id)`
         cmd += `left join games using(id)`
         let existingRes = await this.#runCmd(cmd)
@@ -203,38 +233,69 @@ export class IGDBJob {
     }
 
     async getGameDetails(gameList) {
-        // let detailsFields = ''
-        // detailsFields += 'id,'
-        // detailsFields += 'name,'
-        // detailsFields += 'cover,'
-        // detailsFields += 'platforms.name,'
-        // detailsFields += 'first_release_date,'
-        // detailsFields += 'release_dates.release_region'
-        // detailsFields += 'release_dates.date'
-        // detailsFields += 'hypes,'
-        // detailsFields += 'game_type,'
-        // detailsFields += 'game_status,'
-        // detailsFields += 'keywords,'
-        // detailsFields += 'parent_game,'
-        // detailsFields += 'involved_companies.company.name,'
-        // detailsFields += 'involved_companies.developer,'
-        // detailsFields += 'involved_companies.supporting,'
-        // detailsFields += 'involved_companies.porting,'
-        // detailsFields += 'involved_companies.publisher'
-
+        let detailsMap = {}
+        // let parentGamesToScan = {}
+        let parentGamesToScan = [] // ids of games that were released sometime in the past, and are related to games that were released
+            // dlc, seasons, and updates will not be in the database, but parent games will
+        let unhypedIds = [] // list of games that didnt have pre-release hype, need their popularity checked
         let queryIdLists = []  // array of objects that look like this "id=1|2|3" for api use
-        let dbIdList = []  //to send to db as a int array
-        for (gameChunk of chunkList(gameList, 100)) {
-            let shortIdsList = ''
-            for (game of gameChunk) {
-                shortIdsList += `id=${game.id}|`
-                dbIdList.push(game.id)
+        let dbIdList = gameList.map(game => game.id)  // to send to db as a int array
+        let compiledIGDBData = UpdateStruct()
+
+        // i love this command. for each game id in dbIdList, returns a map where
+        //   key = id of game queried
+        //   value = true if there is db entry with that id, otherwise false
+        let listOfGamesInDatabase = await this.#gameIdsExist(dbIdList)
+        let gamesToUpdate = listOfGamesInDatabase.filter((k,v) => v == true) // games in database
+        let gamesToAdd = listOfGamesInDatabase.filter((k,v) => v == false) // games missing
+
+        for (let chunk of chunkList(gamesToUpdate, 100)) {
+            let idString = this.#apicalypseIdString(chunk)
+            let detailsRes = await apicalypse({headers: this.authToken})
+                .fields(detailsFields)
+                .where(idList)
+                .sort('id','asc')
+                .limit(500)
+            let detailsJson = await detailsRes.json()
+            let reducedPopularity = await crunchPopularity(detailsJson)
+
+            // turn the array into a searchable map.
+            let compiledToUpdate = {}
+            for (let item of detailsJson) {
+                compiledToUpdate[item.id] = item
             }
-            shortIdsList = shortIdsList.slice(0, -1)  //remove trailing pipe
-            queryIdLists.push(shortIdsList)
+
+            // apply the notability score based on igdb pre-release hype, igdb reviews, and pop score
+            for (let row of chunk) {
+                // notability compilation
+                let game = compiledToUpdate[row.id]
+                let newNotability = reducedPopularity[game.id]
+                if (game.hasOwnProperty('hypes')) {
+                    newNotability += game.hypes
+                }
+                if (game.hasOwnProperty('rating_count')) {
+                    newNotability += Math.floor(game.rating_count / 10)
+                }
+                if (row.notability_score <= newNotability) {
+                    game.notability = newNotability
+                }
+
+                //alternate title compilation
+                if (game.hasOwnProperty('alternative_names')) {
+                    game.alternative_names = game.alternative_names.filter(altNameItem => {
+                        if (altNameItem.hasOwnProperty('comment')) {
+                            let altComment = altNameItem.comment.toLowerCase()
+                            return altComment == 'alternative title' || altComment == 'alternative spelling'
+                        }
+                    }).map(altNameItem => altNameItem.name)
+                }
+            }
+
+            compiledIGDBData.updateGames = Object.assign(compiledIGDBData.updateGames, compiledToUpdate)
         }
 
-        for (idList of queryIdLists) {
+        for (let chunk of chunkList(gamesToAdd, 100)) {
+            let idString = this.#apicalypseIdString(chunk)
             let detailsRes = await apicalypse({headers: this.authToken})
                 .fields(detailsFields)
                 .where(idList)
@@ -242,165 +303,208 @@ export class IGDBJob {
                 .limit(500)
             await delay(1000)
             let detailsJson = await detailsRes.json()
-            // 0: main_game, 2: expansion, 4 : standalone_expansion, 7 : season,
-            // 8: remake,    9: remaster,  11: port,                 14: update
-            let okGameTypes = [0,2,4,7,8,9,11,14]
+            // 0 : main_game,            1 : dlc_addon, 2 : expansion,
+            // 4 : standalone_expansion, 7 : season,    8 : remake,
+            // 9 : remaster,             11: port,      14: update
+            let okGameTypes = [0,1,2,4,7,8,9,11,14]
             // 0        : released,     4: early access
             // undefined: only released
             let okGameStatus = [undefined, 0, 4]
             detailsJson = detailsJson
                 .filter(g => okGameTypes.includes(g.game_type))
                 .filter(g => okGameStatus.includes(g.game_status))
-
-            // transform game list into a dictionary with id as a key
-            // but exclude all games already in the database
-            let detailsMap = {}
-            let listOfGamesInDatabase = await this.#gameIdsExist(dbIdList)
+            let reducedPopularity = await crunchPopularity(detailsJson)
+            let compiledToAdd = {}
             for (let item of detailsJson) {
-                let alreadyInDatabase = listOfGamesInDatabase[item.id]
-                if (!alreadyInDatabase) {
-                    detailsMap[item.id] = item
+                compiledToAdd[item.id] = item
+            }
+
+            for (let row of chunk) {
+                let game = compiledToAdd[row.id]
+                if (game.hasOwnProperty(parent_game)) {
+                    parentGamesToScan.push(detailsMap[item.id].parent_game)
+                }
+                game.notability = reducedPopularity[game.id]
+                if (game.hasOwnProperty('hypes')) {
+                    game.notability += game.hypes
+                }
+                if (game.hasOwnProperty('rating_count')) {
+                    game.notability += Math.floor(game.rating_count / 10)
                 }
             }
-            detailsJson = []  //save memory, untrack array
-            
-            let unhypedIds = []
-            let parentGamesToScan = {}
-            for (let [key, game] of Object.entries(detailsMap)) {
-            // for (let a = 0; a < detailsJson.length; a++) {
-                // let game = detailsJson[a]
-                if (!game.hypes) {
-                    // if the game didn't have any hypes, assign zero and put it in the check list
-                    game.hypes = 0
-                    unhypedIds.push(key)
-                }
-                else if (game.hypes >= 5) {
-                    // this game had any noteriety before release, so its ok to go in
-                    if (game.hypes >= 10) {
-                        // this game had more than usual, its automatically notable
-                        game.notable = true
-                    }
-                }
-                if (game.parent_game) {
-                    parentGamesToScan[key] = game.parent_game
-                }
-            }
+
+            compiledIGDBData.addGames = Object.assign(compiledIGDBData.addGames, compiledToAdd)
         }
 
-        // let gameScoreMap = {}
-        // for (item of popularityBall) {
-        //     if (gameScoreMap[item.game_id] == undefined) {
-        //         gameScoreMap[item.game_id] = 0
-        //     }
-        //     if (item.external_popularity_source.name == 'IGDB') {
-        //         gameScoreMap[item.game_id] += 1
-        //     } else {
-        //         gameScoreMap[item.game_id] += 2
-        //     }
-        // }
+        // for each game id in parentGameList, returns a map where
+        //   key = id of game queried
+        //   value = true if there is db entry with that id, otherwise false
+        let dbParentCheck = await this.#gameIdsExist(parentGamesToScan)
+        let parentGamesToUpdate = dbParentCheck.filter((k,v) => v == true) // parent games in database
+        let parentGamesToAdd = dbParentCheck.filter((k,v) => v == false) // parent games missing
 
-        // return gameScoreMap
-
-        // add popularity val to games without them
-        for (chunk of chunkList(unhypedIds, 100)) {
-            let popularityJson = await this.getGamePopularity(chunk)
-            for (item of popularityJson) {
-                if (detailsMap[item.game_id].hypes == undefined) {
-                    detailsMap[item.game_id].hypes = 0
-                }
-                if (item.external_popularity_source.name == 'IGDB') {
-                    detailsMap[item.game_id].hypes += 1
-                } else {
-                    detailsMap[item.game_id].hypes += 2
-                }
-            }
-        }
-
-        // remove parent games already in the database
-        
-
-        let parentGameList = Object.values(parentGamesToScan)
-        
-        let parentIdLists = []
-        let dbParentIdList = []
-        for (chunk of chunkList(parentGameList, 100)) {
-            let shortIdsList = ''
-            for (game in chunk) {
-                shortIdsList += `id=${game.id}|`
-                dbParentIdList.push(game.id)
-            }
-            shortIdsList = shortIdsList.slice(0, -1)  //remove trailing pipe
-            parentIdLists.push(shortIdsList)
-        }
-
-        let dbParentCheck = await this.#gameIdsExist(Object.values(parentGameList))
-        let parentsToAdd = dbParentCheck.filter((k,v) => v == false)
-
-        let parentGamesToUpdate = {}
-        for (parentIdList of parentIdLists) {
-            let parentDetailsRes = await apicalypse({headers: this.authToken})
+        for (let chunk of chunkList(parentGamesToUpdate, 100)) {
+            let idString = this.#apicalypseIdString(chunk)
+            let detailsRes = await apicalypse({headers: this.authToken})
                 .fields(detailsFields)
-                .where(parentIdList)
+                .where(idList)
+                .sort('id','asc')
+                .limit(500)
+            let detailsJson = await detailsRes.json()
+            let reducedPopularity = await crunchPopularity(detailsJson)
+
+            let compiledParentUpdate = {}
+            for (let item of detailsJson) {
+                compiledParentUpdate[item.id] = item
+            }
+
+            for (let row of chunk) {
+                let game = compiledParentUpdate[row.id]
+                let newNotability = reducedPopularity[game.id]
+                if (game.hasOwnProperty('hypes')) {
+                    newNotability += game.hypes
+                }
+                if (game.hasOwnProperty('rating_count')) {
+                    newNotability += Math.floor(game.rating_count / 10)
+                }
+                if (row.notability_score <= newNotability) {
+                    game.notability = newNotability
+                }
+            }
+
+            compiledIGDBData.updateParents = Object.assign(compiledIGDBData.updateParents, compiledParentUpdate)
+        }
+
+        for (let chunk of chunkList(parentGamesToAdd, 100)) {
+            let idString = this.#apicalypseIdString(chunk)
+            let detailsRes = await apicalypse({headers: this.authToken})
+                .fields(detailsFields)
+                .where(idList)
                 .sort('id','asc')
                 .limit(500)
             await delay(1000)
-            let parentDetailsJson = await parentDetailsRes.json()
-            let parentDetailsMap = {}
-            let listOfParentsInDatabase = await this.#gameIdsExist(dbParentIdList)
-            for (let item of parentDetailsJson) {
-                let alreadyInDatabase = listOfParentsInDatabase[item.id]
-                // if (alreadyInDatabase) {
-                //     parentGamesToUpdate[item.id] = 
-                // } else {
-                //     parentDetailsMap[item.id] = item
-                // }
+            let detailsJson = await detailsRes.json()
+            // 0 : main_game,            1 : dlc_addon, 2 : expansion,
+            // 4 : standalone_expansion, 7 : season,    8 : remake,
+            // 9 : remaster,             11: port,      14: update
+            let okGameTypes = [0,1,2,4,7,8,9,11,14]
+            // 0        : released,     4: early access
+            // undefined: only released
+            let okGameStatus = [undefined, 0, 4]
+            detailsJson = detailsJson
+                .filter(g => okGameTypes.includes(g.game_type))
+                .filter(g => okGameStatus.includes(g.game_status))
+            let reducedPopularity = await crunchPopularity(detailsJson)
+            let compiledToAdd = {}
+            for (let item of detailsJson) {
+                compiledToAdd[item.id] = item
             }
-            parentDetailsJson = []
+
+            for (let row of chunk) {
+                let game = compiledToAdd[row.id]
+                if (game.hasOwnProperty(parent_game)) {
+                    parentGamesToScan.push(detailsMap[item.id].parent_game)
+                }
+                game.notability = reducedPopularity[game.id]
+                if (game.hasOwnProperty('hypes')) {
+                    game.notability += game.hypes
+                }
+                if (game.hasOwnProperty('rating_count')) {
+                    game.notability += Math.floor(game.rating_count / 10)
+                }
+            }
+
+            compiledIGDBData.addParents = Object.assign(compiledIGDBData.addParents, compiledToAdd)
         }
 
-        let parentGamesToAdd = []
-        for (let [subGameId, parentGameId] of Object.entries(parentGamesToScan)) {
+        return compiledIGDBData
 
-        }
+        // ------------------
 
-        // for each unhyped Id,
-        // for (let [key, val] of Object.entries(unhypedMap)) {
-        //     detailsMap[key].hypes += val
+        // let dbParentCheck = await this.#gameIdsExist(parentGamesToScan)
+        // let parentGamesToUpdate = dbParentCheck.filter((k,v) => v == true) // parent games in database
+        // let parentGamesToAdd = dbParentCheck.filter((k,v) => v == false) // parent games missing
+
+        // for each parent game in database, update it
+        // for (let chunk of chunkList(parentGamesToUpdate, 100)) {
+        //     let idString = this.#apicalypseIdString(chunk)
+        //     let parentUpdateDetailsRes = await apicalypse({headers: this.authToken})
+        //         .fields(detailsFields)
+        //         .where(shortIdsStr)
+        //         .sort('id','asc')
+        //         .limit(500)
+        //     await delay(1000)
+        //     let parentUpdateDetailsJson = await parentUpdateDetailsRes.json()
+            // TODO update games already in database
         // }
 
-        //   is there a parent game? that means this game is a port or something
-        //     that game might already be in the database, or hyped
-        //     if it is,
-        // for (let [key, val] of Object.entries(unhypedMap)) {
-        //     detailsMap[key].hypes += val
-        //     if (detailsMap[key].parent_game) {
-        //         parentGamesToScan[key] = detailsMap[key].parent_game
-        //     }
+        // for each parent game missing, add it
+        // for (let chunk of chunkList(parentGamesToAdd)) {
+        //     let idString = this.#apicalypseIdString(chunk)
+        //     let parentAddDetailsRes = await apicalypse({headers: this.authToken})
+        //         .fields(detailsFields)
+        //         .where(shortIdsStr)
+        //         .sort('id','asc')
+        //         .limit(500)
+        //     await delay(1000)
+        //     let parentAddDetailsJson = await parentAddDetailsRes.json()
+            // TODO add games to database
         // }
 
-        // let detailsRes = await apicalypse({headers: this.authToken})
-        //     .fields(detailsFields)
-        //     .where(detailsIdList)
-        //     .sort('id','asc')
-        //     .limit(500)
-
-        // igdbFields = igdbFields.replace('\n', '')
-        // let igdbBody = 
-        //     `${idList};
-        //     sort id desc;
-        //     limit 500;`
-        // igdbBody = igdbBody.replace('\n', '')
-        // let detailsRes = await fetch('https://api.igdb.com/v4/games/', {
-        //     method: 'post',
-        //     headers: this.authToken,
-        //     body: igdbBody
-        // })
+        // return []
 
         // return detailsJson
     }
 
-    async callIGDBForDetails() {
+    // async reducePopularityResponse(popRes) {
+    //     let reduced = []
+    //     for (pr of popRes) {
+    //         if (reduced[pr.game_id] == undefined) {
+    //             reduced[pr.game_id] = 0
+    //         }
+    //         reduced[pr.game_id] += 2
+    //     }
+    //     return reduced
+    // }
 
+    async updateGamesTables(compiledStruct) {
+        let addStr = ''
+        Object.values(compiledStruct.addGames).forEach(game => {
+            addStr.concat('(')
+            
+            addStr.concat(')')
+        })
+    }
+
+    /**
+     * for a list of igdb game data, find all the popularity sources for this game.
+     * tally a score, for each non-igdb popularity source, score 2 points
+     * @param {Array} gameList (nearly) raw list of igdb game details data minimally containing field:id
+     * @returns {Object} a map like object where the key is the game id, and the value is its score
+     */
+    async crunchPopularity(gameList) {
+        if (gameList.length > 199) {
+            return
+        }
+        let reduced = {}
+        let idList = this.#apicalypseIdString(gameList)
+        let popRes = await apicalypse({headers: this.authToken})
+            .fields(popFields)
+            .where(popIdList)
+            .sort('game_id','asc')
+            .limit(500)
+        await delay(1000)
+        let popJson = await popRes.json()
+        for (pr of popJson) {
+            if (reduced[pr.game_id] == undefined) {
+                reduced[pr.game_id] = 0
+            }
+            if (pr.external_popularity_source.name != 'IGDB') {
+                reduced[pr.game_id] += 2
+            }
+        }
+
+        return reduced
     }
 
     async getGamePopularity(idBall) {
@@ -421,24 +525,33 @@ export class IGDBJob {
             .limit(500)
         await delay(1000)
         let popJson = await popRes.json()
+        let reduced = []
+        for (pr of popJson) {
+            if (reduced[pr.game_id] == undefined) {
+                reduced[pr.game_id] = 0
+            }
+            reduced[pr.game_id] += 2
+        }
+        return reduced
+
         // let popularityMap = this.calculatePopularites(popJson)
-        return popJson
+        // return popJson
     }
 
-    calculatePopularites(popularityBall) {
-        let gameScoreMap = {}
-        for (item of popularityBall) {
-            if (gameScoreMap[item.game_id] == undefined) {
-                gameScoreMap[item.game_id] = 0
-            }
-            if (item.external_popularity_source.name == 'IGDB') {
-                gameScoreMap[item.game_id] += 1
-            } else {
-                gameScoreMap[item.game_id] += 2
-            }
-        }
+    // calculatePopularites(popularityBall) {
+    //     let gameScoreMap = {}
+    //     for (item of popularityBall) {
+    //         if (gameScoreMap[item.game_id] == undefined) {
+    //             gameScoreMap[item.game_id] = 0
+    //         }
+    //         if (item.external_popularity_source.name == 'IGDB') {
+    //             gameScoreMap[item.game_id] += 1
+    //         } else {
+    //             gameScoreMap[item.game_id] += 2
+    //         }
+    //     }
 
-        return gameScoreMap
+    //     return gameScoreMap
     }
 
     async organizeGameDetails(gameDetailsList) {

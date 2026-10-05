@@ -1,5 +1,6 @@
 import { render } from 'preact'
-import { isLocalhost } from '../js/functionhider.js'
+import { useState, useEffect } from 'preact/hooks'
+import { isLocalhost } from '../../js/functionhider.js'
 
 let isLocal = isLocalhost()
 
@@ -10,6 +11,7 @@ export async function renderTileViewer(zone, path, eventName, eventYear) {
 
 async function fetchAllTiles(path, eventName, eventYear) {
     let eventTiles
+    
     if (path.startsWith('/past')) {
         eventTiles = await fetch(`/api/getAllTiles/${eventName}/${eventYear}`)
     } else {
@@ -19,10 +21,23 @@ async function fetchAllTiles(path, eventName, eventYear) {
 }
 
 export function TileViewer(props) {
+    let { path, eventName, eventYear } = props
+    let [ viewerData, setViewerData ] = useState([])
+
+    useEffect(async () => {
+        let eventTilesRaw, eventTiles
+        if (path.startsWith('/past')) {
+            eventTilesRaw = await fetch(`/api/getAllTiles/${eventName}/${eventYear}`)
+        } else {
+            eventTilesRaw = await fetch(`/api/getAllTiles/active`)
+        }
+        eventTiles = await eventTilesRaw.json()
+        setViewerData(eventTiles)
+    }, []) // happen only once
+
     return (
         <>
-        {/* <TileViewerSingleRow tileData={freeTile} /> */}
-        {props.map(tileData => {
+        {viewerData.map(tileData => {
             if (tileData.length > 0) {
                 return (
                     <div class='linked-tile-binding'>

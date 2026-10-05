@@ -77,6 +77,11 @@ export function objectSort(obj, member) {
     });
 }
 
+// from colinhacks.com/essays/reasonable-email-regex
+export function colinHacksEmailRegex(email) {
+    return /^(?!\.)(?!.*\.\.)([a-z0-9_'+\-\.]*)[a-z0-9_+\-]@([a-z0-9][a-z0-9\-]*\.)+[a-z]{2,}$/.test(email)
+}
+
 export function utcNow() {
     return Math.floor(new Date().getTime() / 1000)
 }

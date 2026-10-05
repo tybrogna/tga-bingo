@@ -1,9 +1,9 @@
 import { render } from 'preact'
 import { useState, useEffect } from 'preact/hooks'
-import { $, range, delay } from '../js/functionhider.js'
+import { $, range, delay } from '../../js/functionhider.js'
 import { Cropt } from 'cropt'
 
-// import TopMenuBar from './TopMenuBar.jsx'
+import TopMenuBar from './TopMenuBar.jsx'
 import '../styles/newTile.scss'
 
 let cropts = {
@@ -53,7 +53,8 @@ function textUploaderClasses(numCols) {
 
 function NewTileContent(props) {
     const [ numUploaders, setNumUploaders ] = useState('1')
-    const [ isEventDropdownFilled, setIsEventDropdownFilled ] = useState('')
+    const [ eventOptionsList, setEventsOptionsList ] = useState([])
+    // const [ isEventDropdownFilled, setIsEventDropdownFilled ] = useState('')
 
     let handleSubmitForApproval = async (event) => {
         let resultOfUpload = await submitForApproval(event)
@@ -68,22 +69,22 @@ function NewTileContent(props) {
     }
 
     useEffect(() => {
-        let eventsData = async () => {
-            let res = await fetch('/api/events/true')
-            let resJson = await res.json()
-            range(resJson.length).forEach(a => {
-                let optionEle = document.createElement('option')
-                optionEle.innerText = resJson[a].name + ' ' + resJson[a].year
-                // optionEle.value = optionEle.innerText.toLowerCase().replace(/\s+/g, '')
-                optionEle.value = optionEle.innerText
-                document.querySelector('#event-select').appendChild(optionEle)
-            })
-            setIsEventDropdownFilled('done')
-        }
+        // let eventsData = async () => {
+        //     let res = await fetch('/api/events/true')
+        //     let resJson = await res.json()
+        //     range(resJson.length).forEach(a => {
+        //         let optionEle = document.createElement('option')
+        //         optionEle.innerText = resJson[a].name + ' ' + resJson[a].year
+        //         // optionEle.value = optionEle.innerText.toLowerCase().replace(/\s+/g, '')
+        //         optionEle.value = optionEle.innerText
+        //         document.querySelector('#event-select').appendChild(optionEle)
+        //     })
+        //     setIsEventDropdownFilled('done')
+        // }
         
-        if (isEventDropdownFilled == '') {
-            eventsData()
-        }
+        // if (isEventDropdownFilled == '') {
+        //     eventsData()
+        // }
 
         // after page is (re)rendered, make one, two, or three cropt boxes
         // and since there's so few paths, this is more readable than a loop
@@ -99,37 +100,55 @@ function NewTileContent(props) {
         }
     })
 
+    useEffect(async () => {
+            let res = await fetch('/api/events/true')
+            let resJson = await res.json()
+            setEventsOptionsList(resJson)
+    }, []) //only once, on page load
+
+    let EventOptions = () => eventOptionsList.map(eo => {
+        let eoValue = eo.name + ' ' + eo.year
+        console.log(eoValue)
+        return (
+            <>
+                <option value={eoValue}>{eoValue}</option>
+            </>
+        )
+    })
+    
+    useEffect(() => {
+
+    }, [numUploaders]) // when numUploaders changes
+
     let tileIdLimit = 2
     if (numUploaders != '') {
         tileIdLimit = parseInt(numUploaders) + 1
     }
 
-    let picUploaderCode =
-        range(1, tileIdLimit).map(id => {
-            return (
-            <>
-                <PictureUploader items={{'id':id, 'numCols':numUploaders}}/>
-            </>
-            )
-        })
+
+    let picUploaderCode = range(1, tileIdLimit).map(id => {
+        return (
+        <>
+            <PictureUploader items={{'id':id, 'numCols':numUploaders}}/>
+        </>
+        )
+    })
     
-    let textUploadCode =
-        range(1, tileIdLimit).map(id => {
-            return (
-            <>
-                <TextUploader items={{'id':id, 'numCols':numUploaders}}/>
-            </>
-            )
-        })
-    
-    // console.log('picuplodadlen', picUploaderCode.length)
-    // console.log('txtuplodadlen', textUploadCode.length)
+    let textUploadCode = range(1, tileIdLimit).map(id => {
+        return (
+        <>
+            <TextUploader items={{'id':id, 'numCols':numUploaders}}/>
+        </>
+        )
+    })
     
     return (
     <>
     <div id="options-area">
         <label class='pr-1'>Event </label>
-        <select name="events" id="event-select"> </select>
+        <select name="events" id="event-select">
+            <EventOptions />
+        </select>
         <label class="pl-4 pr-1">Mutually-Exclusive Combos <a class="help-link" onClick={activateOverlay}><sup><u>?</u></sup></a> </label>
         <select name="combos" id="combo-select" onChange={event => { resetAllImages(); setNumUploaders(event.currentTarget.value);} }>
             <option value="1" selected>1</option>
@@ -246,7 +265,7 @@ function resetText() {
     }
 }
 
-function NewTileSkeleton(props) {
+export default function NewTileSkeleton(props) {
     return (
     <>
     <title>TGABingo // New Tile</title>
@@ -285,9 +304,9 @@ function imgDragLeave(event) {
  */
 function clickFileInput(event, id) {
     let eventTarget = event.target
-
-    if (eventTarget.id.startsWith('url-textbox') &&
-            eventTarget.id.startsWith('url-submit') &&
+    
+    if (eventTarget.id.startsWith('url-textbox') ||
+            eventTarget.id.startsWith('url-submit') ||
             eventTarget.id.startsWith('reset-button')) {
         return
     }
@@ -300,6 +319,12 @@ function clickFileInput(event, id) {
     if (croptBoxes[id] == null) {
         return
     }
+    // if (eventTarget.querySelector('[id^=\'preview-box\']').style.display != 'none') {
+    //     console.log(eventTarget.querySelector('[id^=\'preview-box\']'))
+    //     console.log(eventTarget.querySelector('[id^=\'preview-box\']').classList)
+    //     console.log(eventTarget.querySelector('[id^=\'preview-box\']').style.display)
+    //     return
+    // }
     eventTarget.querySelector('[id^=\'file-input\']').click()
 }
 
@@ -478,7 +503,7 @@ function disableOverlay() {
     document.getElementById("overlay").style.display = "none";
 }
 
-export default function() {
-    render(NewTileSkeleton(), document.querySelector('body'))
-    $('#options-area').style.display = 'block'
-}
+// export default function() {
+//     render(<NewTileSkeleton />, document.querySelector('body'))
+//     $('#options-area').style.display = 'block'
+// }

@@ -8,12 +8,12 @@ import sharp from 'sharp'
 import { fileURLToPath } from 'url'
 import { dirname } from 'path'
 import bcrypt from 'bcryptjs'
-// import jwt from 'jsonwebtoken';
+import jwt from 'jsonwebtoken';
 
 import { getPRNG, shuffle } from './js/randomHelper.js'
 import Database from './js/database.js'
 import { IGDBJob } from './js/igdb.js'
-import { utcNow, utcOneWeek } from './js/functionhider.js'
+import { colinHacksEmailRegex, utcNow, utcOneWeek } from './js/functionhider.js'
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -98,8 +98,21 @@ app.get('/dbAccess/:password', async (req, res) => {
     console.log("its wrong")
 })
 
+async function initIGDB() {
+    let now = utcNow()
+    let utcOrigin = 1761955200 // 1 Nov 2026 00:00
+    while (utcOrigin < now) {
+        let nextWeek = utcOrigin + utcOneWeek
+        let igdb = new IGDBJob()
+        igdb.connnect()
+        let thisWeeksGames = await igdb.getGames(utcOrigin, nextWeek)
+        let thisWeeksGameDetails = await igdb.getGameDetails(thisWeeksGames)
+        let updateStruct = await igdb.organizeGameDetails(thisWeeksGameDetails)
+    }
+}
+
 async function serverCron() {
-    let now = utcNow
+    let now = utcNow()
     let lastWeek = now - utcOneWeek * 4
 
     // get db connection
@@ -108,8 +121,8 @@ async function serverCron() {
     return
     // get games released in the last week in america
     let gamesThisWeekList = await igdb.getGames(lastWeek, now)
-    let gamesDetailsList = await igdb.getGameDetails(gamesThisWeekList)
-    igdb.organizeGameDetails(gamesDetailsList)
+    let gamesDetailsStruct = await igdb.getGameDetails(gamesThisWeekList)
+    igdb.updateGamesTable(gamesDetailsStruct)
 
     // update platform list
     //   get all platforms
@@ -146,9 +159,9 @@ async function serverCron() {
     //   1 point per hype
     //   1 point per IGDB popularity source
     //   2 points per non-IGDB popularity source
-    /************* here ************** */
     // PORTS CANT BE NOTABLE
     // for each game
+    /************* here ************** */
     //   check if igdb_id is already in database
     //     update from early_access if the game released
     //     update with VR if VR mode was inexplicalby added
@@ -180,21 +193,49 @@ async function serverCron() {
 //     res.send('yep ok')
 // })
 
-app.post('/testadduser', async (req, res) => {
-    try {
-        let hashedPass = await bcrypt.hash(req.body.password, 10)
-        await db.createUser(req.body.email, req.body.userName, hashedPass)
+function theseExist(...things) {
+    for (let t of things) {
+        if (t == null || t == undefined || t == "") {
+            return false
+        }
+    }
+    return true
+}
 
+app.post('/registerUser', async (req, res) => {
+    let email = req.body.email
+    let username = req.body.username
+    let password = req.body.password
+    if (!theseExist(email, username, password)) {
+        console.log('data missing')
+        res.json({ error: 'data missing'})
+        return
+    }
+
+    if (!colinHacksEmailRegex(email)) {
+        console.log(`${email} failed email regex`)
+        res.json({ error: `${email} failed email regex`})
+        return
+    }
+
+    let isUser = await db.retrieveUser(email)
+    if (isUser) {
+        res.json({ error: `${email} already in use`})
+        return
+    }
+
+    try {
+        let hashedPass = await bcrypt.hash(password, 10)
+        await db.createUser(email, username, hashedPass)
+        let token = jwt.sign({id: dbUser.id}, process.env.JWT_SECRET, {expiresIn: '1h'})
+        res.json({ token: token, username: dbUser.username })
     } catch(err) {
         console.log(err)
         res.json({ error: err })
     }
 })
 
-
-// let secret = I7xBbvH0EZIOJ68rT5a8o96wumip77lhW4urADAXd7SiD9dQm1QfMVOT4SgIQd2p
-
-app.post('/testlogin', async (req, res) => {
+app.post('/login', async (req, res) => {
     let email = req.body.email
     let username = req.body.username
     let password = req.body.password
@@ -206,8 +247,8 @@ app.post('/testlogin', async (req, res) => {
     try {
         let match = await bcrypt.compare(password, dbUser.password_hash)
         if (match) {
-            let token = jwt.sign(JSON.stringify(dbUser), secret)
-            res.json({ token: token })
+            let token = jwt.sign({id: dbUser.id}, process.env.JWT_SECRET, {expiresIn: '1h'})
+            res.json({ token: token, username: dbUser.username })
         } else {
             res.json({ error: "Password incorrect" })
         }
@@ -215,6 +256,20 @@ app.post('/testlogin', async (req, res) => {
         console.log(err)
         res.json({ error: err })
     }
+})
+
+app.post('/verifyTokenActive', async (req, res) => {
+    let guy = jwt.verify(req.body.token, process.env.JWT_SECRET, (err, verified) => {
+        if (err) {
+            if (err.message.includes('expired')) {
+                console.log(req.body.username + ' expired')
+                res.send(false)
+            }
+        } else {
+            console.log(req.body.username + ' token ok')
+            res.send(true)
+        }
+    })
 })
 
 app.get('/testRead', async (req, res) => {

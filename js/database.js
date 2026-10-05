@@ -12,7 +12,7 @@ function unsqlize(str) {
 
 export default class Database {
     constructor() {
-        console.log(process.env.POSTGRES_USER, process.env.POSTGRES_HOST, process.env.POSTGRES_PORT,)
+        console.log(process.env.POSTGRES_USER, process.env.POSTGRES_HOST, process.env.POSTGRES_PORT)
         this.client = new Client({
             user: process.env.POSTGRES_USER,
             password: process.env.POSTGRES_PASSWORD,
