@@ -13,6 +13,15 @@ export function isLocalhost() {
     return location.hostname === "localhost" || location.hostname === "127.0.0.1" || location.hostname === ""
 }
 
+export function theseExist(...things) {
+    for (let t of things) {
+        if (t == null || t == undefined || t == "") {
+            return false
+        }
+    }
+    return true
+}
+
 export function chunkList(list, size=10) {
     let chunks = []
     for (let a = 0; a < list.length; a += size) {
@@ -20,6 +29,14 @@ export function chunkList(list, size=10) {
         chunks.push(chunk)
     }
     return chunks
+}
+
+export function sqlize(str) {
+    return str.replaceAll("'", "''")
+}
+
+export function unsqlize(str) {
+    return str.replaceAll("''", "'")
 }
 
 /***
@@ -84,6 +101,10 @@ export function colinHacksEmailRegex(email) {
 
 export function utcNow() {
     return Math.floor(new Date().getTime() / 1000)
+}
+
+export function utcToPGDate(utc) {
+    return new Date(utc * 1000).toDateString().substring(4)
 }
 
 export const utcOneDay = 24 * 60 * 60 // in seconds

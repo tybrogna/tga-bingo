@@ -8,26 +8,33 @@ import sharp from 'sharp'
 import { fileURLToPath } from 'url'
 import { dirname } from 'path'
 import bcrypt from 'bcryptjs'
-import jwt from 'jsonwebtoken';
+import jwt from 'jsonwebtoken'
+import { CronJob } from 'cron'
 
 import { getPRNG, shuffle } from './js/randomHelper.js'
 import Database from './js/database.js'
 import { IGDBJob } from './js/igdb.js'
-import { colinHacksEmailRegex, utcNow, utcOneWeek } from './js/functionhider.js'
+import { theseExist, colinHacksEmailRegex, utcNow, utcOneWeek } from './js/functionhider.js'
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-// const upload = multer({ dest: 'uploads/' })
-// console.log(process.env)
 
-console.log('i actually changed')
+const job = new CronJob('0 0 * * 1,4',
+
+)
+
+
+export function log(message) {
+    console.log(message)
+    message = new Date().toLocaleString({timeZone: 'est'}).concat(' ', message).concat('\n')
+    fs.appendFile('log.txt', message, (err) => { if (err) { throw err } })
+}
 
 let app = express()
 app.use(express.json())
 app.use(cors())
 app.use(express.urlencoded({ extended: true }))
 app.use(express.static('dist'))
-// app.use(express.static('dist/img'))
 app.use(express.static('../uploads'))
 
 app.get('/helloworld', async (req, res) => {
@@ -43,7 +50,12 @@ process.on('exit', async () => {
 
 app.get('/testcron', async (req, res) => {
     console.log('testing server cron job')
-    serverCron()
+    job.start()
+    res.send('started')
+})
+
+app.get('/igdb/games', async (req, res) => {
+    res.json(await db.getGames())
 })
 
 app.get('/dbAccess/:token/getTables', async (req, res) => {
@@ -98,108 +110,62 @@ app.get('/dbAccess/:password', async (req, res) => {
     console.log("its wrong")
 })
 
+app.get('/miniDb', async (req, res) => {
+    let igdb = new IGDBJob()
+    await igdb.connect()
+    let oneWeekOfGames = await igdb.getGames(1762732800, 1763337600)
+    // let someGames = await igdb.getSomeGames()
+    let deets = await igdb.organizeGameDetails(oneWeekOfGames)
+    igdb.updateGamesTable(deets)
+    res.send('hi')
+})
+
+// app.get('/miniSql', async (req, res) => {
+//     igdb.updateGamesTable(struc)
+// })
+
 async function initIGDB() {
-    let now = utcNow()
     let utcOrigin = 1761955200 // 1 Nov 2026 00:00
+    let now = utcNow()
     while (utcOrigin < now) {
         let nextWeek = utcOrigin + utcOneWeek
         let igdb = new IGDBJob()
         igdb.connnect()
         let thisWeeksGames = await igdb.getGames(utcOrigin, nextWeek)
-        let thisWeeksGameDetails = await igdb.getGameDetails(thisWeeksGames)
-        let updateStruct = await igdb.organizeGameDetails(thisWeeksGameDetails)
+        let compiledGames = await igdb.organizeGameDetails(thisWeeksGames)
+        igdb.updateGamesTable(compiledGames)
+        igdb.disconnect()
+        await delay(10000)
     }
 }
 
-async function serverCron() {
+async function updateDBWithThisWeeksGames() {
     let now = utcNow()
-    let lastWeek = now - utcOneWeek * 4
-
-    // get db connection
+    let lastWeek = now - utcOneWeek
+    let secondWeek = lastWeek - utcOneWeek
+    let thirdWeek = secondWeek - utcOneWeek
+    let fourthWeek = thirdWeek - utcOneWeek
     let igdb = new IGDBJob()
     igdb.connect()
-    return
-    // get games released in the last week in america
-    let gamesThisWeekList = await igdb.getGames(lastWeek, now)
-    let gamesDetailsStruct = await igdb.getGameDetails(gamesThisWeekList)
-    igdb.updateGamesTable(gamesDetailsStruct)
+    let rawWeeklyGames, compiledGames
 
-    // update platform list
-    //   get all platforms
-    //     fields id,name,abbreviation,alternative_name;limit 500; sort id;
-    // get games this week in america
-    //   let now = gmt.now()
-    //   let lastWeek = now - 604800
-    //     fields id,game,date; where date > lastWeek & date < now & release_region = 8; sort date desc; limit 500;
-    // assemble a giant string to get the list of games
-    // get games released this week
-        // fields
-        //   id,
-        //   name,
-        //   cover,
-        //   platforms,
-        //   first_release_date,
-        //   game_type,
-        //   game_status,
-        //   keywords,
-        //   parent_game,
-        //   involved_companies.company.name,
-        //   involved_companies.developer,
-        //   involved_companies.porting,
-        //   involved_companies.publisher;
-        // where [giant list]; sort id desc;
-    // cull by game_type (0, 2, 4, 7, 8, 9, 11)
-    //   main_game, expansion, standalone_expansion, season, remake, remaster, port
-    // cull by game_status (null, 0, 4)
-    //   no value, released, early_access
-    // cull by popularity metrics
-    //   games get a score of popularity
-    //     6 or more points: game goes in my database
-    //     11 points ore more: game gets the notable status
-    //   1 point per hype
-    //   1 point per IGDB popularity source
-    //   2 points per non-IGDB popularity source
-    // PORTS CANT BE NOTABLE
-    // for each game
-    /************* here ************** */
-    //   check if igdb_id is already in database
-    //     update from early_access if the game released
-    //     update with VR if VR mode was inexplicalby added
-    //     update publisher/developer if missing
-    //   compile igdb_id, name, release date, developer, publisher, igdb_cover_id
-    //   check if free to play
-    //     keywords contains id 2385
-    //   check if early_access
-    //     game_status = 4
-    //   check if remaster
-    //      game_type = 9
-    //   check if mobile
-    //      platform contains id 34, 39
-    //         android, ios
-    //   check if VR supported
-    //      platform contains id 162, 163, 165, 384, 385, 386, 387, 388, 390, 471, 472,
-    //         Oculus VR, Steam VR, PSVR, Quest, Rift, Quest 2, Go, Gear VR, PSVR2, Quest 3, VisionOS
-    //   check if expansion
-    //      game_type = 2,4
-    //         mark game as ongoing
-    //   check if this game is an update to a f2p game
-    //      check if parent_game is in the database
-    //      record parent game id, get ready for second pass
-    //   second pass, does this again but marks the game as ongoing
-}
+    rawWeeklyGames = await igdb.getGames(lastWeek, now)
+    compiledGames = await igdb.organizeGameDetails(rawWeeklyGames)
+    igdb.updateGamesTable(compiledGames)
 
-// app.get('/testAdd', async(req, res) => {
-//     await db.qaAdd('Briblham')
-//     res.send('yep ok')
-// })
+    rawWeeklyGames = await igdb.getGames(secondWeek, lastWeek)
+    compiledGames = await igdb.organizeGameDetails(rawWeeklyGames)
+    igdb.updateGamesTable(compiledGames)
 
-function theseExist(...things) {
-    for (let t of things) {
-        if (t == null || t == undefined || t == "") {
-            return false
-        }
-    }
-    return true
+    rawWeeklyGames = await igdb.getGames(thirdWeek, secondWeek)
+    compiledGames = await igdb.organizeGameDetails(rawWeeklyGames)
+    igdb.updateGamesTable(compiledGames)
+
+    rawWeeklyGames = await igdb.getGames(fourthWeek, thirdWeek)
+    compiledGames = await igdb.organizeGameDetails(rawWeeklyGames)
+    igdb.updateGamesTable(compiledGames)
+
+    igdb.disconnect()
 }
 
 app.post('/registerUser', async (req, res) => {
@@ -227,8 +193,8 @@ app.post('/registerUser', async (req, res) => {
     try {
         let hashedPass = await bcrypt.hash(password, 10)
         await db.createUser(email, username, hashedPass)
-        let token = jwt.sign({id: dbUser.id}, process.env.JWT_SECRET, {expiresIn: '1h'})
-        res.json({ token: token, username: dbUser.username })
+        let token = jwt.sign({id: dbUser.id}, process.env.JWT_SECRET, {expiresIn: '8h'})
+        res.json({ token: token, id: dbUser.id, username: dbUser.username })
     } catch(err) {
         console.log(err)
         res.json({ error: err })
@@ -247,8 +213,8 @@ app.post('/login', async (req, res) => {
     try {
         let match = await bcrypt.compare(password, dbUser.password_hash)
         if (match) {
-            let token = jwt.sign({id: dbUser.id}, process.env.JWT_SECRET, {expiresIn: '1h'})
-            res.json({ token: token, username: dbUser.username })
+            let token = jwt.sign({id: dbUser.id}, process.env.JWT_SECRET, {expiresIn: '8h'})
+            res.json({ token: token, id: dbUser.id, username: dbUser.username })
         } else {
             res.json({ error: "Password incorrect" })
         }
@@ -270,6 +236,10 @@ app.post('/verifyTokenActive', async (req, res) => {
             res.send(true)
         }
     })
+})
+
+app.post('/submitNomineesGuesses', async (req, res) => {
+
 })
 
 app.get('/testRead', async (req, res) => {
@@ -400,20 +370,20 @@ const [server, port] = (() => {
         let keyFile = fs.readFileSync('/etc/letsencrypt/live/tga.zone/privkey.pem')
         console.log(keyFile)
         let certFile = fs.readFileSync('/etc/letsencrypt/live/tga.zone/cert.pem')
-	console.log(certFile)
+	    console.log(certFile)
         let chainFile = fs.readFileSync('/etc/letsencrypt/live/tga.zone/fullchain.pem')
-	console.log(chainfile)
-	let options = {
-            key: keyFile,
-            cert: certFile,
-            ca: chainFile
+	    console.log(chainfile)
+        let options = {
+                key: keyFile,
+                cert: certFile,
+                ca: chainFile
         }
         server = https.createServer(options, app)
         port = 443
         return [server, port]
     } catch (err) {
         console.log(err)
-	server = http.createServer(app)
+	    server = http.createServer(app)
         port = 3000
         return [server, port]
     }
@@ -421,8 +391,9 @@ const [server, port] = (() => {
 
 
 
-server.listen(port, (err) =>{
+server.listen(port, (err) => {
     if (!err) {
+        log('server online')
         console.log('its on at ' + port)
     }
 })

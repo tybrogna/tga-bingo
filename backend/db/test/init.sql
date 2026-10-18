@@ -44,12 +44,11 @@ CREATE TABLE tiles (
 
 CREATE TABLE games (
     id INTEGER PRIMARY KEY,
-    -- igdb_id INTEGER,
-    igdb_cover_id INTEGER,
+    igdb_cover_id TEXT,
     name TEXT NOT NULL,
-    release DATE,
-    developer TEXT,
-    publisher TEXT,
+    release_date DATE,
+    developers TEXT[],
+    publishers TEXT[],
     notability_score INTEGER DEFAULT 0,
     is_vr BOOLEAN DEFAULT FALSE,
     is_remaster BOOLEAN DEFAULT FALSE,
@@ -58,18 +57,28 @@ CREATE TABLE games (
     is_expansion BOOLEAN DEFAULT FALSE,
     is_mobile BOOLEAN DEFAULT FALSE,
     is_free_to_play BOOLEAN DEFAULT FALSE,
-    -- is_ongoing BOOLEAN DEFAULT FALSE,
     last_update_date DATE,
-    alternate_name TEXT,
-    alt_text TEXT
+    alternative_names TEXT[]
+);
+
+CREATE TABLE nominee_categories (
+    id SERIAL PRIMARY KEY,
+    name TEXT NOT NULL
 );
 
 CREATE TABLE users (
     id SERIAL PRIMARY KEY,
     email TEXT NOT NULL,
     username TEXT NOT NULL,
-    password_hash TEXT NOT NULL,
-    token_expires_at TIMESTAMP
+    password_hash TEXT NOT NULL
+    -- token_expires_at TIMESTAMP
+);
+
+CREATE TABLE user_nominations (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id),
+    category_id INTEGER REFERENCES nominee_categories(id),
+    game_ids INTEGER[]
 );
 
 -- INSERT INTO submitters (email, nickname) values ('test@qa.com', 'Nick Quality');
@@ -77,5 +86,5 @@ CREATE TABLE users (
 -- INSERT INTO events (name, year, active) VALUES ('Summer Games Fest', 2025, FALSE);
 -- INSERT INTO events (name, year, active) VALUES ('The Game Awards', 2024, FALSE);
 -- INSERT INTO events (name, year, active) VALUES ('The Game Awards', 2025, TRUE);
-INSERT INTO games (id, name, release, developer, publisher, notability_score, is_released_from_early_access) VALUES (654321, 'The Year 2025', '2026-01-01', 'BiG BoYS', 'Devolver Digital', 420, TRUE);
+INSERT INTO games (id, name, release_date, developers, publishers, notability_score, is_released_from_early_access) VALUES (654321, 'The Year 2025', 'Jan 1 2026', ARRAY['BiG BoYS'], ARRAY['Devolver Digital'], 420, TRUE);
 INSERT INTO igdb_api_keys (token, expires_at) values ('a299aca4gz7z6yc7cvbrmb78lou7cx', 1782792000);

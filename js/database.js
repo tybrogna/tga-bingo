@@ -1,14 +1,15 @@
 import 'dotenv/config'
 import pg from 'pg'
+import { sqlize, unsqlize } from './functionhider.js'
 const Client = pg.Client
 
-function sqlize(str) {
-    return str.replaceAll("'", "''")
-}
+// function sqlize(str) {
+//     return str.replaceAll("'", "''")
+// }
 
-function unsqlize(str) {
-    return str.replaceAll("''", "'")
-}
+// function unsqlize(str) {
+//     return str.replaceAll("''", "'")
+// }
 
 export default class Database {
     constructor() {
@@ -198,5 +199,11 @@ export default class Database {
             let idsUpdate = freeTile.rows[0].tile_ids + ',' + clusterId
             cmd = `update tile_clusters set tile_ids=${idsUpdate} where id=${freeTile.rows[0].id}`
         }
+    }
+
+    async getGames() {
+        let cmd = `select name from games;`
+        let res = await this.#runCmd(cmd)
+        return res.rows
     }
 }

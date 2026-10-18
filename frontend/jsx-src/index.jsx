@@ -9,7 +9,7 @@ const Home = lazy(() => import('./pages/Home.jsx'))
 const BingoCard = lazy(() => import('./pages/BingoCard.jsx'))
 const NewTile = lazy(() => import('./pages/newTile.jsx'))
 const DbViewer = lazy(() => import('./pages/DbViewer.jsx'))
-// const Test = lazy(() => import('./components/Test.jsx'))
+const Test = lazy(() => import('./pages/Test.jsx'))
 const UserControl = lazy(() => import('./pages/UserControl.jsx'))
 // const TileViewer = lazy(() => import('./components/tiles.jsx'))
 
@@ -24,7 +24,7 @@ let App = () => (
             <DbViewer path='/crudview' />
             <NewTile path='/newtile' />
             <UserControl path='/accounts' />
-            {/* <Test path='/test' /> */}
+            <Test path='/test' />
             {/* <Viewer path='/tiles' /> */}
             {/* <YouLost default /> */}
         </Router>

@@ -88,6 +88,7 @@ async function login() {
     let login = await loginRes.json()
     console.log(login)
     localStorage.setItem('jwt', login.token)
+    localStorage.setItem('id', login.id)
     localStorage.setItem('username', login.username)
 }
 
@@ -122,6 +123,7 @@ async function register() {
     }
 
     localStorage.setItem('jwt', login.token)
+    localStorage.setItem('id', login.id)
     localStorage.setItem('username', login.username)
     loginResMessage.value = `successfully registered ${login.username}. You're now logged in`
 }
@@ -143,5 +145,6 @@ async function verify() {
 
 async function unsetJwt() {
     localStorage.setItem('jwt', null)
+    localStorage.setItem('id', null)
     localStorage.setItem('username', null)
 }

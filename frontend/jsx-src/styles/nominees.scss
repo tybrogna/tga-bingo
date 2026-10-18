@@ -1,0 +1,107 @@
+@use './main.scss' as main;
+
+.nom-container {
+    width: 1400px;
+    padding-right: 15px;
+    padding-left: 15px;
+    margin-right: auto;
+    margin-left: auto;
+}
+
+.flex {
+    display: flex;
+    flex-direction: row;
+    // gap: 1em;
+    justify-content: space-between;
+}
+
+.db-tile-container {
+    display: grid;
+    grid-template-columns: 100px 100px 100px 100px;
+
+}
+
+.games-db-box {
+    width: 400px;
+    position:static;
+}
+
+.nominee-container {
+    height: 200px;
+    max-width: inherit;
+}
+
+.game-grid {
+    height: inherit;
+    border: solid black 1px;
+    text-align: center;
+    display: flex;
+    overflow: scroll;
+    min-width: 841px;
+    max-width: 841px;
+}
+
+.track-toggle {
+    float: left;
+    width: 25px;
+    height: 100%;
+    background-color: red;
+}
+
+.game-container {
+    position: relative;
+    border: solid blue 1px;
+    min-width: 140px;
+}
+
+.game-cover {
+    position: absolute;
+    width: 92%;
+    top: 8%;
+    cursor: grab;
+    left: 4%;
+}
+
+.game-title-text {
+    position: absolute;
+    width: 130px;
+    text-align: center;
+    top: 50%;
+    z-index: 12;
+    text-shadow: #778da9 1px 0 10px;
+    transform: translate(0%, -50%);
+    left: 1%;
+    // right: 5%;
+    overflow: hidden;
+    max-height: 100%;
+    pointer-events: none;
+}
+
+.db-game-container {
+    position: relative;
+    border: solid blue 1px;
+}
+
+.db-game-cover {
+    position: absolute;
+    width: 75%;
+    top: 8%;
+    cursor: grab;
+    left: 12.5%;
+}
+
+.db-game-title-text {
+    position: relative;
+    // width: ;
+    text-align: center;
+    top: 50%;
+    z-index: 12;
+    text-shadow: #778da9 1px 0 10px;
+    transform: translate(0%, -50%);
+    left: 1%;
+    // right: 5%;
+    font-size: 11px;
+    overflow:hidden;
+    max-height: 100%;
+    pointer-events: none;
+}
