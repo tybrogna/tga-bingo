@@ -202,7 +202,7 @@ export default class Database {
     }
 
     async getGames() {
-        let cmd = `select name from games;`
+        let cmd = `select id,name,igdb_cover_id from games limit 100;`
         let res = await this.#runCmd(cmd)
         return res.rows
     }

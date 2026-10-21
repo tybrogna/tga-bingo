@@ -35,3 +35,15 @@
 10/16/2026, 5:03:44 AM 40 to add, 0 to update, and 2 already in the list of games to add
 10/16/2026, 5:03:46 AM IGDB // 47 games and 22 parents meet the criteria to be added
 10/16/2026, 5:03:46 AM IGDB // 0 games and 0 parents will be updated
+10/19/2026, 1:39:21 AM server online
+10/20/2026, 12:44:12 AM server online
+10/20/2026, 12:44:43 AM IGDB // Job Started
+10/20/2026, 12:44:43 AM refreshing igdb api token, will do so again in 4 weeks
+10/20/2026, 12:44:43 AM IGDB // searching for release items starting week of
+10/20/2026, 12:44:47 AM IGDB // found 890 release items to filter
+10/20/2026, 12:44:47 AM IGDB // Of the 890 released items, there are 0 already in the database
+10/20/2026, 12:45:09 AM IGDB //
+10/20/2026, 12:45:09 AM IGDB //  42 parent games detected: 40 to add, 0 to update, and 2 already in the list of games to add
+10/20/2026, 12:45:12 AM IGDB // 52 games and 24 parents meet the criteria to be added
+10/20/2026, 12:45:12 AM IGDB // 0 games and 0 parents will be updated
+10/20/2026, 2:34:06 AM server online

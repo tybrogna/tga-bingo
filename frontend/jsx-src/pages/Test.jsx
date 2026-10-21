@@ -15,6 +15,7 @@ const games = [
 ]
 
 const allGames = signal([])
+const draggingGame = signal({})
 
 const completedCount = computed(
     () => todos.value.filter(todo => todo.completed).length
@@ -38,16 +39,12 @@ let displayStyle = 0
 
 function GameBox(props) {
     let game = props.game
-    let art = ""
-    if (displayStyle == 0) {
-        art = game.fullBox
-    }
-    if (displayStyle == 1) {
-        art = game.smallBox
-    }
+    let art = `https://images.igdb.com/igdb/image/upload/t_cover_big/${game.igdb_cover_id}.webp`
+
     return (
     <>
     <div class="game-container">
+        <div class="remove-button">x</div>
         <div class="game-title-text">
             {game.name}
         </div>
@@ -59,16 +56,44 @@ function GameBox(props) {
 
 function DatabaseBox(props) {
     let game = props.game
-    let art = ""
-    if (displayStyle == 0) {
-        art = game.fullBox
+    let art = `https://images.igdb.com/igdb/image/upload/t_cover_big/${game.igdb_cover_id}.webp`
+    let textEle, imgEle = undefined
+
+    useEffect(() => {
+        
+    }, [])
+
+    let dragStart = (e) => {
+        draggingGame.value = game
     }
-    if (displayStyle == 1) {
-        art = game.smallBox
+
+    let dragEnd = (e) => {
+        draggingGame.value = {}
     }
+
+    let mouseOver = (e) => {
+        let ele = e.target
+        while (!ele.classList.contains('db-game-container')) {
+            ele = ele.parentElement
+        }
+        ele = ele.querySelector('.db-game-title-text')
+        console.log(ele)
+        ele.style.visibility = 'visible'
+    }
+
+    let mouseLeave = (e) => {
+        let ele = e.target
+        while (!ele.classList.contains('db-game-container')) {
+            ele = ele.parentElement
+        }
+        ele = ele.querySelector('.db-game-title-text')
+        console.log(ele)
+        ele.style.visibility = 'hidden'
+    }
+
     return (
     <>
-    <div class="db-game-container" onDragStart={(e) => console.log('drag start')} onDragEnd={e => console.log('drag end')}>
+    <div name={game.id} class="db-game-container" onDragStart={dragStart} onDragEnd={dragEnd} onMouseOver={mouseOver} onMouseLeave={mouseLeave} >
         <div class="db-game-title-text">
             {game.name}
         </div>
@@ -78,8 +103,14 @@ function DatabaseBox(props) {
     )
 }
 
-function GameTile(props) {
-
+function GamePicker(props) {
+    return (
+        <div class='db-tile-container'>
+            {props.games.map(g => 
+                <DatabaseBox game={g} />
+            )}
+        </div>
+    )
 }
 
 function GameList() {
@@ -90,13 +121,18 @@ function GameList() {
     useEffect(async () => {
         let gamesRes = await fetch('/api/igdb/games')
         let games = await gamesRes.json()
-        // setOptions(games.map((g, idx) => { return {text: g.name, value: String(idx)}}))
+        setPickerData(games)
 
         $('.flex').addEventListener('drop', e => {
             e.preventDefault()
             console.log('drop detected')
+            allGames.value = [...allGames.value, draggingGame.value]
         })
     }, [])
+
+    useEffect(() => {
+
+    }, [pickerData])
 
     let addGameLocal = (e) => {
         e.preventDefault()
@@ -110,14 +146,6 @@ function GameList() {
         allGames.value = [...allGames.value];
     }
 
-    // useEffect(() => {
-    //     console.log(selected)
-    // }, [selected])
-
-    // let addOption = () => {
-    //     setOptions(options.concat({text:'a new one', value:'lol'}))
-    // }
-
     return (
     <div id="main" className="nom-container widener">
         <div id="content" className="shell pl-1 pr-1">
@@ -125,14 +153,7 @@ function GameList() {
             <div class='flex'>
                 <div class='games-db-box'>
                     <input id='search-db' type='text' placeholder='search...' />
-                    <div class='db-tile-container'>
-                        <DatabaseBox game={{name: "Rift Wizard 2", fullBox: 'https://images.igdb.com/igdb/image/upload/t_cover_big/co7yy8.webp',smallBox: 'https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/2058570/header.jpg'}} />
-                        <DatabaseBox game={{name: "Brush Burial: Gutter World", fullBox: 'https://images.igdb.com/igdb/image/upload/t_cover_big/coaqim.webp',smallBox: 'https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/3594120/04e2e5ec0340a10312a15cda8f38ad5aa37cc238/header.jpg'}} />
-                        <DatabaseBox game={{name: "Rift Wizard 2", fullBox: 'https://images.igdb.com/igdb/image/upload/t_cover_big/co7yy8.webp',smallBox: 'https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/2058570/header.jpg'}} />
-                        <DatabaseBox game={{name: "BRAZILIAN DRUG DEALER 3: I OPENED A PORTAL TO HELL IN THE FAVELA TRYING TO REVIVE MIT AIA I NEED TO CLOSE IT", fullBox: 'https://images.igdb.com/igdb/image/upload/t_cover_big/co8u39.webp', smallBox: 'https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/3594120/04e2e5ec0340a10312a15cda8f38ad5aa37cc238/header.jpg'}} />
-                        <DatabaseBox game={{name: "Brush Burial: Gutter World", fullBox: 'https://images.igdb.com/igdb/image/upload/t_cover_big/coaqim.webp',smallBox: 'https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/3594120/04e2e5ec0340a10312a15cda8f38ad5aa37cc238/header.jpg'}} />
-                        <DatabaseBox game={{name: "BRAZILIAN DRUG DEALER 3: I OPENED A PORTAL TO HELL IN THE FAVELA TRYING TO REVIVE MIT AIA I NEED TO CLOSE IT", fullBox: 'https://images.igdb.com/igdb/image/upload/t_cover_big/co8u39.webp', smallBox: 'https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/3594120/04e2e5ec0340a10312a15cda8f38ad5aa37cc238/header.jpg'}} />
-                    </div>
+                    <GamePicker games={pickerData} />
                 </div>
                 <>
                 <div>
