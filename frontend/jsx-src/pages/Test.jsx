@@ -1,6 +1,6 @@
-import { $ } from "../../js/functionhider"
+import { $, $$$ } from "../../js/functionhider.js"
 import { signal, computed } from '@preact/signals';
-import { useState, useEffect } from 'preact/hooks'
+import { useState, useEffect, useRef } from 'preact/hooks'
 import { render } from 'preact'
 import TopMenuBar from './TopMenuBar.jsx'
 import SlimSelect from 'slim-select/react'
@@ -16,10 +16,6 @@ const games = [
 
 const allGames = signal([])
 const draggingGame = signal({})
-
-const completedCount = computed(
-    () => todos.value.filter(todo => todo.completed).length
-);
 
 const newItem = signal('');
 
@@ -40,28 +36,8 @@ let displayStyle = 0
 function GameBox(props) {
     let game = props.game
     let art = `https://images.igdb.com/igdb/image/upload/t_cover_big/${game.igdb_cover_id}.webp`
-
-    return (
-    <>
-    <div class="game-container">
-        <div class="remove-button">x</div>
-        <div class="game-title-text">
-            {game.name}
-        </div>
-        <img class="game-cover" src={art} />
-    </div>
-    </>
-    )
-}
-
-function DatabaseBox(props) {
-    let game = props.game
-    let art = `https://images.igdb.com/igdb/image/upload/t_cover_big/${game.igdb_cover_id}.webp`
-    let textEle, imgEle = undefined
-
-    useEffect(() => {
-        
-    }, [])
+    let textEle = useRef(null)
+    let imgEle = useRef(null)
 
     let dragStart = (e) => {
         draggingGame.value = game
@@ -72,32 +48,59 @@ function DatabaseBox(props) {
     }
 
     let mouseOver = (e) => {
-        let ele = e.target
-        while (!ele.classList.contains('db-game-container')) {
-            ele = ele.parentElement
-        }
-        ele = ele.querySelector('.db-game-title-text')
-        console.log(ele)
-        ele.style.visibility = 'visible'
+        textEle.current.style.visibility = 'visible'
+        imgEle.current.style.opacity = '.33'
     }
 
     let mouseLeave = (e) => {
-        let ele = e.target
-        while (!ele.classList.contains('db-game-container')) {
-            ele = ele.parentElement
-        }
-        ele = ele.querySelector('.db-game-title-text')
-        console.log(ele)
-        ele.style.visibility = 'hidden'
+        textEle.current.style.visibility = 'hidden'
+        imgEle.current.style.opacity = ''
+    }
+
+    return (
+    <>
+    <div name={game.id} class="game-container" onDragStart={dragStart} onDragEnd={dragEnd} onMouseOver={mouseOver} onMouseLeave={mouseLeave}>
+        <div class="remove-button" onClick={props.remove}>x</div>
+        <div ref={textEle} class="game-title-text">
+            {game.name}
+        </div>
+        <img ref={imgEle} class="game-cover" src={art} />
+    </div>
+    </>
+    )
+}
+
+function DatabaseBox(props) {
+    let game = props.game
+    let art = `https://images.igdb.com/igdb/image/upload/t_cover_big/${game.igdb_cover_id}.webp`
+    let textEle = useRef(null)
+    let imgEle = useRef(null)
+
+    let dragStart = (e) => {
+        draggingGame.value = game
+    }
+
+    let dragEnd = (e) => {
+        draggingGame.value = {}
+    }
+
+    let mouseOver = (e) => {
+        textEle.current.style.visibility = 'visible'
+        imgEle.current.style.opacity = '.33'
+    }
+
+    let mouseLeave = (e) => {
+        textEle.current.style.visibility = 'hidden'
+        imgEle.current.style.opacity = ''
     }
 
     return (
     <>
     <div name={game.id} class="db-game-container" onDragStart={dragStart} onDragEnd={dragEnd} onMouseOver={mouseOver} onMouseLeave={mouseLeave} >
-        <div class="db-game-title-text">
+        <div ref={textEle} class="db-game-title-text">
             {game.name}
         </div>
-        <img class="db-game-cover" src={art} />
+        <img ref={imgEle} class="db-game-cover" src={art} />
     </div>
     </>
     )
@@ -113,38 +116,98 @@ function GamePicker(props) {
     )
 }
 
-function GameList() {
-    let [ pickerData, setPickerData ] = useState([])
-    let [ selected, setSelected ] = useState('1')
-    let [ options, setOptions ] = useState([])
+function NomineesList(props) {
+    let [ gameList, setGameList ] = useState([])
+    // let [  ] = useState([])
 
     useEffect(async () => {
-        let gamesRes = await fetch('/api/igdb/games')
-        let games = await gamesRes.json()
-        setPickerData(games)
-
-        $('.flex').addEventListener('drop', e => {
-            e.preventDefault()
-            console.log('drop detected')
-            allGames.value = [...allGames.value, draggingGame.value]
-        })
+        setGameList(props.category.initGames)
     }, [])
 
-    useEffect(() => {
-
-    }, [pickerData])
+    let onDropLocal = (e) => {
+        e.preventDefault()
+        console.log('drop detected')
+        setGameList([...gameList, draggingGame.value])
+    }
 
     let addGameLocal = (e) => {
         e.preventDefault()
-        console.log('add game')
         let newGame = games[Math.floor(Math.random() * 3)]
-        allGames.value = [...allGames.value, newGame]
+        setGameList([...gameList, newGame])
     }
 
-    let removeGameLocal = () => {
-        allGames.value.splice(allGames.value.length - 1, 1);
-        allGames.value = [...allGames.value];
+    let removeGameLocal = (e) => {
+        let idx = gameList.findIndex(g => g.id == e.target.parentElement.getAttribute('name'))
+        console.log(idx)
+        gameList.splice(idx, 1)
+        setGameList([...gameList])
     }
+
+    return (
+        <div class="nominee-container" name={props.category.id}>
+            {/* <div style="display:none;">
+                {gameList.map(g => (<GameBox game={g} />))}
+            </div> */}
+            {/* <div class="track-toggle" onclick={swapTrack}></div> */}
+            <div style='margin:5px'>
+                {props.category.name}
+            </div>
+            <div class="game-grid" onDragOver={e => e.preventDefault()} onDrop={onDropLocal}>
+                {gameList.map(g => (<GameBox game={g} remove={removeGameLocal} />))}
+            </div>
+        </div>
+    )
+}
+
+function GameList() {
+    let [ nominees, setNominees ] = useState([])
+    let [ search, setSearch ] = useState('')
+    let [ pickerData, setPickerData ] = useState([])
+    let [ options, setOptions ] = useState([])
+
+    useEffect(async () => {
+        let nomineesRes = await fetch('/api/nomineeCategories/' + localStorage.getItem('id')) //get everything here??
+        let nomineeCategories = await nomineesRes.json()
+        // console.log(nomineeCategories)
+        let initGameIds = []
+        nomineeCategories.forEach(nom => initGameIds = [...initGameIds, ...nom.game_ids])
+        // console.log(initGameIds)
+        let initGamesRes = await fetch('/api/igdb/games/id/' + initGameIds.toString())
+        let initGames = await initGamesRes.json()
+        // console.log(initGames)
+        nomineeCategories.forEach(nc => {
+            let fullGames = []
+            nc.game_ids.forEach(gid => fullGames.push(initGames.find(g => g.id == gid)))
+            nc.initGames = fullGames
+        })
+        // console.log(nomineeCategories)
+        setNominees(nomineeCategories)
+
+        // let userNomsRes = await fetch('/api/userNominations/', { //skip to getting the games here
+        //     method: 'post',
+        //     body: JSON.stringify({
+        //         user: localStorage.getItem('id'),
+        //         categories: nomineeCategories.map(cat => cat.id),
+        //     })
+        // })
+        // let userNoms = await userNomsRes.json()
+
+    }, [])
+
+    useEffect(async () => {
+
+    }, [pickerData])
+
+    useEffect(() => {
+        let type = setTimeout(() => {
+            fetch('/api/igdb/games/search/'+ search).then(res => {
+                res.json().then(gamesJson => {
+                    setPickerData(gamesJson)
+                })
+            })
+        }, 400)
+        return () => clearTimeout(type)
+    }, [search])
 
     return (
     <div id="main" className="nom-container widener">
@@ -152,27 +215,20 @@ function GameList() {
             <TopMenuBar />
             <div class='flex'>
                 <div class='games-db-box'>
-                    <input id='search-db' type='text' placeholder='search...' />
+                    <input id='search-db' type='text' defaultValue={search} placeholder='search...' onInput={e => setSearch(e.currentTarget.value)}/>
+                    <input id='save-test' type='button' value='save' onClick={save}/>
                     <GamePicker games={pickerData} />
                 </div>
                 <>
                 <div>
-                    <div class="nominee-container" >
-                        <div id="personal-track" style="display:none;">
-                            {allGames.value.map(g => (<GameBox game={g} />))}
-                        </div>
-                        <div class="track-toggle" onclick={swapTrack}></div>
-                        <div id="tga-track" class="game-grid" onDragOver={e => e.preventDefault()}>
-                            {allGames.value.map(g => (<GameBox game={g} />))}
-                        </div>
+                    <div style='display: flex; flex-direction: column; overflow: scroll; height: 90vh;'>
+                        {nominees.map(n => 
+                            <NomineesList category={n} />
+                        )}
                     </div>
-                    <button onClick={addGameLocal}>test append game</button>
-                    <button onClick={removeGameLocal}>test remove game</button>
                 </div>
                 </>
             </div>
-            {/* <SlimSelect id='selele' data={options} value={selected} onChange={setSelected} /> */}
-            
         </div>
     </div>
     )
@@ -217,6 +273,32 @@ function Test() {
     </div>
     </>
     )
+}
+
+async function save() {
+    let saveData = {}
+    let cats = $$$('.nominee-container')
+    saveData.selections = []
+    saveData.userId = localStorage.getItem('id')
+    cats.forEach(cat => {
+        let saveRow = {}
+        saveRow.id = cat.getAttribute('name')
+        saveRow.games = []
+        let choices = cat.querySelectorAll('.game-container')
+        choices.forEach(g => {
+            saveRow.games.push(g.getAttribute('name'))
+        })
+        saveData.selections.push(saveRow)
+    })
+    
+    console.log(JSON.stringify(saveData))
+    fetch('/api/saveNominees', {
+        method: 'post',
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify(saveData)
+    })
 }
 
 export default function() {

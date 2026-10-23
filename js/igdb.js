@@ -285,7 +285,7 @@ export class IGDBJob {
 
         log(`IGDB // Of the ${gameList.length} released items, there are ${gamesToUpdate.length} already in the database`)
 
-        // console.log('games to update:')
+        log('IGDB // compiling details for new games...')
         for (let chunk of chunkList(gamesToUpdate, 250)) {
             let idString = this.#apicalypseIdString(chunk)
             let detailsRes = await apicalypse(this.apiConfig)
@@ -318,7 +318,6 @@ export class IGDBJob {
             compiledIGDBData.updateGames = Object.assign(compiledIGDBData.updateGames, compiledToUpdate)
         }
 
-        // console.log('games to add:')
         for (let chunk of chunkList(gamesToAdd, 100)) {
             let idString = this.#apicalypseIdString(chunk)
             // let apicalypsebody = `fields ${detailsFields};where ${idString};sort id asc;limit 500;`
@@ -378,13 +377,12 @@ export class IGDBJob {
         let parentGamesToAdd = dbParentCheck.filter(g => !g.exists).filter(g =>
             !allKeysAddingOrUpdating.includes(String(g.id))
         ) // parent games missing, and not already going to be added in the new games
-        log(`IGDB //`)
-        let logMessage = `IGDB //  ${parentGamesToScan.length} parent games detected: ${parentGamesToAdd.length} to add, `
+        let logMessage = `IGDB // ${parentGamesToScan.length} parent games detected. `
         logMessage = logMessage.concat(`${parentGamesToUpdate.length} to update, `)
         logMessage = logMessage.concat(`and ${parentGamesToScan.length - (parentGamesToAdd.length + parentGamesToUpdate.length)} already in the list of games to add`)
         log(logMessage)
 
-        // console.log('parents to update:')
+        log('compiling data for parents...')
         for (let chunk of chunkList(parentGamesToUpdate, 100)) {
             let idString = this.#apicalypseIdString(chunk)
             let detailsRes = await apicalypse(this.apiConfig)
@@ -606,7 +604,7 @@ export class IGDBJob {
             // dbStr = dbStr.concat(') as ug(id, igdb_cover_id, release_date, developers, publishers, notability_score, is_vr,',
             //     'is_in_early_access, is_released_from_early_access, is_expansion, is_mobile, is_free_to_play,',
             //     'alternative_names, last_update_date) ')
-            dbStr = dbStr.concat('where ug.idid = g.id;')
+            dbStr = dbStr.concat('where ug.id = g.id;')
             // console.log('update parents:')
             // console.log(dbStr)
             this.#runCmd(dbStr)
@@ -619,7 +617,7 @@ export class IGDBJob {
         retVal = retVal.concat(game.id, ',')
         retVal = retVal.concat(`'${game.cover_id}'`, ',')
         retVal = retVal.concat(`'${game.name}'`, ',')
-        retVal = retVal.concat(`'${game.first_release_date}'`, ',')
+        retVal = retVal.concat(`'${game.first_release_date}'::date`, ',')
         retVal = retVal.concat(`array[${game.developers}]::text[]`, ',') // might need `array[${game.developers}]`
         retVal = retVal.concat(`array[${game.publishers}]::text[]`, ',') // might need `array[${game.publishers}]`
         retVal = retVal.concat(game.notability_score, ',')
@@ -631,7 +629,7 @@ export class IGDBJob {
         retVal = retVal.concat(game.platforms.map(p => p.id).some(p => mobilePlatformIds.includes(p)), ',') //is mobile?
         retVal = retVal.concat(game.keywords.includes(2385), ',') //is free to play?
         retVal = retVal.concat(`array[${game.alternative_names}]::text[]`, ',') // might need `array[${game.alternative_names}]`
-        retVal = retVal.concat(`'${now}'`) // last updated
+        retVal = retVal.concat(`'${now}'::date`) // last updated
         retVal = retVal.concat('),')
         return retVal
     }

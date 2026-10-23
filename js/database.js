@@ -1,6 +1,6 @@
 import 'dotenv/config'
 import pg from 'pg'
-import { sqlize, unsqlize } from './functionhider.js'
+import { sqlize, unsqlize, range } from './functionhider.js'
 const Client = pg.Client
 
 // function sqlize(str) {
@@ -201,9 +201,85 @@ export default class Database {
         }
     }
 
-    async getGames() {
-        let cmd = `select id,name,igdb_cover_id from games limit 100;`
+    async getGames(term) {
+        let cmd = ''
+        if (term == undefined) {
+            cmd = `select id,name,igdb_cover_id from games limit 100;`
+        } else {
+            term = term.replaceAll('\'', '')
+            term = term.replaceAll(' ', '%')
+            cmd = `select id,name,igdb_cover_id from games where name ilike '%${term}%' limit 100;`
+        }
         let res = await this.#runCmd(cmd)
         return res.rows
+    }
+
+    async getGamesByIds(strList) {
+        let cmd = ''
+        if (strList == undefined) {
+            cmd = `select id,name,igdb_cover_id from games limit 100;`
+        } else {
+            cmd = `select id,name,igdb_cover_id from games where id in (${strList});`
+        }
+        let res = await this.#runCmd(cmd)
+        return res.rows
+    }
+
+    async getNomineeCategories(e_id) {
+        if (e_id == undefined) {
+            e_id = 1
+        }
+        let cmd = `select id,name from nominee_categories where event_id=${e_id};`
+        let res = await this.#runCmd(cmd)
+        return res.rows
+    }
+
+    /**
+     * this works because the statement is an upsert (insert or update), fixed to a
+     * unique index marked by the combination of user_id and category_id.
+     * databases are pretty cool once you start trying to make them do weird stuff
+     */
+    async saveUserNominations(saveObj) {
+        console.log(saveObj.userId)
+        if (saveObj.userId == undefined) {
+            return
+        }
+        let cmd = `insert into user_nominations (user_id, category_id, game_ids) values `
+        saveObj.selections.forEach(sel => {
+            cmd = cmd.concat(`(${saveObj.userId}, ${sel.id}, array[${sel.games.toString()}]::integer[]),`)
+        })
+        cmd = cmd.slice(0, -1)
+        cmd = cmd.concat(` on conflict (user_id, category_id) `)
+        cmd = cmd.concat(`do update set game_ids = EXCLUDED.game_ids;`)
+        this.#runCmd(cmd)
+    }
+
+    // i hate this i know theres a one-liner way to do it in sql but im not smart enough to do it
+    async getUserNominations(userId, eventId) {
+        if (eventId == undefined) {
+            eventId = 1
+        }
+        let cmd = `select id,name from nominee_categories where event_id=${eventId} order by id;`
+        let rows = (await this.#runCmd(cmd)).rows
+        cmd = `select category_id, game_ids from user_nominations where category_id in (${rows.map(r => r.id).toString()}) and user_id=${userId} order by category_id;`
+        let noms = (await this.#runCmd(cmd)).rows
+        if (noms.length == 0) {
+            rows.forEach(r => r.game_ids = [])
+        } else if (noms.length == rows.length) {
+            range(rows.length).forEach(idx => {
+                rows[idx].game_ids = noms[idx].game_ids
+            })
+        } else {
+            console.log('the stupid thing with mismatched category and user nominations has happened')
+        }
+        console.log(rows)
+        return rows
+
+        // cmd = `user_nominations.category_id, nominee_categories.name, user_nominations.game_ids from nominee_categories `
+        // cmd = cmd.concat(`inner join user_nominations on nominee_categories.id=user_nominations.category_id `)
+        // cmd = cmd.concat(`where nominee_categories.event_id=${eventId} and `)
+        // cmd = cmd.concat(`user_nominations.user_id=${userId};`)
+        // let rows = await this.#runCmd(cmd)
+        // return rows
     }
 }

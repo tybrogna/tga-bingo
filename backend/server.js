@@ -54,8 +54,20 @@ app.get('/testcron', async (req, res) => {
     res.send('started')
 })
 
-app.get('/igdb/games', async (req, res) => {
-    res.json(await db.getGames())
+app.get('/igdb/games/search/:term?', async (req, res) => {
+    res.json(await db.getGames(req.params.term))
+})
+
+app.get('/igdb/games/id/:list?', async (req, res) => {
+    res.json(await db.getGamesByIds(req.params.list))
+})
+
+app.get('/nomineeCategories/:id?', async (req, res) => {
+    res.json(await db.getUserNominations(req.params.id))
+})
+
+app.post('/saveNominees', async (req,res) => {
+    await db.saveUserNominations(req.body)
 })
 
 app.get('/dbAccess/:token/getTables', async (req, res) => {
@@ -120,9 +132,9 @@ app.get('/miniDb', async (req, res) => {
     res.send('hi')
 })
 
-// app.get('/miniSql', async (req, res) => {
-//     igdb.updateGamesTable(struc)
-// })
+app.get('/maxDb', async (req, res) => {
+    updateDBWithThisWeeksGames()
+})
 
 async function initIGDB() {
     let utcOrigin = 1761955200 // 1 Nov 2026 00:00
@@ -145,25 +157,25 @@ async function updateDBWithThisWeeksGames() {
     let secondWeek = lastWeek - utcOneWeek
     let thirdWeek = secondWeek - utcOneWeek
     let fourthWeek = thirdWeek - utcOneWeek
-    let igdb = new IGDBJob()
-    igdb.connect()
     let rawWeeklyGames, compiledGames
+    let igdb = new IGDBJob()
+    await igdb.connect()
 
     rawWeeklyGames = await igdb.getGames(lastWeek, now)
     compiledGames = await igdb.organizeGameDetails(rawWeeklyGames)
-    igdb.updateGamesTable(compiledGames)
+    await igdb.updateGamesTable(compiledGames)
 
     rawWeeklyGames = await igdb.getGames(secondWeek, lastWeek)
     compiledGames = await igdb.organizeGameDetails(rawWeeklyGames)
-    igdb.updateGamesTable(compiledGames)
+    await igdb.updateGamesTable(compiledGames)
 
     rawWeeklyGames = await igdb.getGames(thirdWeek, secondWeek)
     compiledGames = await igdb.organizeGameDetails(rawWeeklyGames)
-    igdb.updateGamesTable(compiledGames)
+    await igdb.updateGamesTable(compiledGames)
 
     rawWeeklyGames = await igdb.getGames(fourthWeek, thirdWeek)
     compiledGames = await igdb.organizeGameDetails(rawWeeklyGames)
-    igdb.updateGamesTable(compiledGames)
+    await igdb.updateGamesTable(compiledGames)
 
     igdb.disconnect()
 }
@@ -192,7 +204,7 @@ app.post('/registerUser', async (req, res) => {
 
     try {
         let hashedPass = await bcrypt.hash(password, 10)
-        await db.createUser(email, username, hashedPass)
+        let dbUser = await db.createUser(email, username, hashedPass)
         let token = jwt.sign({id: dbUser.id}, process.env.JWT_SECRET, {expiresIn: '8h'})
         res.json({ token: token, id: dbUser.id, username: dbUser.username })
     } catch(err) {

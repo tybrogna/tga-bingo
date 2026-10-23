@@ -17,24 +17,22 @@ function MenuItem(props) {
 
 export default function TopMenuBar(props) {
     let [ menuItems, setMenuItems ] = useState([])
-    console.log(useRoute().path)
+    // console.log(useRoute().path)
 
     useEffect(async () => {
         let labels = []
         labels.push({text: 'Bingo', link: '/', image: icon})
         labels.push({text: 'Nominees', link: '/', image: icon})
-        if (localStorage.getItem('jwt') != null && 
-            localStorage.getItem('signedIn') != null &&
-            localStorage.getItem('signedIn') == false) {
+        if (localStorage.getItem('jwt') != null) {
             let activeTokenRes = await fetch('/api/verifyTokenActive', {
                 method: 'post',
                 headers: { 'Content-Type': 'application/json'},
-                body: JSON.stringify({ 'token': localStorage.getItem('jwt') })
+                body: JSON.stringify({ 'username': localStorage.getItem('username'), 'token': localStorage.getItem('jwt') })
             })
             let activeToken = await activeTokenRes.text()
-            console.log(activeToken)
-            if (activeToken == true) {
-                console.log('still logged in')
+            // console.log('at', activeToken)
+            if (activeToken) {
+                // console.log('still logged in')
                 localStorage.setItem('signedIn', true)
                 labels.push({text: localStorage.getItem('username'), link: '/accounts', image: icon})
             } else {

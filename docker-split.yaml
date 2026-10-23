@@ -9,16 +9,16 @@ services:
     volumes:
       - ./backend/db/main:/docker-entrypoint-initdb.d
     restart: unless-stopped
-  test-db:
-    container_name: test-db
-    image: postgres:16-alpine
-    env_file: ./.env
-    build: ./backend/db/test
-    ports:
-      - $POSTGRES_PORT:$POSTGRES_PORT  # should be 5432
-    volumes:
-      - ./backend/db/test:/docker-entrypoint-initdb.d
-    restart: unless-stopped
+  # test-db:
+  #   container_name: test-db
+  #   image: postgres:16-alpine
+  #   env_file: ./.env
+  #   build: ./backend/db/test
+  #   ports:
+  #     - $POSTGRES_PORT:$POSTGRES_PORT  # should be 5432
+  #   volumes:
+  #     - ./backend/db/test:/docker-entrypoint-initdb.d
+  #   restart: unless-stopped
   tga-front:
     container_name: tga-front
     env_file: ./.env

@@ -51,6 +51,10 @@ export function $(cssSelector) {
     return document.querySelector(cssSelector)
 }
 
+export function $$$(cssSelector) {
+    return document.querySelectorAll(cssSelector)
+}
+
 /***
  * Python style range function
  * @param {number} from - start value, default 0

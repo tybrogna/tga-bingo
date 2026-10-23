@@ -23,9 +23,9 @@ SET row_security = off;
 --
 
 COPY public.events (id, name, year, active) FROM stdin;
-1	Summer Games Fest	2025	f
+4	Summer Games Fest	2025	f
 2	The Game Awards	2024	f
-3	The Game Awards	2025	t
+3	The Game Awards	2025	f
 \.
 
 

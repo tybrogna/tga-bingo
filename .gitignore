@@ -10,6 +10,7 @@ oracle-bingo-ssh.pem
 Caddyfile
 oracle cmds.txt
 .env
+image.env
 docker.env
 other.yaml
 docker cmds.txt

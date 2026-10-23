@@ -6,9 +6,14 @@ import { colinHacksEmailRegex, $, range, delay } from '../../js/functionhider.js
 let loginResMessage = signal('')
 
 export default function UserControl(props) {
-    let [ signedIn, setSignedIn ] = useState(localStorage.getItem('signedIn'))
+    let [ signedIn, setSignedIn ] = useState()
 
-    if (signedIn) {
+    useEffect(() => {
+        setSignedIn(localStorage.getItem('jwt'))
+    })
+
+    if (signedIn != null) {
+        console.log(signedIn)
         return (
             <>
             <title>User</title>
@@ -57,19 +62,20 @@ function checkData(packet) {
         $('#wLogin-password-box').style.border = 'red 1px solid'
         return false
     }
-
+    
     if (!colinHacksEmailRegex(packet.email)) {
         $('#wLogin-email-box').style.border = 'red 1px solid'
         return false
     }
+    return true
 }
 
 async function login() {
-    let data = JSON.stringify({
+    let data = {
         email: $('#wLogin-email-box').value,
         username: $('#wLogin-username-box').value,
         password: $('#wLogin-password-box').value
-    })
+    }
 
     if (!checkData(data)) {
         return
@@ -83,7 +89,7 @@ async function login() {
         headers: {
             "Content-Type": "application/json",
         },
-        body: data
+        body: JSON.stringify(data)
     })
     let login = await loginRes.json()
     console.log(login)
@@ -93,11 +99,11 @@ async function login() {
 }
 
 async function register() {
-    let data = JSON.stringify({
+    let data = {
         email: $('#wLogin-email-box').value,
         username: $('#wLogin-username-box').value,
         password: $('#wLogin-password-box').value
-    })
+    }
 
     if (!checkData(data)) {
         return
@@ -108,13 +114,12 @@ async function register() {
         $('#wLogin-email-box').style.border = ''
 
 
-    console.log(data)
     let registerRes = await fetch('/api/registerUser', {
         method: 'post',
         headers: {
             "Content-Type": "application/json",
         },
-        body: data
+        body: JSON.stringify(data)
     })
     let registerJson = await registerRes.json()
     if (Object.hasOwn(registerJson, 'error')) {
@@ -144,7 +149,10 @@ async function verify() {
 }
 
 async function unsetJwt() {
-    localStorage.setItem('jwt', null)
-    localStorage.setItem('id', null)
-    localStorage.setItem('username', null)
+    localStorage.removeItem('jwt')
+    localStorage.removeItem('id')
+    localStorage.removeItem('username')
+    // localStorage.setItem('jwt', undefined)
+    // localStorage.setItem('id', undefined)
+    // localStorage.setItem('username', undefined)
 }
