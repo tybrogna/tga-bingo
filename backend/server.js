@@ -302,7 +302,7 @@ app.post('/SubmitTile', imageUpload, async(req, res) => {
 })
 
 app.get('/getTiles/active/:seed', async (req, res) => {
-    let latestEvent = (await db.queryAllEvents(true))[0]
+    let latestEvent = await db.activeEvent()
     res.send(
         await getTiles(latestEvent.name, latestEvent.year, req.params.seed)
     )
@@ -317,6 +317,9 @@ app.get('/getTiles/:eventName/:eventYear/:seed', async (req, res) => {
 async function getTiles(eventName, eventYear, seed) {
     let random = getPRNG(seed)
     let tileClusters = await db.queryTileClustersForCard(eventName, eventYear)
+    if (tileClusters.length == 0) {
+        return
+    }
     let freeTile = tileClusters[0]
     tileClusters = tileClusters.slice(1)
     tileClusters = shuffle(tileClusters, random)
@@ -334,20 +337,24 @@ async function getTiles(eventName, eventYear, seed) {
 }
 
 app.get('/getAllTiles/active', async (req, res) => {
-    let latestEvent = (await db.queryAllEvents(true))[0]
+    let latestEvent = await db.activeEvent()
     res.send(
         await getAllTiles(latestEvent.name, latestEvent.year)
     )
 })
 
 app.get('/getAllTiles/:eventName/:eventYear/', async (req, res) => {
+    let chosenEvent = (await db.queryEvents(req.params.eventName, req.params.eventYear))[0]
     res.send(
-        await getAllTiles(req.params.eventName, req.params.eventYear)
+        await getAllTiles(chosenEvent.name, chosenEvent.year)
     )
 })
 
 async function getAllTiles(eventName, eventYear, seed) {
     let tileClusters = await db.queryTileClustersForCard(eventName, eventYear)
+    if (tileClusters.length == 0) {
+        return
+    }
     let tilesToGet = []
     let tilesInClusterIds = tileClusters.map(cluster => {
         let tileIds = cluster.tile_ids.split(',')

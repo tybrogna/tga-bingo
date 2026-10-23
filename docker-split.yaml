@@ -3,11 +3,11 @@ services:
     container_name: tga-database
     image: postgres:16-alpine
     env_file: ./.env
-    build: ./backend/db/main
+    build: ./backend/db/
     ports:
       - $POSTGRES_PORT:$POSTGRES_PORT  # should be 5432
     volumes:
-      - ./backend/db/main:/docker-entrypoint-initdb.d
+      - ./backend/db/:/docker-entrypoint-initdb.d
     restart: unless-stopped
   # test-db:
   #   container_name: test-db

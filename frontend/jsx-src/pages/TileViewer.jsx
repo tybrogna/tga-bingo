@@ -4,29 +4,13 @@ import { isLocalhost } from '../../js/functionhider.js'
 
 let isLocal = isLocalhost()
 
-export async function renderTileViewer(zone, path, eventName, eventYear) {
-    let eventTiles = await fetchAllTiles(path, eventName, eventYear)
-    render(TileViewer(eventTiles), zone)
-}
-
-async function fetchAllTiles(path, eventName, eventYear) {
-    let eventTiles
-    
-    if (path.startsWith('/past')) {
-        eventTiles = await fetch(`/api/getAllTiles/${eventName}/${eventYear}`)
-    } else {
-        eventTiles = await fetch(`/api/getAllTiles/active`)
-    }
-    return await eventTiles.json()
-}
-
 export function TileViewer(props) {
-    let { path, eventName, eventYear } = props
+    let { eventName, eventYear } = props
     let [ viewerData, setViewerData ] = useState([])
 
     useEffect(async () => {
         let eventTilesRaw, eventTiles
-        if (path.startsWith('/past')) {
+        if (eventName != undefined && eventYear != undefined) {
             eventTilesRaw = await fetch(`/api/getAllTiles/${eventName}/${eventYear}`)
         } else {
             eventTilesRaw = await fetch(`/api/getAllTiles/active`)

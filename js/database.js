@@ -17,7 +17,7 @@ export default class Database {
         this.client = new Client({
             user: process.env.POSTGRES_USER,
             password: process.env.POSTGRES_PASSWORD,
-            host: 'test-db',
+            host: 'tga-database',
             port: process.env.POSTGRES_PORT,
             database: "bingo-db"
         })
@@ -77,11 +77,20 @@ export default class Database {
         return res.rows
     }
 
-    async queryAllEvents(active=true) {
+    async activeEvent() {
         let cmd = `
             select *
             from events
-            where active=${active}`
+            where active=true;`
+        let res = await this.#runCmd(cmd)
+        return res.rows[0]
+    }
+
+    async queryEvents(title, year) {
+        let cmd = `
+            select *
+            from events
+            where name='${title}' and year=${year};`
         let res = await this.#runCmd(cmd)
         return res.rows
     }
@@ -104,6 +113,15 @@ export default class Database {
                 join events on events.id=tile_clusters.event_id
             where events.name='${eventName}' and events.year=${eventYear}
             order by is_free desc`
+        let res = await this.#runCmd(cmd)
+        return res.rows
+    }
+
+    async getAllTilesById(idList) {
+        let cmd = `
+            select * from tiles
+            where id in (${idList.toString()})
+            order by array_position(array[${idList.toString()}], id)`
         let res = await this.#runCmd(cmd)
         return res.rows
     }
@@ -256,10 +274,13 @@ export default class Database {
 
     // i hate this i know theres a one-liner way to do it in sql but im not smart enough to do it
     async getUserNominations(userId, eventId) {
+        let cmd
         if (eventId == undefined) {
-            eventId = 1
+            cmd = `select nominee_categories.id,nominee_categories.name from nominee_categories join `
+            cmd = cmd.concat(`events on nominee_categories.event_id=events.id where events.active=true;`)
+        } else {
+            cmd = `select id,name from nominee_categories where event_id=${eventId} order by id;`
         }
-        let cmd = `select id,name from nominee_categories where event_id=${eventId} order by id;`
         let rows = (await this.#runCmd(cmd)).rows
         cmd = `select category_id, game_ids from user_nominations where category_id in (${rows.map(r => r.id).toString()}) and user_id=${userId} order by category_id;`
         let noms = (await this.#runCmd(cmd)).rows
@@ -272,7 +293,7 @@ export default class Database {
         } else {
             console.log('the stupid thing with mismatched category and user nominations has happened')
         }
-        console.log(rows)
+        // console.log(rows)
         return rows
 
         // cmd = `user_nominations.category_id, nominee_categories.name, user_nominations.game_ids from nominee_categories `

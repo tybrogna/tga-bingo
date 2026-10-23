@@ -22,7 +22,7 @@ export default function TopMenuBar(props) {
     useEffect(async () => {
         let labels = []
         labels.push({text: 'Bingo', link: '/', image: icon})
-        labels.push({text: 'Nominees', link: '/', image: icon})
+        labels.push({text: 'Nominees', link: '/nominees', image: icon})
         if (localStorage.getItem('jwt') != null) {
             let activeTokenRes = await fetch('/api/verifyTokenActive', {
                 method: 'post',

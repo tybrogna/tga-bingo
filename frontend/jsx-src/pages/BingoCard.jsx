@@ -5,7 +5,7 @@ import { getPRNG, shuffle } from '../../js/randomHelper.js'
 import { $, isLocalhost, delay } from '../../js/functionhider.js'
 import { TileViewer, compressAllImages } from './TileViewer.jsx'
 import { Tile } from '../../js/Tile.js'
-import { words } from '../../words.js'
+import { words } from '../../js/words.js'
 import TopMenuBar from './TopMenuBar.jsx'
 import correctImg from '../img/correct25.png'
 import closeImg from '../img/close25.png'
@@ -18,7 +18,7 @@ let path = ""
 let eventName = ""
 let eventYear = ""
 let isLocal = isLocalhost()
-let randomWord = () => { return Math.floor(Math.random() * words.length) }
+let randomWord = () => { return words[Math.floor(Math.random() * words.length)] }
 
 let bingoObj = { }
 
@@ -36,11 +36,10 @@ let lastZone = ""
 function BingoSkeleton(props) {
     let [ viewerDisplayed, setViewerDisplayed ] = useState(false)
     let [ viewerWasRendered, setViewerWasRendered ] = useState(false)
-    let [ cardSeed, setCardSeed ] = useState('')
+    let [ cardSeed, setCardSeed ] = useState()
     let [ tiles, setTiles ] = useState([])
     
     // #TODO use algorithmic name and years
-    console.log(props.eventName, props.eventYear)
     $('body').addEventListener('click', event => {
         if (event.target.tagName == 'BODY' || event.target.id == 'tile-list-empty' || event.target.id == 'viewer-overlay') {
             setViewerDisplayed(false)
@@ -49,7 +48,6 @@ function BingoSkeleton(props) {
     })
 
     useEffect(() => {
-        console.log('use effect -- onLoad')
         let defaultSeed
         if (localStorage.getItem('seed')) {
             defaultSeed = localStorage.getItem('seed')
@@ -65,7 +63,6 @@ function BingoSkeleton(props) {
     }, []) // do only once after page loads
 
     useEffect(async () => {
-        console.log('use effect -- card seed: ' + cardSeed)
         let storedSeed
         if (localStorage.getItem('seed')) {
             storedSeed = localStorage.getItem('seed')
@@ -74,7 +71,8 @@ function BingoSkeleton(props) {
             localStorage.setItem('seed', cardSeed)
         }
 
-        setTiles(await newFetchShuffledTiles(cardSeed))
+        let tiles = await newFetchShuffledTiles(cardSeed, props.eventName, props.eventYear)
+        setTiles(tiles)
         sortTiles()
         revealTiles()
     }, [cardSeed]) // do when cardSeed changes
@@ -94,7 +92,6 @@ function BingoSkeleton(props) {
     }
 
     useEffect(() => {
-        console.log('use effect -- viewer displayed: ' + viewerDisplayed)
         if (viewerDisplayed) {
             $("#viewer-overlay").style.display = "block"
             $("#tile-list-zone").style.display = "block"
@@ -111,7 +108,6 @@ function BingoSkeleton(props) {
     <>
     <title>Bingo: The Game Awards 2024</title>
     {/* <link rel="icon" href={favicon} /> */}
-    {/* <PageShell> */}
     <div id="main" className="container widener">
         <TopMenuBar />
         <div id="content" className="shell pl-5 pr-5">
@@ -142,7 +138,7 @@ function BingoSkeleton(props) {
                         <div id="tile-list-empty" style="visibility: visible; max-height: 825px;" class="row align-items-end pr-2 pt-2">
                             <div class="col-4" style="visibility: visible;"></div>
                             <div id="tile-list-zone" style="display: block;" class="col-8">
-                                <TileViewer path={'hiya'} eventName={'geoffs nonsense'} eventYear={2016} />
+                                <TileViewer eventName={props.eventName} eventYear={props.eventYear} />
                             </div>
                         </div>
                     </div>
@@ -187,10 +183,6 @@ function TitleAndHeader(props) {
 }
 
 function Footer(props) {
-    // if (!localStorage.getItem('seed')) {
-    //     localStorage.setItem('seed', 'Enter your name or email or something')
-    // }
-    // let seedBoxVal = localStorage.getItem('seed')
     return (
         <div class="row pt-3 pb-3">
             <div class="col">
@@ -220,85 +212,10 @@ function HelperOverlay() {
     )
 }
 
-export async function generateCard(zone, regen=false) {
-    if (zone == null)
-        return
-    if (!localStorage.getItem('seed') || localStorage.getItem('seed') == 'Enter your name or email or something') {
-        $('#seed-box').value = "this is the version with the busted random words"
-
-        // let randomWords = await fetch('https://random-word-api.herokuapp.com/word?number=4')
-        // let rw = await randomWords.json()
-        // document.querySelector('#seed-box').value = rw.toString().replaceAll(',',' ')
-    }
-    lastZone = zone
-    let shuffled = await fetchShuffledTiles()
-    render(BingoCard(shuffled), zone)
-    sortTiles()
-    revealTiles()
-}
-
-export async function regenerateCard(zone) {
-    if (zone == null)
-        { zone = lastZone }
-    if (!localStorage.getItem('seed') || localStorage.getItem('seed') == 'Enter your name or email or something') {
-        $('#seed-box').value = "this is the version with the busted random words"
-        // let randomWords = await fetch('https://random-word-api.herokuapp.com/word?number=4')
-        // let rw = await randomWords.json()
-        // document.querySelector('#seed-box').value = rw.toString().replaceAll(',',' ')
-    }
-
-    colNumbers.forEach((num) => {
-        bingoLetters.forEach((letter) => {
-            let tileEle = document.querySelector('#' + letter + num)
-            tileEle.classList.remove('tile-anim')
-            if (tileEle.querySelector('#tick').classList.contains('tick-visible')) {
-                tileEle.querySelector('#tick').classList.remove('tick-visible')
-                tileEle.querySelector('#tick').classList.add('tick-hidden')
-            }
-        })
-    })
-    localStorage.setItem('seed', document.querySelector('#seed-box').value)
-    let shuffled = await fetchShuffledTiles()
-    render(BingoCard(shuffled), zone)
-    checkBingo()
-    revealTiles()
-}
-
-async function fetchShuffledTiles() {
-    let seed = localStorage.getItem('seed')
+async function newFetchShuffledTiles(seed,event,year) {
     let shuffledRes, shuffled
 
-    if (path.startsWith('/past')) {
-        shuffledRes = await fetch(`/api/getTiles/${eventName}/${eventYear}/${seed}`)
-    } else {
-        shuffledRes = await fetch(`/api/getTiles/active/${seed}`)
-    }
-    
-    try {
-        shuffled = await shuffledRes.json()
-    } catch (e) {
-        shuffled = []
-    }
-    while (shuffled.length < 25) {
-        let len = shuffled.length
-        shuffled.push({
-            "title": "Data Missing" + (len + 1),
-            "description": "Doesn't exist",
-            "img_loc": ""
-        })
-    }
-
-    let temp = shuffled[0]
-    shuffled[0] = shuffled[12]
-    shuffled[12] = temp
-
-    return shuffled
-}
-
-async function newFetchShuffledTiles(seed) {
-    let shuffledRes, shuffled
-
-    if (path.startsWith('/past')) {
+    if (event != undefined && year != undefined) {
         shuffledRes = await fetch(`/api/getTiles/${eventName}/${eventYear}/${seed}`)
     } else {
         shuffledRes = await fetch(`/api/getTiles/active/${seed}`)
@@ -307,8 +224,6 @@ async function newFetchShuffledTiles(seed) {
     try {
         shuffled = await shuffledRes.json()
     } catch (e) { shuffled = [] }
-
-    console.log(shuffled)
 
     while (shuffled.length < 25) {
         let len = shuffled.length
@@ -477,12 +392,7 @@ export async function revealTiles() {
     }
 }
 
-// let ticking = 0
 function checkBingo() {
-    // ticking -= 1
-    // if (ticking > 0) {
-    //     return
-    // }
 
     for (const [key, value] of Object.entries(bingoObj)) {
         value.forEach(tile => {
@@ -518,44 +428,7 @@ function checkBingoTiles(tileArr) {
     }
 }
 
-// async function getShuffleTilesServerSide() {
-//     let seed = localStorage.getItem('seed')
-//     let random = getPRNG(seed)
-//     let eventMarkedTilesSize = await fetch(`/tiles/eventid/${eventId}`,).then(res => res.json())
-
-//     return eventMarkedTilesSize.map(dbData => {
-//         let tiles = []
-//         tiles[0] = new Tile(dbData.title_1)
-//         if (dbData.description_1 != null) { tiles[0].description = dbData.description_1 }
-//         if (dbData.imgLoc != null) { tiles[0].description = dbData.description_1 }
-//         tiles[0].imgLoc = dbData.img_loc_1 != null ? dbData.img_loc_1 : ""
-//         if (dbData.title_2 != null) {
-//             tiles[1] = new Tile(dbData.title_2, dbData.img_loc_2, dbData.description_2)
-//         }
-//         if (dbData.title_3 != null) {
-//             tiles[1] = new Tile(dbData.title_3, dbData.img_loc_3, dbData.description_3)
-//         }
-
-//     })
-// }
-
-// function getShuffleTiles(tilesToShuffle) {
-//     let seed = localStorage.getItem('seed')
-//     let random = getPRNG(seed)
-//     return shuffle(tilesToShuffle, random).map(tile => {
-//         let reducedTile
-//         if (tile.length > 0) {
-//             let pick = Math.floor(random() * tile.length)
-//             reducedTile = tile[pick]
-//         } else {
-//             reducedTile = tile
-//         }
-//         return reducedTile
-//     })
-// }
-
 async function displayViewerOverlay() {
-    console.log('viewerOverlay popping up')
     $("#viewer-overlay").style.display = "block"
     $("#tile-list-zone").style.display = "block"
     // renderTileViewer($('#tile-list-zone'), path, eventName, eventYear)
@@ -587,18 +460,13 @@ function swapTickVisibility(event) {
         tickTarget.classList.remove('tick-hidden')
         tickTarget.classList.add('tick-visible')
     }
-    // ticking += 1
     checkBingo()
 }
 
-
-// move bingoSkeleton into this function
-// move generateCard into useEffect()
 
 export default function() {
     path = useRoute().path
     eventName = useRoute().params.eventName
     eventYear = useRoute().params.eventYear // #TODO this is caveman shit
     render(BingoSkeleton({path, eventName, eventYear}), document.querySelector('body'))
-    // generateCard(document.querySelector('#tile-zone'))
 }
