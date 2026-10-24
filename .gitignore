@@ -28,3 +28,5 @@ backend/db/test/backup-data.sql
 
 frontend/dist/
 frontend/node_modules/
+log.txt
+bingo.db.data.sql

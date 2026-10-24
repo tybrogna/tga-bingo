@@ -1,4 +1,4 @@
-FROM node:23
+FROM node:26
 
 RUN mkdir /bingo-app
 WORKDIR /bingo-app
