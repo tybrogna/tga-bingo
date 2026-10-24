@@ -1,4 +1,14 @@
 services:
+  test-db:
+    container_name: test-db
+    image: postgres
+    build: ./bingo-app/db/test
+    ports:
+      - $TEST_POSTGRES_LOCAL_PORT:$TEST_POSTGRES_IMAGE_PORT
+    volumes:
+      - ./bingo-app/db/test:/docker-entrypoint-initdb.d
+    restart: unless-stopped
+    env_file: ./image.env
   db:
     container_name: tga-database
     image: postgres
@@ -6,7 +16,7 @@ services:
     ports:
       - $POSTGRES_LOCAL_PORT:$POSTGRES_IMAGE_PORT
     volumes:
-      - ./bingo-app/db:/docker-entrypoint-initdb.d
+      - ./bingo-app/db/main:/docker-entrypoint-initdb.d
       # - ./bingo-app/db:/var/lib/postgres
     restart: unless-stopped
     env_file: ./image.env
@@ -15,8 +25,10 @@ services:
     build: ./bingo-app
     depends_on:
       - db  # "db" has to be done first for "app" to build
+      - test-db  # "db" has to be done first for "app" to build
     links:
       - db  # this makes the host have a name "db" in the image
+      - test-db  # this makes the host have a name "db" in the image
     ports:
       - $APP_LOCAL_PORT:$APP_IMAGE_PORT
     volumes:
@@ -26,6 +38,7 @@ services:
     env_file: ./image.env
     restart: unless-stopped
     tty: true
+    # command: npm run dev
 
 volumes:
   db:

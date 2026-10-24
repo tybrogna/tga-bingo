@@ -1,20 +1,32 @@
+# bingo-app/server.py
+# bingo-app/node_modules/
+# bingo-app/dist/
+# bingo-app/.oci/
+bingo-app/
+
+aws cmds.txt
 bingo-ssh.pem
 oracle-bingo-ssh.pem
-aws cmds.txt
 Caddyfile
-bingo-app/server.py
-bingo-app/node_modules/
-bingo-app/dist/
 oracle cmds.txt
-node_modules/
 .env
+image.env
 docker.env
 other.yaml
 docker cmds.txt
-bingo-app/db/Beekeeper.lnk
-bingo-app/.oci/
+
+node_modules/
 uploads/
 certbot/
 safecertbot/
 postgres/
 
+backend/db/node_modules
+backend/db/main/Beekeeper.lnk
+backend/db/main/backup-data.sql
+backend/db/test/backup-data.sql
+
+frontend/dist/
+frontend/node_modules/
+log.txt
+bingo.db.data.sql

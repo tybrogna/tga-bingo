@@ -1,0 +1,69 @@
+services:
+  # hiya:
+  #   container_name: hiya
+  #   image: crccheck/hello-world
+  db:
+    container_name: tga-database
+    image: postgres:16-alpine
+    env_file: ./.env
+    build: ./backend/db/
+    ports:
+      - $POSTGRES_PORT:$POSTGRES_PORT  # should be 5432
+    volumes:
+      - ./backend/db/:/docker-entrypoint-initdb.d
+      - ./postgres:/var/lib/postgresql/data
+    restart: unless-stopped
+  tga-front:
+    container_name: tga-front
+    env_file: ./.env
+    build: ./frontend
+    ports:
+      - $FRONTEND_PORT:$FRONTEND_PORT  # should be 3100
+    volumes:
+      - ./frontend/jsx-src:/bingo-app/jsx-src
+      - ./frontend/index.html:/bingo-app/index.html
+      - ./frontend/vite.config.js:/bingo-app/vite.config.js
+      - ./js:/bingo-app/js
+    tty: true
+  tga-back:
+    container_name: tga-back
+    env_file: ./.env
+    build: ./backend
+    ports:
+      - $BACKEND_PORT:$BACKEND_PORT  # should be 3000
+    depends_on:
+      - db  # "db" has to be done first for "app" to build
+    links:
+      - db  # this makes the host have a name "db" in the image
+    volumes:
+      - ./backend:/bingo-app
+      - ./js:/bingo-app/js
+      - ./uploads:/uploads/
+      - ./log.txt:/bingo-app/log.txt
+    restart: unless-stopped
+  nginx:
+    container_name: nginx
+    image: nginx  # this is the nginx repo, there is no Dockerfile
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./certbot/conf:/etc/letsencrypt  # | these two locations are the same as the
+      - ./certbot/www:/var/www/certbot   # ->   certbot container
+    restart: unless-stopped
+  certbot:
+    container_name: certbot
+    image: certbot/certbot
+    volumes:
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
+        #command: certonly --webroot --webroot-path /var/www/certbot --keep-until-expiring --email tybrogna@gmail.com -d tga.zone --agree-tos
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+
+#volumes:
+  #hiya:
+  #db:
+  #tga:
+  #nginx:
+  #certbot:

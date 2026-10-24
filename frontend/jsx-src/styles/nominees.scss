@@ -1,0 +1,127 @@
+@use './main.scss' as main;
+
+.nom-container {
+    width: 1400px;
+    padding-right: 15px;
+    padding-left: 15px;
+    margin-right: auto;
+    margin-left: auto;
+}
+
+.flex {
+    display: flex;
+    flex-direction: row;
+    // gap: 1em;
+    justify-content: space-between;
+}
+
+.db-tile-container {
+    display: grid;
+    grid-template-columns: 110px 110px 110px 110px;
+    overflow: scroll;
+    max-height: 800px;
+    margin-top: 1em;
+}
+
+.games-db-box {
+    width: 440px;
+    position:static;
+}
+
+.nominee-container {
+    min-height: 21%;
+    max-width: inherit;
+}
+
+.game-grid {
+    height: 82%;
+    border: solid black 1px;
+    text-align: center;
+    display: flex;
+    overflow: scroll;
+    min-width: 860px;
+    // max-width: 841px;
+}
+
+.track-toggle {
+    float: left;
+    width: 25px;
+    height: 100%;
+    background-color: red;
+}
+
+.game-container {
+    position: relative;
+    border: solid blue 1px;
+    min-width: 142px;
+}
+
+.game-cover {
+    position: absolute;
+    object-fit: fill;
+    cursor: grab;
+    width: 86%;
+    height: 86%;
+    top: 7%;
+    left: 7%;
+
+}
+
+.game-title-text {
+    visibility: hidden;
+    position: absolute;
+    width: 130px;
+    text-align: center;
+    top: 50%;
+    z-index: 12;
+    transform: translate(0%, -50%);
+    left: 1%;
+    overflow: hidden;
+    max-height: 100%;
+    pointer-events: none;
+    text-shadow: main.$color_third 1px 0 10px;
+    font-weight: bold;
+    color: white;
+}
+
+.db-game-container {
+    position: relative;
+    border: solid blue 1px;
+    min-height: 130px;
+}
+
+.db-game-cover {
+    position: absolute;
+    width: 75%;
+    top: 8%;
+    cursor: grab;
+    left: 12.5%;
+    max-height: 85%;
+}
+
+.db-game-title-text {
+    visibility: hidden;
+    position: relative;
+    text-align: center;
+    top: 50%;
+    z-index: 12;
+    transform: translate(0%, -50%);
+    left: 1%;
+    font-size: 11px;
+    overflow:hidden;
+    max-height: 100%;
+    pointer-events: none;
+    text-shadow: main.$color_third 1px 0 10px;
+    font-weight: bold;
+    color: white;
+}
+
+.remove-button {
+    transform: translate(20%, -25%);
+    position: absolute;
+    font-size: 14px;
+    cursor: pointer;
+    z-index: 10;
+    color:mediumvioletred;
+    font-weight: bold;
+}

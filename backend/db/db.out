@@ -1,0 +1,325 @@
+--
+-- PostgreSQL database dump
+--
+
+\restrict 7755X3be3tchSe5iSayTGhEdh8ri7rJFFXPf7eMro3vIS7etmuJE7mL0IKfsOfp
+
+-- Dumped from database version 16.11
+-- Dumped by pg_dump version 16.11
+
+SET statement_timeout = 0;
+SET lock_timeout = 0;
+SET idle_in_transaction_session_timeout = 0;
+SET client_encoding = 'UTF8';
+SET standard_conforming_strings = on;
+SELECT pg_catalog.set_config('search_path', '', false);
+SET check_function_bodies = false;
+SET xmloption = content;
+SET client_min_messages = warning;
+SET row_security = off;
+
+SET default_tablespace = '';
+
+SET default_table_access_method = heap;
+
+--
+-- Name: events; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.events (
+    id integer NOT NULL,
+    name text NOT NULL,
+    year integer,
+    active boolean
+);
+
+
+ALTER TABLE public.events OWNER TO postgres;
+
+--
+-- Name: events_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.events_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.events_id_seq OWNER TO postgres;
+
+--
+-- Name: events_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.events_id_seq OWNED BY public.events.id;
+
+
+--
+-- Name: submitters; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.submitters (
+    id integer NOT NULL,
+    email text NOT NULL,
+    nickname text
+);
+
+
+ALTER TABLE public.submitters OWNER TO postgres;
+
+--
+-- Name: submitters_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.submitters_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.submitters_id_seq OWNER TO postgres;
+
+--
+-- Name: submitters_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.submitters_id_seq OWNED BY public.submitters.id;
+
+
+--
+-- Name: tile_clusters; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.tile_clusters (
+    id integer NOT NULL,
+    tile_ids text NOT NULL,
+    submitter_id integer,
+    event_id integer,
+    is_verified boolean DEFAULT false,
+    is_free boolean DEFAULT false
+);
+
+
+ALTER TABLE public.tile_clusters OWNER TO postgres;
+
+--
+-- Name: tile_clusters_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.tile_clusters_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.tile_clusters_id_seq OWNER TO postgres;
+
+--
+-- Name: tile_clusters_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.tile_clusters_id_seq OWNED BY public.tile_clusters.id;
+
+
+--
+-- Name: tiles; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.tiles (
+    id integer NOT NULL,
+    title text NOT NULL,
+    description text,
+    img_loc text,
+    gotwrong boolean
+);
+
+
+ALTER TABLE public.tiles OWNER TO postgres;
+
+--
+-- Name: tiles_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.tiles_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.tiles_id_seq OWNER TO postgres;
+
+--
+-- Name: tiles_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.tiles_id_seq OWNED BY public.tiles.id;
+
+
+--
+-- Name: events id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.events ALTER COLUMN id SET DEFAULT nextval('public.events_id_seq'::regclass);
+
+
+--
+-- Name: submitters id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.submitters ALTER COLUMN id SET DEFAULT nextval('public.submitters_id_seq'::regclass);
+
+
+--
+-- Name: tile_clusters id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.tile_clusters ALTER COLUMN id SET DEFAULT nextval('public.tile_clusters_id_seq'::regclass);
+
+
+--
+-- Name: tiles id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.tiles ALTER COLUMN id SET DEFAULT nextval('public.tiles_id_seq'::regclass);
+
+
+--
+-- Data for Name: events; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.events (id, name, year, active) FROM stdin;
+1	Summer Games Fest	2025	f
+2	The Game Awards	2024	f
+3	The Game Awards	2025	t
+\.
+
+
+--
+-- Data for Name: submitters; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.submitters (id, email, nickname) FROM stdin;
+1	test@qa.com	Nick Quality
+\.
+
+
+--
+-- Data for Name: tile_clusters; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.tile_clusters (id, tile_ids, submitter_id, event_id, is_verified, is_free) FROM stdin;
+1	1	\N	3	f	f
+2	2	\N	3	f	f
+3	3	\N	3	f	f
+4	4,5	\N	3	f	f
+\.
+
+
+--
+-- Data for Name: tiles; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.tiles (id, title, description, img_loc, gotwrong) FROM stdin;
+1	cre ma spe fo com	opaiuswbegf	cmsfc71932.jpg	\N
+2	reg lan dtrus me bro	poauisbeg	rldmb82616.jpg	\N
+3	overh win ocn	oh boy	owo96736.jpg	\N
+4	pee in abyss	sdfrtjkmder	pia16517.jpg	\N
+5	shit teferi	segase	st16517.jpg	\N
+\.
+
+
+--
+-- Name: events_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.events_id_seq', 3, true);
+
+
+--
+-- Name: submitters_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.submitters_id_seq', 1, true);
+
+
+--
+-- Name: tile_clusters_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.tile_clusters_id_seq', 4, true);
+
+
+--
+-- Name: tiles_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.tiles_id_seq', 5, true);
+
+
+--
+-- Name: events events_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.events
+    ADD CONSTRAINT events_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: submitters submitters_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.submitters
+    ADD CONSTRAINT submitters_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: tile_clusters tile_clusters_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.tile_clusters
+    ADD CONSTRAINT tile_clusters_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: tiles tiles_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.tiles
+    ADD CONSTRAINT tiles_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: tile_clusters tile_clusters_event_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.tile_clusters
+    ADD CONSTRAINT tile_clusters_event_id_fkey FOREIGN KEY (event_id) REFERENCES public.events(id);
+
+
+--
+-- Name: tile_clusters tile_clusters_submitter_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.tile_clusters
+    ADD CONSTRAINT tile_clusters_submitter_id_fkey FOREIGN KEY (submitter_id) REFERENCES public.submitters(id);
+
+
+--
+-- PostgreSQL database dump complete
+--
+
+\unrestrict 7755X3be3tchSe5iSayTGhEdh8ri7rJFFXPf7eMro3vIS7etmuJE7mL0IKfsOfp
+
