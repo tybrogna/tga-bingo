@@ -1,0 +1,10 @@
+FROM node:26-alpine as build
+
+WORKDIR /bingo-app
+COPY frontend ./
+COPY js ./js
+RUN npm ci
+RUN npm run vite-build
+
+FROM nginx:alpine
+COPY --from=build /bingo-app/dist /usr/share/nginx/html

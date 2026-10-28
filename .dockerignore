@@ -1,0 +1,14 @@
+**/node_modules
+**/dist
+etc
+bingo.db.data.sql
+init-letsencrypt.sh
+nginx-local
+other.yaml
+safecertbot
+.env
+.git
+.github-proto
+postgres
+uploads
+certbot
