@@ -90,7 +90,7 @@ export default class Database {
         let cmd = `
             select *
             from events
-            where name='${title}' and year=${year};`
+            where name='${title.toLowerCase()}' and year=${year};`
         let res = await this.#runCmd(cmd)
         return res.rows
     }
@@ -219,15 +219,25 @@ export default class Database {
         }
     }
 
-    async getGames(term) {
-        let cmd = ''
-        if (term == undefined) {
-            cmd = `select id,name,igdb_cover_id from games limit 100;`
-        } else {
+    async getGames(term, thisYearOnly=false, notableOnly=false, vrOnly=false, remasterOnly=false, mobileOnly=false) {
+        let cmd = 'select id,name,igdb_cover_id from games '
+        let adds = []
+        if (term != undefined) {
             term = term.replaceAll('\'', '')
             term = term.replaceAll(' ', '%')
-            cmd = `select id,name,igdb_cover_id from games where name ilike '%${term}%' limit 100;`
+            adds.push(` name ilike '%${term}%'`)
         }
+        // if (thisYearOnly) {
+        //     adds.push(``)
+        // }
+
+        if (adds.length > 0) {
+            cmd = cmd.concat(' where')
+            adds.forEach(a => {
+                cmd = cmd.concat(a)
+            })
+        }
+        cmd = cmd.concat(` limit 100;`)
         let res = await this.#runCmd(cmd)
         return res.rows
     }
@@ -247,7 +257,7 @@ export default class Database {
         if (e_id == undefined) {
             e_id = 1
         }
-        let cmd = `select id,name from nominee_categories where event_id=${e_id};`
+        let cmd = `select id,name,locked from nominee_categories where event_id=${e_id};`
         let res = await this.#runCmd(cmd)
         return res.rows
     }
@@ -269,6 +279,7 @@ export default class Database {
         cmd = cmd.slice(0, -1)
         cmd = cmd.concat(` on conflict (user_id, category_id) `)
         cmd = cmd.concat(`do update set game_ids = EXCLUDED.game_ids;`)
+        // console.log(cmd)
         this.#runCmd(cmd)
     }
 
@@ -276,10 +287,11 @@ export default class Database {
     async getUserNominations(userId, eventId) {
         let cmd
         if (eventId == undefined) {
-            cmd = `select nominee_categories.id,nominee_categories.name from nominee_categories join `
-            cmd = cmd.concat(`events on nominee_categories.event_id=events.id where events.active=true;`)
+            cmd = `select `
+            cmd = cmd.concat(`nominee_categories.id,nominee_categories.name,nominee_categories.locked from nominee_categories join `)
+            cmd = cmd.concat(`events on nominee_categories.event_id=events.id where events.active=true order by id;`)
         } else {
-            cmd = `select id,name from nominee_categories where event_id=${eventId} order by id;`
+            cmd = `select id,name,locked from nominee_categories where event_id=${eventId} order by id;`
         }
         let rows = (await this.#runCmd(cmd)).rows
         cmd = `select category_id, game_ids from user_nominations where category_id in (${rows.map(r => r.id).toString()}) and user_id=${userId} order by category_id;`

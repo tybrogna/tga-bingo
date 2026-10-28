@@ -14,15 +14,14 @@ import { CronJob } from 'cron'
 import { getPRNG, shuffle } from './js/randomHelper.js'
 import Database from './js/database.js'
 import { IGDBJob } from './js/igdb.js'
-import { theseExist, colinHacksEmailRegex, utcNow, utcOneWeek } from './js/functionhider.js'
+import { theseExist, colinHacksEmailRegex, utcNow, utcOneWeek, delay } from './js/functionhider.js'
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 const job = new CronJob('0 0 * * 1,4',
-
+    updateDBWithThisWeeksGames()
 )
-
 
 export function log(message) {
     console.log(message)
@@ -48,13 +47,18 @@ process.on('exit', async () => {
     await db.disconnect()
 })
 
-app.get('/testcron', async (req, res) => {
-    console.log('testing server cron job')
-    job.start()
-    res.send('started')
+// app.get('/testcron', async (req, res) => {
+//     console.log('testing server cron job')
+//     job.start()
+//     res.send('started')
+// })
+
+app.get('/igdb/games/search/', async (req, res) => {
+    res.json(await db.getGames())
 })
 
-app.get('/igdb/games/search/:term?', async (req, res) => {
+app.get('/igdb/games/search/:year,:notable,:vr,:remaster,:mobile/:term?', async (req, res) => {
+    console.log(req.params)
     res.json(await db.getGames(req.params.term))
 })
 
@@ -136,19 +140,27 @@ app.get('/maxDb', async (req, res) => {
     updateDBWithThisWeeksGames()
 })
 
+app.get('/pullFullGamesPasswordOnly/:password', async (req,res) => {
+    if (req.params.password == process.env.INITALIZE_IGDB_FROM_2025) {
+        initIGDB()
+    }
+    res.send('ok working on it')
+})
+
 async function initIGDB() {
-    let utcOrigin = 1761955200 // 1 Nov 2026 00:00
+    let utcOrigin = 1761955200 // 1 Nov 2025 00:00
     let now = utcNow()
+    let igdb = new IGDBJob()
+    await igdb.connect()
     while (utcOrigin < now) {
         let nextWeek = utcOrigin + utcOneWeek
-        let igdb = new IGDBJob()
-        igdb.connnect()
         let thisWeeksGames = await igdb.getGames(utcOrigin, nextWeek)
         let compiledGames = await igdb.organizeGameDetails(thisWeeksGames)
         igdb.updateGamesTable(compiledGames)
-        igdb.disconnect()
+        utcOrigin = nextWeek
         await delay(10000)
     }
+    igdb.disconnect()
 }
 
 async function updateDBWithThisWeeksGames() {
@@ -205,7 +217,7 @@ app.post('/registerUser', async (req, res) => {
     try {
         let hashedPass = await bcrypt.hash(password, 10)
         let dbUser = await db.createUser(email, username, hashedPass)
-        let token = jwt.sign({id: dbUser.id}, process.env.JWT_SECRET, {expiresIn: '8h'})
+        let token = jwt.sign({id: dbUser.id}, process.env.JWT_SECRET, {expiresIn: '200 days'})
         res.json({ token: token, id: dbUser.id, username: dbUser.username })
     } catch(err) {
         console.log(err)
@@ -243,10 +255,9 @@ app.post('/verifyTokenActive', async (req, res) => {
                 console.log(req.body.username + ' expired')
                 res.send(false)
             }
-        } else {
-            console.log(req.body.username + ' token ok')
-            res.send(true)
         }
+        console.log(req.body.username + ' token ok (or idc)')
+        res.send(true)
     })
 })
 
@@ -408,10 +419,9 @@ const [server, port] = (() => {
     }
 })()
 
-
-
 server.listen(port, (err) => {
     if (!err) {
+        job.start()
         log('server online')
         console.log('its on at ' + port)
     }

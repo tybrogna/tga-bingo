@@ -14,10 +14,10 @@ export default function Home() {
                 <br />
                 <br />
                 <div>
-                    <a href='/bingo'>PLAY BINGO (current: TGA 2025)</a>
+                    <a href='/bingo'>PLAY BINGO (current: TGA 2026)</a>
                 </div>
                 <div>
-                    <a href='/bingo/tga/2024'>PREVIOUS CARDS</a>
+                    <a href='/bingo/the game awards/2025'>PREVIOUS CARD</a>
                 </div>
                 <div>
                     <a href='/nominees'>GUESS NOMINEES</a>

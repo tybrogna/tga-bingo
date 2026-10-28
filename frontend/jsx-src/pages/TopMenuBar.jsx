@@ -23,17 +23,24 @@ export default function TopMenuBar(props) {
         let labels = []
         labels.push({text: 'Bingo', link: '/', image: icon})
         labels.push({text: 'Nominees', link: '/nominees', image: icon})
+        labels.push({text: 'Account', link: '/accounts', image: icon})
+        labels.push({text: 'Home', link: '/', image: icon})
+        setMenuItems(labels)
+        labels = []
+        labels.push({text: 'Bingo', link: '/', image: icon})
+        labels.push({text: 'Nominees', link: '/nominees', image: icon})
         if (localStorage.getItem('jwt') != null) {
+            console.log('the top menu bar is up to no good')
             let activeTokenRes = await fetch('/api/verifyTokenActive', {
                 method: 'post',
                 headers: { 'Content-Type': 'application/json'},
                 body: JSON.stringify({ 'username': localStorage.getItem('username'), 'token': localStorage.getItem('jwt') })
             })
             let activeToken = await activeTokenRes.text()
-            // console.log('at', activeToken)
+            console.log('at', activeToken)
             if (activeToken) {
-                // console.log('still logged in')
-                localStorage.setItem('signedIn', true)
+                console.log('still logged in')
+                // localStorage.setItem('signedIn', true)
                 labels.push({text: localStorage.getItem('username'), link: '/accounts', image: icon})
             } else {
                 labels.push({text: 'Account', link: '/accounts', image: icon})

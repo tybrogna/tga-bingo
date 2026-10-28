@@ -109,7 +109,7 @@ export class IGDBJob {
             this.db = new Client({
                 user: process.env.POSTGRES_USER,
                 password: process.env.POSTGRES_PASSWORD,
-                host: 'test-db',
+                host: 'tga-database',
                 port: process.env.POSTGRES_PORT,
                 database: "bingo-db"
             })
@@ -179,7 +179,7 @@ export class IGDBJob {
         let now = utcNow()
         if (tokenRes.rows.length == 0) {
             log('no igdb api token in db, adding one')
-            let bearerInfo = await this.fetchBearer()
+            let bearerInfo = await this.fetchBearer(now)
             let storeTokenCmd = `insert into igdb_api_keys (token, expires_at) values
                 ('${bearerInfo.access_token}', ${bearerInfo.expiryTime});`
             await this.#runCmd(storeTokenCmd)
@@ -244,7 +244,7 @@ export class IGDBJob {
         if (timeStart == null) {
             timeStart = timeEnd - utcOneWeek
         }
-        log('IGDB // searching for release items starting week of', utcToPGDate(timeStart))
+        log('IGDB // searching for release items starting week of ' + utcToPGDate(timeStart))
         let offset = 0
         let fullGameList = []
         while (true) {
@@ -350,7 +350,7 @@ export class IGDBJob {
                 }
 
                 this.normalizeData(game, reducedPopularity[game.id])
-                if (game.notability_score > 5) {
+                if (game.first_release_date != undefined && game.notability_score > 5) {
                     // console.log('  ' + game.name +' -- score ' + game.notability_score)
                     compiledToAdd[game.id] = game
                 }
@@ -382,7 +382,7 @@ export class IGDBJob {
         logMessage = logMessage.concat(`and ${parentGamesToScan.length - (parentGamesToAdd.length + parentGamesToUpdate.length)} already in the list of games to add`)
         log(logMessage)
 
-        log('compiling data for parents...')
+        log('IGDB // compiling data for parents...')
         for (let chunk of chunkList(parentGamesToUpdate, 100)) {
             let idString = this.#apicalypseIdString(chunk)
             let detailsRes = await apicalypse(this.apiConfig)
@@ -447,6 +447,13 @@ export class IGDBJob {
     normalizeData(game, popularity) {
         game.name = sqlize(game.name)
 
+        // date normalizing
+        if (game.hasOwnProperty('first_release_date')) {
+            game.first_release_date = utcToPGDate(game.first_release_date)
+        } else {
+            game.first_release_date = undefined
+        }
+
         game.notability_score = popularity
         if (game.hasOwnProperty('hypes')) {
             game.notability_score += game.hypes
@@ -471,9 +478,6 @@ export class IGDBJob {
         } else {
             game.cover_id = ""
         }
-
-        // date normalizing
-        game.first_release_date = utcToPGDate(game.first_release_date)
 
         //alternate title compilation
         if (game.hasOwnProperty('alternative_names')) {

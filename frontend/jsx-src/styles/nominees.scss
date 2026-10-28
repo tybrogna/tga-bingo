@@ -1,21 +1,27 @@
 @use './main.scss' as main;
 
-.nom-container {
+.noms-container {
+    padding-top: 50px;
     width: 1400px;
     padding-right: 15px;
     padding-left: 15px;
     margin-right: auto;
     margin-left: auto;
+    background-color: main.$color_second;
+}
+
+.nom-mobile {
+
 }
 
 .flex {
     display: flex;
-    flex-direction: row;
+    // flex-direction: row;
     // gap: 1em;
     justify-content: space-between;
 }
 
-.db-tile-container {
+.db-tile-grid-options {
     display: grid;
     grid-template-columns: 110px 110px 110px 110px;
     overflow: scroll;
@@ -23,14 +29,47 @@
     margin-top: 1em;
 }
 
-.games-db-box {
-    width: 440px;
+.db-tile-grid-options-mobile {
+    display: flex;
+    overflow: scroll;
+    height: 7em;
+}
+
+.games-db-grid {
+    width: 444px;
     position:static;
 }
 
-.nominee-container {
+.games-db-grid-mobile {
+    width: 100%;
+    position: fixed;
+    margin-top: 14%;
+    z-index: 95;
+    background-color: main.$color_first;
+}
+
+.nominees-box {
+    display: flex;
+    flex-direction: column;
+    overflow: scroll;
+    height: 90vh;
+}
+
+.nominees-box-mobile {
+    width: 100%;
+    flex-direction: column;
+    overflow: scroll;
+    height: 50%;
+    padding-top: 50%;
+}
+
+.nominee-roll {
     min-height: 21%;
     max-width: inherit;
+}
+
+.nominee-roll-mobile {
+
 }
 
 .game-grid {
@@ -40,7 +79,17 @@
     display: flex;
     overflow: scroll;
     min-width: 860px;
-    // max-width: 841px;
+    max-width: 860px;
+}
+
+.game-grid-mobile {
+    display: grid;
+    grid-template-columns: repeat(5, 31%);
+    grid-template-rows: repeat(2, 7em);
+    overflow: scroll;
+    border: solid black 1px;
+    text-align: center;
+    background-color: main.$color_second;
 }
 
 .track-toggle {
@@ -50,10 +99,58 @@
     background-color: red;
 }
 
-.game-container {
+.db-game-view {
+    position: relative;
+    border: solid blue 1px;
+    min-height: 130px;
+}
+
+.db-game-view-mobile {
+    position: relative;
+    border: solid blue 1px;
+    min-width: 28%;
+}
+
+.game-view {
     position: relative;
     border: solid blue 1px;
     min-width: 142px;
+}
+
+.game-view-mobile {
+    position: relative;
+    border: solid blue 1px;
+    // min-width: 10%;
+}
+
+.bookend {
+    min-width: 142px;
+}
+
+.bookend-mobile {
+    // min-width: 10%;
+}
+
+.category-header {
+    max-height: 30px;
+    font-size: 28px;
+}
+
+.category-header-mobile {
+    color: main.$color_fourth;
+    font-size: 14pt;
+    max-height: 20px;
+}
+
+.bookend > div {
+    vertical-align:middle;
+    height: 50%;
+    width: 50%;
+    border: solid black 1px;
+    transform: translate(50%, 50%);
+    cursor: pointer;
+    text-align: center;
+    line-height: 100%;
 }
 
 .game-cover {
@@ -64,7 +161,6 @@
     height: 86%;
     top: 7%;
     left: 7%;
-
 }
 
 .game-title-text {

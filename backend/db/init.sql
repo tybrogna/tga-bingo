@@ -80,4 +80,27 @@ CREATE TABLE user_nominations (
 
 CREATE UNIQUE INDEX user_nomination_combo ON user_nominations(user_id, category_id);
 INSERT INTO events (id, name, year, active) VALUES (4, 'The Game Awards', 2026, TRUE);
-insert into nominee_categories (name,year,event_id) values ('Game of the Year',2026,4),('Best Game Direction',2026,4),('Best Narrative',2026,4),('Best Art Direction',2026,4),('Best remake / remaster',2026,4),('Best visual design',2026,4),('Best Audio Design',2026,4),('Best Ongoing',2026,4),('Best Debut Indie Game',2026,4),('Best Action Game',2026,4),('Best RPG',2026,4),('Best Family',2026,4),('Best Sports / Racing',2026,4),('Best Multiplayer',2026,4);
+INSERT INTO nominee_categories (name,year,event_id) VALUES ('Game of the Year',2026,4),('Best Game Direction',2026,4),('Best Narrative',2026,4),('Best Art Direction',2026,4),('Best remake / remaster',2026,4),('Best visual design',2026,4),('Best Audio Design',2026,4),('Best Ongoing',2026,4),('Best Debut Indie Game',2026,4),('Best Action Game',2026,4),('Best RPG',2026,4),('Best Family',2026,4),('Best Sports / Racing',2026,4),('Best Multiplayer',2026,4);
+
+-- UPDATE 1
+ALTER TABLE nominee_categories
+    ADD COLUMN locked BOOLEAN DEFAULT FALSE;
+
+UPDATE nominee_categories SET locked=TRUE
+    FROM events
+    WHERE nominee_categories.event_id=events.id AND events.active=FALSE;
+
+DROP TABLE IF EXISTS user_event_scores;
+CREATE TABLE user_event_scores (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id),
+    event_id INTEGER REFERENCES events(id),
+    score INTEGER
+)
+
+CREATE TABLE final_nominees {
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id),
+    category_id INTEGER REFERENCES nominee_categories(id),
+    game_ids INTEGER[]
+}
