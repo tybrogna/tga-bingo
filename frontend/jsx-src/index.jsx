@@ -19,7 +19,7 @@ let App = () => (
     <link rel="icon" href={favicon} />
     <LocationProvider>
         <Router>
-            <Home path='' />
+            <Home path='/' />
             <BingoCard path='/bingo' />
             <BingoCard path='/bingo/:eventName?/:eventYear?' />
             <DbViewer path='/crudview' />
