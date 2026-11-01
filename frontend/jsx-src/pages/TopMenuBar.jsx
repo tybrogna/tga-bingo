@@ -2,7 +2,7 @@ import { useRoute } from 'preact-iso'
 import { useState, useEffect } from 'preact/hooks'
 import '../styles/topMenuBar.scss'
 
-import icon from '../img/favicon25.ico'
+import icon from '../img/favicon26.ico'
 
 function MenuItem(props) {
     return (
@@ -17,17 +17,16 @@ function MenuItem(props) {
 
 export default function TopMenuBar(props) {
     let [ menuItems, setMenuItems ] = useState([])
-    // console.log(useRoute().path)
 
     useEffect(async () => {
         let labels = []
-        labels.push({text: 'Bingo', link: '/', image: icon})
+        labels.push({text: 'Bingo', link: '/bingo', image: icon})
         labels.push({text: 'Nominees', link: '/nominees', image: icon})
         labels.push({text: 'Account', link: '/accounts', image: icon})
         labels.push({text: 'Home', link: '/', image: icon})
         setMenuItems(labels)
         labels = []
-        labels.push({text: 'Bingo', link: '/', image: icon})
+        labels.push({text: 'Bingo', link: '/bingo', image: icon})
         labels.push({text: 'Nominees', link: '/nominees', image: icon})
         if (localStorage.getItem('jwt') != null) {
             console.log('the top menu bar is up to no good')

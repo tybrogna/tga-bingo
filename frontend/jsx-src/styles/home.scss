@@ -1,0 +1,20 @@
+@use './main.scss' as main;
+
+
+.links {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    text-align: center;
+}
+
+.links img {
+    background-color: var(--color-4);
+    width: 30%;
+    height: 30%;
+}
+
+.link-card {
+    width: 50%;
+    padding-top: 5%;
+}

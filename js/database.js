@@ -3,14 +3,9 @@ import pg from 'pg'
 import { sqlize, unsqlize, range } from './functionhider.js'
 const Client = pg.Client
 
-// function sqlize(str) {
-//     return str.replaceAll("'", "''")
-// }
-
-// function unsqlize(str) {
-//     return str.replaceAll("''", "'")
-// }
-
+/**
+ * @typedef {class} Database
+ */
 export default class Database {
     constructor() {
         console.log(process.env.POSTGRES_USER, process.env.POSTGRES_HOST, process.env.POSTGRES_PORT)

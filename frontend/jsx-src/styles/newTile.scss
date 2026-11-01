@@ -24,7 +24,7 @@
     left: 50%;
     margin-right: -50%;
     transform: translate(-50%, -50%);
-    background: main.$color_fourth;
+    background: var(--color-4);
     padding: 1em;
 }
 
@@ -45,13 +45,13 @@
 }
 
 #submit-button {
-    background-color: main.$color_fourth;
+    background-color: var(--color-4);
 }
 
 textarea {
     width: inherit;
     border-style: none;
-    background-color: main.$color_third;
+    background-color: var(--color-3);
     border-top-left-radius: 10px;
     border-bottom-right-radius: 10px;
     padding-left: 5px;
@@ -154,7 +154,7 @@ textarea {
 
 @keyframes text-flash {
     0% {
-        color: main.$color_fourth;
+        color: var(--color-4);
     }
 
     5% {

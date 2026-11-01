@@ -228,15 +228,33 @@ export class IGDBJob {
         return [328373,151665,385294,305006,372560,388550,229093,280573,405028,342959]
     }
 
-    /*
-    fields 
-        id,game,date;
-    where 
-        date > 1769628539 & date < 1770233339 & release_region = 8;
-    sort
-        date desc;
-    limit
-        500;*/
+    async getOneGame(gameId) {
+        let inDb = await this.#runCmd(`select id from games where id=${gameId};`)
+        if (inDb.rows.length > 0) {
+            return
+        }
+        let gameDetailsRes = await apicalypse(this.apiConfig)
+            .fields(detailsFields)
+            .where('id = ' + gameId)
+            .request('https://api.igdb.com/v4/games/')
+        game = gameDetailsRes.data[0]
+        this.normalizeData(game)
+        dbStr = dbStr.concat('insert into games (', dbRows, ') values ')
+        Object.values(compiledStruct.addGames).forEach(game => {
+            dbStr = dbStr.concat(this.getDbStringForGame(game, now))
+        })
+        dbStr = dbStr.slice(0, -1) // remove trailing comma
+        dbStr = dbStr.concat(';')
+        this.#runCmd(dbStr)
+
+    }
+
+    /**
+     * 
+     * @param {int} timeStart utc time
+     * @param {int} timeEnd utc time
+     * @returns {int[]} list of igdb game ids
+     */
     async getGames(timeStart = null, timeEnd = null) {
         if (timeEnd == null) {
             timeEnd = utcNow()
@@ -270,6 +288,12 @@ export class IGDBJob {
         return fullGameList
     }
 
+    /**
+     * does the heavy lifting, grabbing details and popularity numbers for the int array of game ids
+     * @param {int[]} gameList int[]
+     * @param {boolean} doParents probably useless, but speeds up the processing by not checking parents or their popularity
+     * @returns {UpdateStruct} obj with 4 objs inside, one dictionary for games, parents, updates, and update parents
+     */
     async organizeGameDetails(gameList, doParents = true) {
         let detailsMap = {}
         let parentGamesToScan = [] // ids of games that were released sometime in the past, and are related to games that were released
@@ -527,24 +551,20 @@ export class IGDBJob {
 
         let now = utcToPGDate(utcNow())
         let dbStr = ''
+        //new games
         if (addGameCount > 0) {
-            // console.log(`attempting to add ${addGameCount} new games`)
-            //new games
             dbStr = dbStr.concat('insert into games (', dbRows, ') values ')
             Object.values(compiledStruct.addGames).forEach(game => {
                 dbStr = dbStr.concat(this.getDbStringForGame(game, now))
             })
             dbStr = dbStr.slice(0, -1) // remove trailing comma
             dbStr = dbStr.concat(';')
-            // console.log('new games:')
-            // console.log(dbStr)
             this.#runCmd(dbStr)
             await delay(3000)
         }
 
         //new parents
         if (addParentCount > 0) {
-            // console.log(`attempting to add ${addParentCount} new parents`)
             dbStr = ''
             dbStr = dbStr.concat('insert into games (', dbRows, ') values ')
             Object.values(compiledStruct.addParents).forEach(game => {
@@ -552,8 +572,6 @@ export class IGDBJob {
             })
             dbStr = dbStr.slice(0, -1)
             dbStr = dbStr.concat(';')
-            // console.log('new parents:')
-            // console.log(dbStr)
             this.#runCmd(dbStr)
             await delay(3000)
         }
@@ -561,19 +579,12 @@ export class IGDBJob {
         //update games
         dbStr = ''
         if (updateGameCount > 0) {
-            // console.log(`attempting to update ${updateGameCount} existing games`)
             dbStr = dbStr.concat('update games as g set ', dbUpdateRows, ' from (values')
             Object.values(compiledStruct.updateGames).forEach(game => {
                 dbStr = dbStr.concat(this.getDbStringForGame(game, now))
             })
             dbStr = dbStr.slice(0, -1)
             dbStr = dbStr.concat(`) as ug(${dbRows}) where ug.id = g.id;`)
-            // dbStr = dbStr.concat(') as ug(id, igdb_cover_id, name, release_date, developers, publishers, notability_score, is_vr,',
-            //     'is_remaster, is_in_early_access, is_released_from_early_access, is_expansion, is_mobile, is_free_to_play,',
-            //     'alternative_names, last_update_date) ')
-            // dbStr = dbStr.concat('')
-            // console.log('update games:')
-            // console.log(dbStr)
             this.#runCmd(dbStr)
             await delay(3000)
         }
@@ -581,36 +592,14 @@ export class IGDBJob {
         //update parents
         dbStr = ''
         if (updateParentCount > 0) {
-            // console.log(`attempting to update ${updateParentCount} existing parents`)
             dbStr = dbStr.concat(`update games as g set ${dbUpdateRows} from (values `)
-            // dbStr = dbStr.concat('igdb_cover_id=ug.igdb_cover_id, ')
-            // dbStr = dbStr.concat('name=ug.name, ')
-            // dbStr = dbStr.concat('release_date=ug.release_date, ')
-            // dbStr = dbStr.concat('developers=ug.developers, ')
-            // dbStr = dbStr.concat('publishers=ug.publishers, ')
-            // dbStr = dbStr.concat('notability_score=ug.notability_score, ')
-            // dbStr = dbStr.concat('is_vr=ug.is_vr, ')
-            // dbStr = dbStr.concat('is_remaster=ug.is_remaster, ')
-            // dbStr = dbStr.concat('is_in_early_access=ug.is_in_early_access, ')
-            // dbStr = dbStr.concat('is_released_from_early_access=ug.is_released_from_early_access, ')
-            // dbStr = dbStr.concat('is_expansion=ug.is_expansion, ')
-            // dbStr = dbStr.concat('is_mobile=ug.is_mobile, ')
-            // dbStr = dbStr.concat('is_free_to_play=ug.is_free_to_play, ')
-            // dbStr = dbStr.concat('alternative_names=ug.alternative_names, ')
-            // dbStr = dbStr.concat('last_update_date=ug.last_update_date ')
-            // dbStr = dbStr.concat('from (values ')
             Object.values(compiledStruct.updateParents).forEach(game => {
                 dbStr = dbStr.concat(this.getDbStringForGame(game, now))
             })
             dbStr = dbStr.slice(0, -1)
             dbStr = dbStr.concat('\n')
             dbStr = dbStr.concat(`) as ug (${dbRows}) `)
-            // dbStr = dbStr.concat(') as ug(id, igdb_cover_id, release_date, developers, publishers, notability_score, is_vr,',
-            //     'is_in_early_access, is_released_from_early_access, is_expansion, is_mobile, is_free_to_play,',
-            //     'alternative_names, last_update_date) ')
             dbStr = dbStr.concat('where ug.id = g.id;')
-            // console.log('update parents:')
-            // console.log(dbStr)
             this.#runCmd(dbStr)
         }
     }
@@ -650,8 +639,6 @@ export class IGDBJob {
         }
         let reduced = {}
         let popIdList = this.#apicalypseIdString(gameList, 'game_id')
-        // console.log(popFields)
-        // console.log(popIdList)
         let popRes = await apicalypse(this.apiConfig)
             .fields(popFields)
             .where(popIdList)

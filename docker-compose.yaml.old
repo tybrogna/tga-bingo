@@ -1,0 +1,64 @@
+services:
+  #hiya:
+  #  container_name: hiya 
+  #  image: crccheck/hello-world
+  db:
+    container_name: tga-database
+    image: postgres:16-alpine
+    build: ./bingo-app/db
+    ports:
+      - $POSTGRES_LOCAL_PORT:$POSTGRES_IMAGE_PORT
+    volumes:
+      - ./bingo-app/db:/docker-entrypoint-initdb.d
+      - ./postgres:/var/lib/postgresql/data
+    restart: unless-stopped
+    env_file: ./image.env
+  tga:
+    container_name: tga
+    build: ./bingo-app
+    depends_on:
+      - db  # "db" has to be done first for "app" to build
+    links:
+      - db  # this makes the host have a name "db" in the image
+    volumes:
+      - ./bingo-app/jsx-src:/bingo-app/jsx-src
+      - ./bingo-app/db:/bingo-app/db
+      - ./uploads:/uploads/
+    restart: unless-stopped
+    tty: true
+    env_file: ./image.env
+  nginx:
+    container_name: nginx
+    image: nginx
+    restart: unless-stopped
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
+    #networks:
+    #  - app-network
+    #depends_on:
+    #  - app
+  certbot:
+    container_name: certbot
+    image: certbot/certbot
+    volumes:
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
+  #  command: certonly --webroot -w /var/www/certbot --keep-until-expiring --email tybrogna@gmail.com -d tga.zone --agree-tos
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+
+#volumes:
+  #hiya:
+  #db:
+  #tga:
+  #nginx:
+  #certbot:
+
+#networks:
+#  app-network:
+#    driver: bridge
+

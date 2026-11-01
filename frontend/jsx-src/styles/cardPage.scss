@@ -24,7 +24,7 @@ html {
     left: 50%;
     margin-right: -50%;
     transform: translate(-50%, -50%);
-    background: main.$color_fourth;
+    background: var(--color-4);
     padding: 2em;
     font-size: larger;
 }
@@ -68,7 +68,7 @@ html {
     padding: 10px;
     width: 725px;
     max-width: 1140px;
-    background: main.$color_fourth;
+    background: var(--color-4);
     color: #be0d0d;
     max-height: inherit;
     overflow-y: scroll;
@@ -139,7 +139,7 @@ html {
         width: 800px;
         /* max-width: 1140px; */
         height: 10%;
-        background: main.$color_fourth;
+        background: var(--color-4);
         color: #be0d0d;
     }
 
@@ -160,7 +160,7 @@ h2 {
 }
 
 .tile-standard {
-    background-color: main.$color_fourth;
+    background-color: var(--color-4);
     position: relative;
     top: 0;
     left: 0;
@@ -206,7 +206,8 @@ h2 {
     left: 5%;
     right: 5%;
     transform: translate(-0%, -50%);
-    text-shadow: main.$color_third 1px 0 10px;
+    text-shadow: var(--color-3) 1px 0 10px;
+    color: main.$color_default;
     max-width: 187.93px;
 }
 

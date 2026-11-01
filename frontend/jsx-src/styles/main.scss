@@ -2,16 +2,55 @@
 // @use "croppie/croppie.css";
 @use 'cropt/src/cropt.css';
 
-// https://colorhunt.co/palette/3b1e549b7ebdd4bee4eeeeee
-// $color_2024_first: #3B1E54;
-// $color_2024_second: #9B7EBD;
-// $color_2024_third: #D4BEE4;
-// $color_2024_fourth: #EEEEEE;
+$color_default: hwb(210 13% 84%);
+$color_first: null;
+$color_second: null;
+$color_third: null;
+$color_fourth: null;
 
-$color_first: #1b263b;
-$color_second: #415a77;
-$color_third: #778da9;
-$color_fourth: #e0e1dd;
+
+// https://colorhunt.co/palette/3b1e549b7ebdd4bee4eeeeee
+// $color_first_2024: #3B1E54;
+// $color_second_2024: #9B7EBD;
+// $color_third_2024: #D4BEE4;
+// $color_fourth_2024: #EEEEEE;
+
+$color_first3: #1b263b;
+$color_second3: #415a77;
+$color_third3: #778da9;
+$color_fourth3: #e0e1dd;
+
+$color_first2: #092328;
+$color_second2: #12544F;
+$color_third2: #2A835F;
+$color_fourth2: #a9bbab;
+
+$color_first4: #3B1E54;
+$color_second4: #9B7EBD;
+$color_third4: #D4BEE4;
+$color_fourth4: #EEEEEE;
+
+:root {
+    --color-1: #{$color_first4};
+    --color-2: #{$color_second4};
+    --color-3: #{$color_third4};
+    --color-4: #{$color_fourth4};
+}
+
+:root[data-year='2'] {
+    --color-1: #{$color_first2};
+    --color-2: #{$color_second2};
+    --color-3: #{$color_third2};
+    --color-4: #{$color_fourth2};
+}
+
+:root[data-year='3'] {
+    --color-1: #{$color_first3};
+    --color-2: #{$color_second3};
+    --color-3: #{$color_third3};
+    --color-4: #{$color_fourth3};
+}
+
 
 #main {
     padding-top: 38px;
@@ -34,11 +73,20 @@ $color_fourth: #e0e1dd;
 }
 
 body {
-    background-color: $color_first;
+    background-color: var(--color-1);
+}
+
+div {
+    color: var(--color-4);
+}
+
+a {
+    text-decoration: underline;
+    color: var(--color-4);
 }
 
 .shell {
-    background-color: $color_second;
+    background-color: var(--color-2);
 }
 
 .shell-dim {
@@ -47,15 +95,17 @@ body {
 
 input[type=text], input[type=textbox] {
     border-style: none;
-    background-color: $color_third;
+    background-color: var(--color-3);
     border-top-left-radius: 10px;
     border-bottom-right-radius: 10px;
     padding-left: 5px;
     padding-right: 5px;
+    border: 1px var(--color-1) solid;
 }
 
 button, input[type=button] {
-    background-color: $color_third;
+    background-color: var(--color-3);
+    color: var(--color-1);
     border-top-left-radius: 10px;
     border-bottom-right-radius: 10px;
     padding-left: 5px;
@@ -63,5 +113,5 @@ button, input[type=button] {
 }
 
 .help-link {
-    color: $color_first;
+    color: var(--color-3);
 }
