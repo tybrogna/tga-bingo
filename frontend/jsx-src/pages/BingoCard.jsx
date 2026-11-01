@@ -7,12 +7,16 @@ import { TileViewer, compressAllImages } from './TileViewer.jsx'
 import { Tile } from '../../js/Tile.js'
 import { words } from '../../js/words.js'
 import TopMenuBar from './TopMenuBar.jsx'
+
+import '../styles/cardPage.scss'
+
+let year = new Date().getFullYear()
+
+
 import correctImg from '../img/correct25.png'
 import closeImg from '../img/close25.png'
 import bingoImg from '../img/bingo25.png'
 import favicon from '../img/favicon25.ico'
-
-import '../styles/cardPage.scss'
 
 let path = ""
 let eventName = ""

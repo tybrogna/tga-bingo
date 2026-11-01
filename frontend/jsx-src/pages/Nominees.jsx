@@ -9,14 +9,12 @@ import '../styles/nominees.scss'
 const draggingGame = signal({})
 const selectedGame = signal()
 const pickerHighlight = signal()
+const displayedRemoveMobile = signal()
 
 let displayStyle = 0
 
-// TODO: locked view/nominees revealed view
-//           clear the picker and repeat the guesser pattern. maybe do custom css to make it 50/50?
 // TODO: scoring system
-// TODO: css
-//           primary game highlighting, remove all these borders, dont need em anymore
+// TODO: animations
 
 function NomineesSkeleton(props) {
     let mobile = props.mobile
@@ -27,13 +25,10 @@ function NomineesSkeleton(props) {
     useEffect(async () => {
         let nomineesRes = await fetch('/api/nomineeCategories/' + localStorage.getItem('id')) //get everything here??
         let nomineeCategories = await nomineesRes.json()
-        // console.log(nomineeCategories)
         let initGameIds = []
         nomineeCategories.forEach(nom => initGameIds = [...initGameIds, ...nom.game_ids.filter(gid => gid!=null)])
-        // console.log(initGameIds.toString())
         let initGamesRes = await fetch('/api/igdb/games/id/' + initGameIds.toString())
         let initGames = await initGamesRes.json()
-        // console.log(initGames)
         let allLockedStatus = true
         nomineeCategories.forEach(nc => {
             let fullGames = []
@@ -45,13 +40,6 @@ function NomineesSkeleton(props) {
         setAllLocked(allLockedStatus)
     }, [])
 
-    let LeftSide = (props) => {
-        if (!allLocked) {
-            return <GamePicker mobile={props.mobile}/>
-        } else {
-            return <div>ya done</div>
-        }
-    }
 
     let saveout
     let update = () => {
@@ -76,25 +64,75 @@ function NomineesSkeleton(props) {
 
     return (
     <div id='new-main' class={mainClasses}>
+        <title>TGA // Nominee Guesser</title>
         <MobileElement />
-        {/* <div id='content' class={contentClasses}> */}
-            <TopMenuBar />
-            <div class={flexClass}>
-                <LeftSide mobile={mobile} />
-                <>
-                <div>
-                    <div class={nomineesBoxClasses}>
-                        {nominees.map(n => 
-                            <NomineesRoll category={n} update={update} mobile={mobile} />
-                        )}
-                    </div>
+        <TopMenuBar />
+        <div class={flexClass}>
+            <LeftSide mobile={mobile} />
+            <>
+            <div>
+                <div class={nomineesBoxClasses}>
+                    {nominees.map(n => 
+                        <NomineesRoll category={n} update={update} mobile={mobile} />
+                    )}
                 </div>
-                </>
             </div>
-        {/* </div> */}
+            </>
+        </div>
     </div>
     )
 
+}
+
+function LeftSide(props) {
+    let [ selectedTab, setSelectedTab] = useState(0)
+    let tabs = [useRef(null), useRef(null), useRef(null)]
+
+    let tabsClass = 'tab-buttons'
+    let switcherClass = 'tab-switcher'
+    let tabContentClass = 'tab-content'
+    if (props.mobile) {
+        tabsClass += '-mobile'
+        switcherClass += '-mobile'
+        tabContentClass += '-mobile'
+    }
+
+    useEffect(() => {
+        let tabEles = $$$('.' + tabsClass + ' span')
+        tabs.forEach((tab, idx) => {
+            if (idx == selectedTab) {
+                tabEles[idx].classList.add('tab-selected')
+                tabEles[idx].classList.remove('tab-unselected')
+                tab.current.style = 'display: block'
+            } else {
+                tabEles[idx].classList.remove('tab-selected')
+                tabEles[idx].classList.add('tab-unselected')
+                tab.current.style = 'display: none'
+            }
+        })
+    }, [selectedTab])
+
+    return (
+    <div>
+        <div class={tabsClass}>
+            <span onClick={e => setSelectedTab(0)}>Game Picker</span>
+            <span onClick={e => setSelectedTab(1)}>Official List</span>
+            <span onClick={e => setSelectedTab(2)}>Score</span>
+        </div>
+        <div class={switcherClass}>
+            <div class={tabContentClass} ref={tabs[0]}>
+                <GamePicker mobile={props.mobile} />
+            </div>
+            <div class={tabContentClass} ref={tabs[1]}>
+                Official TGA nominees will go here (when I get around to it sometime after they're posted)
+            </div>
+            <div class={tabContentClass} ref={tabs[2]}>
+                The funny numbers on the back of your credit card (ai is a wonderful tool)
+            </div>
+        </div>
+    </div>
+
+    )
 }
 
 function GamePicker(props) {
@@ -137,7 +175,7 @@ function GamePicker(props) {
 
     return (
         <div class={majorClass}>
-            <input type='button' value='hide' onClick={e => {e.target.parentElement.style='display:none;'}} />
+            {/* <input type='button' value='hide' onClick={e => {e.target.parentElement.style='display:none;'}} /> */}
             <input id='search-db' type='text' defaultValue={search} placeholder='search...' onInput={e => setSearch(e.currentTarget.value)}/>
             {/* <div>
                 <label>notable?</label>
@@ -152,7 +190,6 @@ function GamePicker(props) {
             </div>
             {/* <GamePicker games={pickerData} /> */}
         </div>
-
     )
 }
 
@@ -191,6 +228,9 @@ function DatabaseBox(props) {
         if (pickerHighlight.value != undefined) {
             pickerHighlight.value.style.background = ''
         }
+        if (props.mobile && displayedRemoveMobile.value != undefined) {
+            displayedRemoveMobile.value.style.display = 'none'
+        }
         pickerHighlight.value = frameEle.current
         pickerHighlight.value.style.background = 'red'
         selectedGame.value = game
@@ -226,9 +266,6 @@ function NomineesRoll(props) {
             }
         })
         setGameList([...gameList])
-
-        // setGameList(props.category.initGames)
-        // filledSpots += props.category.initGames.length
     }, [])
 
     let onDropLocal = (e) => {
@@ -252,14 +289,10 @@ function NomineesRoll(props) {
         if (props.category.locked) {
             return
         }
-        // if (nextIdx >= 10) {
-        //     return
-        // }
         let position = e.target.parentElement.getAttribute('position')
         if (selectedGame.value == undefined) {
             return
         }
-        // e.preventDefault()
         gameList[position] = selectedGame.value
         filledSpots += 1
         setGameList([...gameList])
@@ -267,8 +300,6 @@ function NomineesRoll(props) {
     }
 
     let removeGameLocal = (e) => {
-        // console.log(e.target)
-        // console.log(e.target.parentElement.getAttribute('position'))
         gameList[e.target.parentElement.getAttribute('position')] = undefined
         setGameList([...gameList])
         props.update()
@@ -278,18 +309,25 @@ function NomineesRoll(props) {
         if (g != undefined) {
             return <GameBox game={gameList[idx]} position={idx} remove={removeGameLocal} categoryLocked={props.category.locked} mobile={props.mobile}/>
         } else {
-            return <Bookend position={idx} mobile={props.mobile} />
+            return <Bookend position={idx} mobile={props.mobile} locked={props.category.locked} />
         }
     })
 
     let Bookend = (props) => {
+        let glyph = '+'
         let bookendClasses = 'bookend'
+
+        if (props.locked) {
+            glyph = '🔒︎'
+            bookendClasses += '-locked'
+        }
+
         if (props.mobile) {
             bookendClasses += '-mobile'
         }
         return (
         <div class={bookendClasses} position={props.position}>
-            <div onClick={clickPlus} style='font-size: 4em;'>+</div>
+            <div onClick={clickPlus} class='glyph'>{glyph}</div>
         </div>
         )
     }
@@ -332,6 +370,8 @@ function GameBox(props) {
     let art = `https://images.igdb.com/igdb/image/upload/t_cover_big/${game.igdb_cover_id}.webp`
     let textEle = useRef(null)
     let imgEle = useRef(null)
+    let frameEle = useRef(null)
+    let removeEle = useRef(null)
 
     let dragStart = (e) => {
         draggingGame.value = game
@@ -344,19 +384,35 @@ function GameBox(props) {
     let mouseOver = (e) => {
         textEle.current.style.visibility = 'visible'
         imgEle.current.style.opacity = '.33'
+        if (!props.mobile) {
+            removeEle.current.style.display = 'block'
+        }
     }
 
     let mouseLeave = (e) => {
         textEle.current.style.visibility = 'hidden'
         imgEle.current.style.opacity = ''
+        if (!props.mobile) {
+            removeEle.current.style.display = 'none'
+        }
     }
 
-    let RemoveButton = () => {
-        if (props.categoryLocked) {
-            return
-        } else return <div class="remove-button" onClick={props.remove}>X</div>
+    let click = (e) => {
+        if (pickerHighlight.value != undefined) {
+            pickerHighlight.value.style.background = ''
+        }
+        if (props.mobile) {
+            if (displayedRemoveMobile.value != undefined) {
+                displayedRemoveMobile.value.style.display = 'none'
+            }
+            displayedRemoveMobile.value = removeEle.current
+            displayedRemoveMobile.value.style.display = 'block'
+        }
+        pickerHighlight.value = frameEle.current
+        pickerHighlight.value.style.background = 'white'
+        selectedGame.value = game
     }
-
+    
     let gameViewClasses = 'game-view'
     let bookendClasses = 'bookend'
     if (props.mobile) {
@@ -364,9 +420,19 @@ function GameBox(props) {
         bookendClasses += '-mobile'
     }
 
+    let RemoveButton = () => {
+        let removeBtnClasses = 'remove-button'
+        if (props.mobile) {
+            removeBtnClasses += '-mobile'
+        }
+        if (props.categoryLocked) {
+            return
+        } else return <div ref={removeEle} class={removeBtnClasses} onClick={props.remove}>X</div>
+    }
+
     return (
     <>
-    <div name={game.id} position={props.position} class={gameViewClasses} onDragStart={dragStart} onDragEnd={dragEnd} onMouseOver={mouseOver} onMouseLeave={mouseLeave}>
+    <div ref={frameEle} name={game.id} position={props.position} class={gameViewClasses} onClick={click} onDragStart={dragStart} onDragEnd={dragEnd} onMouseOver={mouseOver} onMouseLeave={mouseLeave}>
         <RemoveButton />
         <div ref={textEle} class="game-title-text">
             {game.name}
@@ -390,15 +456,14 @@ async function save() {
         return
     }
     let saveData = {}
-    let cats = $$$('.nominee-roll')
+    let cats = $$$('.nominee-roll, .nominee-roll-mobile')
     saveData.selections = []
     saveData.userId = localStorage.getItem('id')
     cats.forEach(cat => {
         let saveRow = {}
         saveRow.id = cat.getAttribute('name')
         saveRow.games = []
-        let choices = cat.querySelectorAll('.game-grid > div')
-        choices.concat(cat.querySelectorAll('.game-grid-mobile > div'))
+        let choices = cat.querySelectorAll('.game-grid > div, .game-grid-mobile > div')
         choices.forEach(g => {
             if (g.getAttribute('name') != null) {
                 saveRow.games.push(g.getAttribute('name'))
@@ -409,8 +474,7 @@ async function save() {
         saveData.selections.push(saveRow)
     })
     
-    // console.log(JSON.stringify(saveData))
-    return
+    console.log(JSON.stringify(saveData))
     fetch('/api/saveNominees', {
         method: 'post',
         headers: {

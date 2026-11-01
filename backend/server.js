@@ -19,14 +19,12 @@ import { theseExist, colinHacksEmailRegex, utcNow, utcOneWeek, delay } from './j
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-const job = new CronJob('0 0 * * 1,4',
-    updateDBWithThisWeeksGames()
-)
+const job = new CronJob('0 0 * * 1,4', updateDBWithThisWeeksGames)
 
 export function log(message) {
-    console.log(message)
     message = new Date().toLocaleString({timeZone: 'est'}).concat(' ', message).concat('\n')
-    fs.appendFile('log.txt', message, (err) => { if (err) { throw err } })
+    console.log(message)
+    fs.appendFile('log/log.txt', message, (err) => { if (err) { throw err } })
 }
 
 let app = express()
@@ -41,24 +39,18 @@ app.get('/helloworld', async (req, res) => {
     res.send({"hw":"HELLO WORLD"})
 })
 
+/** @type {Database} */
 let db = new Database()
 await db.connect()
 process.on('exit', async () => {
     await db.disconnect()
 })
 
-// app.get('/testcron', async (req, res) => {
-//     console.log('testing server cron job')
-//     job.start()
-//     res.send('started')
-// })
-
 app.get('/igdb/games/search/', async (req, res) => {
     res.json(await db.getGames())
 })
 
 app.get('/igdb/games/search/:year,:notable,:vr,:remaster,:mobile/:term?', async (req, res) => {
-    console.log(req.params)
     res.json(await db.getGames(req.params.term))
 })
 
@@ -126,25 +118,26 @@ app.get('/dbAccess/:password', async (req, res) => {
     console.log("its wrong")
 })
 
-app.get('/miniDb', async (req, res) => {
-    let igdb = new IGDBJob()
-    await igdb.connect()
-    let oneWeekOfGames = await igdb.getGames(1762732800, 1763337600)
-    // let someGames = await igdb.getSomeGames()
-    let deets = await igdb.organizeGameDetails(oneWeekOfGames)
-    igdb.updateGamesTable(deets)
-    res.send('hi')
-})
-
-app.get('/maxDb', async (req, res) => {
-    updateDBWithThisWeeksGames()
-})
+// app.get('/maxDb', async (req, res) => {
+//     updateDBWithThisWeeksGames()
+// })
 
 app.get('/pullFullGamesPasswordOnly/:password', async (req,res) => {
     if (req.params.password == process.env.INITALIZE_IGDB_FROM_2025) {
         initIGDB()
     }
     res.send('ok working on it')
+})
+
+app.get('/addThisGame/:gameId/:password', async (req, res) => {
+    if (req.params.password == process.env.INITALIZE_IGDB_FROM_2025) {
+        let igdb = new IGDBJob()
+        await igdb.connect()
+        let compiledGames = await igdb.organizeGameDetails([req.params.gameId])
+        igdb.updateGamesTable(compiledGames)
+        await igdb.disconnect()
+        res.send('added it')
+    }
 })
 
 async function initIGDB() {
@@ -218,6 +211,7 @@ app.post('/registerUser', async (req, res) => {
         let hashedPass = await bcrypt.hash(password, 10)
         let dbUser = await db.createUser(email, username, hashedPass)
         let token = jwt.sign({id: dbUser.id}, process.env.JWT_SECRET, {expiresIn: '200 days'})
+        log(`user ${dbUser.username} was created with email ${dbUser.email}`)
         res.json({ token: token, id: dbUser.id, username: dbUser.username })
     } catch(err) {
         console.log(err)
@@ -238,6 +232,7 @@ app.post('/login', async (req, res) => {
         let match = await bcrypt.compare(password, dbUser.password_hash)
         if (match) {
             let token = jwt.sign({id: dbUser.id}, process.env.JWT_SECRET, {expiresIn: '8h'})
+            log(`${dbUser.username} was issued a token`)
             res.json({ token: token, id: dbUser.id, username: dbUser.username })
         } else {
             res.json({ error: "Password incorrect" })
@@ -255,14 +250,12 @@ app.post('/verifyTokenActive', async (req, res) => {
                 console.log(req.body.username + ' expired')
                 res.send(false)
             }
+            console.log('i dont know what this token is')
+            res.send('false')
         }
         console.log(req.body.username + ' token ok (or idc)')
         res.send(true)
     })
-})
-
-app.post('/submitNomineesGuesses', async (req, res) => {
-
 })
 
 app.get('/testRead', async (req, res) => {
@@ -396,33 +389,33 @@ async function getAllTiles(eventName, eventYear, seed) {
 
 const [server, port] = (() => {
     let server, port
-    try {
-        let keyFile = fs.readFileSync('/etc/letsencrypt/live/tga.zone/privkey.pem')
-        console.log(keyFile)
-        let certFile = fs.readFileSync('/etc/letsencrypt/live/tga.zone/cert.pem')
-	    console.log(certFile)
-        let chainFile = fs.readFileSync('/etc/letsencrypt/live/tga.zone/fullchain.pem')
-	    console.log(chainfile)
-        let options = {
-                key: keyFile,
-                cert: certFile,
-                ca: chainFile
-        }
-        server = https.createServer(options, app)
-        port = 443
-        return [server, port]
-    } catch (err) {
-        console.log(err)
-	    server = http.createServer(app)
-        port = 3000
-        return [server, port]
-    }
+    // try {
+    //     let keyFile = fs.readFileSync('/etc/letsencrypt/live/tga.zone/privkey.pem')
+    //     console.log(keyFile)
+    //     let certFile = fs.readFileSync('/etc/letsencrypt/live/tga.zone/cert.pem')
+	//     console.log(certFile)
+    //     let chainFile = fs.readFileSync('/etc/letsencrypt/live/tga.zone/fullchain.pem')
+	//     console.log(chainfile)
+    //     let options = {
+    //             key: keyFile,
+    //             cert: certFile,
+    //             ca: chainFile
+    //     }
+    //     server = https.createServer(options, app)
+    //     port = 443
+    //     return [server, port]
+    // } catch (err) {
+    // console.log(err)
+    server = http.createServer(app)
+    port = 3000
+    return [server, port]
+    // }
 })()
 
 server.listen(port, (err) => {
     if (!err) {
         job.start()
         log('server online')
-        console.log('its on at ' + port)
+        // console.log('its on at ' + port)
     }
 })

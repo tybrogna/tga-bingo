@@ -3,23 +3,27 @@ import { useState, useEffect } from 'preact/hooks'
 import { signal } from '@preact/signals'
 import { colinHacksEmailRegex, $, range, delay } from '../../js/functionhider.js'
 
+import '../styles/login.scss'
+
 let loginResMessage = signal('')
+let signedIn = signal(false)
 
 export default function UserControl(props) {
-    let [ signedIn, setSignedIn ] = useState()
 
     useEffect(() => {
-        setSignedIn(localStorage.getItem('jwt'))
+        signedIn.value = localStorage.getItem('jwt') != null
     })
 
-    if (signedIn != null) {
+    if (signedIn.value) {
         console.log(signedIn)
         return (
             <>
             <title>User</title>
-            <div>
-                <span>welcome {localStorage.getItem('username')}</span>
-                <input type='button' value='logout' onClick={unsetJwt} />
+            <div class='logged-in'>
+                <span class='welcome'>welcome {localStorage.getItem('username')}</span>
+                <div>
+                    <input type='button' value='logout' onClick={unsetJwt} />
+                </div>
                 <span>maybe one day ill put awards or something here</span>
             </div>
             </>
@@ -28,22 +32,26 @@ export default function UserControl(props) {
         return (
             <>
             <title>User</title>
-            <div>
-                <input type='text' name='email' id='wLogin-email-box' />
+            <div class='logged-in'>
                 <label>email (i dont know how to email you yet, its just to make a unique db entry)</label>
-            </div>
-            <div>
-                <input type='text' name='username' id='wLogin-username-box' />
+                <div class='field-spacer-bottom'>
+                    <input type='text' name='email' id='wLogin-email-box' />
+                </div>
                 <label>username</label>
-            </div>
-            <div>
-                <input type='text' name='password' id='wLogin-password-box' />
+                <div class='field-spacer-bottom'>
+                    <input type='text' name='username' id='wLogin-username-box' />
+                </div>
                 <label>password</label>
+                <div class='field-spacer-bottom'>
+                    <input type='text' name='password' id='wLogin-password-box' />
+                </div>
+                <div>
+                    <input class='button-spacer-right' type='button' name='login' value='login' onClick={login} />
+                    <input class='button-spacer-right' type='button' name='register' value='register' onClick={register} />
+                    {/* <input class='button-spacer-right' type='button' name='test' value='test' onClick={verify} /> */}
+                </div>
+                <label id='wLoginResMessage' style='color: red;'>{loginResMessage}</label>
             </div>
-            <input type='button' name='login' value='login' onClick={login} />
-            <input type='button' name='register' value='register' onClick={register} />
-            <input type='button' name='test' value='test' onClick={verify} />
-            <label id='wLoginResMessage' style='color: red;'>{loginResMessage}</label>
             </>
         )
     }
@@ -152,7 +160,5 @@ async function unsetJwt() {
     localStorage.removeItem('jwt')
     localStorage.removeItem('id')
     localStorage.removeItem('username')
-    // localStorage.setItem('jwt', undefined)
-    // localStorage.setItem('id', undefined)
-    // localStorage.setItem('username', undefined)
+    signedIn.value = false
 }

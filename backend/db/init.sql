@@ -96,11 +96,11 @@ CREATE TABLE user_event_scores (
     user_id INTEGER REFERENCES users(id),
     event_id INTEGER REFERENCES events(id),
     score INTEGER
-)
+);
 
-CREATE TABLE final_nominees {
+CREATE TABLE final_nominees (
     id SERIAL PRIMARY KEY,
     user_id INTEGER REFERENCES users(id),
     category_id INTEGER REFERENCES nominee_categories(id),
     game_ids INTEGER[]
-}
+);
