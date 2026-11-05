@@ -116,6 +116,7 @@
 .db-game-view {
     position: relative;
     min-height: 130px;
+    transition: all .4s;
 }
 
 .db-game-view-mobile {
@@ -129,8 +130,6 @@
     background-color: rgba(0,0,0,.15);
 }
 
-$tcolor: var(--color-2);
-
 .game-view[position='0'], .game-view-mobile[position='0'] {
     background-image: conic-gradient(
         rgba(0,0,0,.0255) 65deg,
@@ -142,6 +141,26 @@ $tcolor: var(--color-2);
 
 .game-view-mobile {
     position: relative;
+}
+
+.correct-guess {
+    background-color: var(--color-4);
+}
+
+.incorrect-guess {
+    background-color: var(--color-1);
+}
+
+.incorrect-guess img {
+    opacity: 50%;
+}
+
+// https://www.magicpattern.design/tools/css-backgrounds
+// https://x.com/d__raptis
+.picker-highlight {
+    background-color: var(--color-3);
+    opacity: 0.8;
+    background: repeating-linear-gradient( -45deg, var(--color-1), var(--color-1) 15px, var(--color-3) 15px, var(--color-3) 25px );
 }
 
 .bookend {
@@ -232,15 +251,27 @@ $tcolor: var(--color-2);
     border-radius: 6px;
 }
 
+.game-cover-anim {
+    animation: growOnPlace .2s cubic-bezier(1,0,0,1) forwards;
+}
+
+@keyframes growOnPlace {
+    from {
+        transform: scale(.1)
+    }
+    to {
+        transform: scale(1);
+    }
+}
+
 .game-title-text {
     visibility: hidden;
     position: absolute;
-    width: 130px;
+    width: 142px;
     text-align: center;
     top: 50%;
     z-index: 12;
     transform: translate(0%, -50%);
-    left: 1%;
     overflow: hidden;
     max-height: 100%;
     pointer-events: none;
@@ -314,6 +345,7 @@ $tcolor: var(--color-2);
     border-top-left-radius: 10px;
     border-top-right-radius: 10px;
     padding-top: 3px;
+    max-width: 450px;
 }
 
 .tab-switcher-mobile {
@@ -379,4 +411,16 @@ $tcolor: var(--color-2);
     position: fixed;
     z-index: 95;
     background-color: #346739;
+}
+
+.score-roll-info-box {
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+}
+
+.score-roll-info-box {
+    margin-left: 1em;
+    margin-right: 1em;
+    margin-top: 4px;
 }

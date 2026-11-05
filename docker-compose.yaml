@@ -40,6 +40,7 @@ services:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf
       - ./certbot/conf:/etc/letsencrypt  # | these two locations are the same as the
       - ./certbot/www:/var/www/certbot   # ->   certbot container
+      - ./uploads:/var/www/uploads:ro
     restart: unless-stopped
   certbot:
     container_name: certbot

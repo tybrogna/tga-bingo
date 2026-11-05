@@ -68,26 +68,27 @@ html {
     padding: 10px;
     width: 725px;
     max-width: 1140px;
-    background: var(--color-4);
+    background: var(--color-2);
     color: #be0d0d;
     max-height: inherit;
     overflow-y: scroll;
     overflow-x: clip;
+    box-shadow: 0px 0px 8px 10px var(--color-3);
 }
 
 .linked-tile-binding {
-    border-left: #000000 solid thick;
-    border-bottom: #000000;
-    border-image: linear-gradient(to right, #000000 10%, trasparent 90%) 100% 1;
+    border-left: var(--color-1) solid 7px;
+    border-bottom: var(--color-1);
+    border-image: linear-gradient(to right, var(--color-1) 10%, trasparent 90%) 100% 1;
 }
 
 .linked-tile-binding::after {
     content: "";
     position: absolute;
-    height: 3px;
+    height: 7px;
     width: 3%;
-    background: #000000;
-    transform: translate(-22%);
+    background: var(--color-1);
+    transform: translate(-35%);
 }
 
 .full-tile-info {
@@ -139,8 +140,9 @@ html {
         width: 800px;
         /* max-width: 1140px; */
         height: 10%;
-        background: var(--color-4);
+        background: var(--color-2);
         color: #be0d0d;
+        box-shadow: 0px 0px 4px 6px var(--color-3);
     }
 
 }

@@ -100,10 +100,10 @@ async function login() {
         body: JSON.stringify(data)
     })
     let login = await loginRes.json()
-    console.log(login)
     localStorage.setItem('jwt', login.token)
     localStorage.setItem('id', login.id)
     localStorage.setItem('username', login.username)
+    loginResMessage.value = `Welcome back ${login.username}`
 }
 
 async function register() {
@@ -131,14 +131,33 @@ async function register() {
     })
     let registerJson = await registerRes.json()
     if (Object.hasOwn(registerJson, 'error')) {
+        console.log(registerJson.error)
         loginResMessage.value = registerJson.error
         return
     }
 
-    localStorage.setItem('jwt', login.token)
-    localStorage.setItem('id', login.id)
-    localStorage.setItem('username', login.username)
-    loginResMessage.value = `successfully registered ${login.username}. You're now logged in`
+    localStorage.setItem('jwt', registerJson.token)
+    localStorage.setItem('id', registerJson.id)
+    localStorage.setItem('username', registerJson.username)
+
+    if (localStorage.getItem('nomineeSelections') != undefined) {
+        // if there's nom guesses in localStorage, assume the person signing up is the person who made those guesses
+        let saveData = localStorage.getItem('nomineeSelections')
+        saveData = saveData.slice(0, -1)
+        saveData = saveData.concat(`,"userId":"${registerJson.id}"}`)
+        saveData = await JSON.parse(saveData)
+        saveData.userId = localStorage.getItem('id')
+        fetch('/api/saveNominees', {
+            method: 'post',
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(saveData)
+        })
+        localStorage.removeItem('nomineeSelections')
+    }
+
+    loginResMessage.value = `Successfully registered ${registerJson.username}. You're now logged in.`
 }
 
 async function verify() {

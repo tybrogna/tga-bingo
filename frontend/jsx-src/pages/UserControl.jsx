@@ -12,7 +12,7 @@ let token
 export default function UserControl(props) {
     return (
         <>
-        <title>User</title>
+        <title>TGA // User</title>
         <div id="main" className="container widener">
             <div id="content" className="shell pl-5 pr-5">
                 <TopMenuBar />

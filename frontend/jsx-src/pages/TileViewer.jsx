@@ -39,10 +39,9 @@ export function TileViewer(props) {
 }
 
 function TileViewerSingleRow(props) {
-    let imgUrl = (isLocal ? 'http://localhost:3001/' : '/') + props.tileData.img_loc
     return (
         <div class='row full-tile-info'>
-            <img class='col-4 img-in-view' src={imgUrl} onclick={toggleImageZoom} />
+            <img class='col-4 img-in-view' src={'/uploads/' + props.tileData.img_loc} onclick={toggleImageZoom} />
             <div class='col-8 p-2 tile-viewer-text'>
                 <div class='tile-viewer-text-title'>
                     {props.tileData.title}

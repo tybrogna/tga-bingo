@@ -282,14 +282,21 @@ export default class Database {
     async getUserNominations(userId, eventId) {
         let cmd
         if (eventId == undefined) {
-            cmd = `select `
-            cmd = cmd.concat(`nominee_categories.id,nominee_categories.name,nominee_categories.locked from nominee_categories join `)
-            cmd = cmd.concat(`events on nominee_categories.event_id=events.id where events.active=true order by id;`)
+            cmd = `select nominee_categories.id, nominee_categories.name, nominee_categories.locked 
+                from nominee_categories 
+                join events on nominee_categories.event_id=events.id 
+                where events.active=true order by id;`
         } else {
             cmd = `select id,name,locked from nominee_categories where event_id=${eventId} order by id;`
         }
         let rows = (await this.#runCmd(cmd)).rows
-        cmd = `select category_id, game_ids from user_nominations where category_id in (${rows.map(r => r.id).toString()}) and user_id=${userId} order by category_id;`
+
+        if (userId == undefined) {
+            rows.forEach(r => r.game_ids = [])
+            return rows
+        }
+        cmd = `select category_id, game_ids from user_nominations where category_id in 
+            (${rows.map(r => r.id).toString()}) and user_id=${userId} order by category_id;`
         let noms = (await this.#runCmd(cmd)).rows
         if (noms.length == 0) {
             rows.forEach(r => r.game_ids = [])

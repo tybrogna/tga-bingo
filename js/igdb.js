@@ -307,8 +307,7 @@ export class IGDBJob {
         let gamesToUpdate = listOfGamesInDatabase.filter(g => g.exists) // games in database
         let gamesToAdd = listOfGamesInDatabase.filter(g => !g.exists) // games missing
 
-        log(`IGDB // Of the ${gameList.length} released items, there are ${gamesToUpdate.length} already in the database`)
-
+        log(`IGDB // Of the ${gameList.length} release items, there are ${gamesToUpdate.length} already in the database`)
         log('IGDB // compiling details for new games...')
         for (let chunk of chunkList(gamesToUpdate, 250)) {
             let idString = this.#apicalypseIdString(chunk)
@@ -388,13 +387,10 @@ export class IGDBJob {
 
             compiledIGDBData.addGames = Object.assign(compiledIGDBData.addGames, compiledToAdd)
         }
-        // 0 2 4 8 9
 
         // for each game id in parentGameList, returns a map where
         //   key = id of game queried
         //   value = true if there is db entry with that id, otherwise false
-
-
         let allKeysAddingOrUpdating = Object.keys(compiledIGDBData.addGames).concat(Object.keys(compiledIGDBData.updateGames))
         let dbParentCheck = await this.#gameIdsExist(parentGamesToScan)
         let parentGamesToUpdate = dbParentCheck.filter(g => g.exists) // parent games in database

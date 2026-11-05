@@ -22,20 +22,57 @@ function NomineesSkeleton(props) {
     let [ allLocked, setAllLocked ] = useState()
     let [ changeMade, setChangeMade ] = useState()
 
-    useEffect(async () => {
-        let nomineesRes = await fetch('/api/nomineeCategories/' + localStorage.getItem('id')) //get everything here??
-        let nomineeCategories = await nomineesRes.json()
-        let initGameIds = []
-        nomineeCategories.forEach(nom => initGameIds = [...initGameIds, ...nom.game_ids.filter(gid => gid!=null)])
-        let initGamesRes = await fetch('/api/igdb/games/id/' + initGameIds.toString())
-        let initGames = await initGamesRes.json()
-        let allLockedStatus = true
-        nomineeCategories.forEach(nc => {
-            let fullGames = []
-            nc.game_ids.forEach(gid => fullGames.push(initGames.find(g => g.id == gid)))
-            nc.game_ids = fullGames
-            allLockedStatus = allLockedStatus && nc.locked
-        })
+    useEffect(async () => { //loads categories and user saved games, either from db or localStorage
+        let nomineeCategories, allLockedStatus = true
+        if (localStorage.getItem('id') != undefined) { // user signed in, there is somethign in the db
+            let url = '/api/nomineeCategories/' + localStorage.getItem('id') + '/'
+            let nomineesRes = await fetch(url)
+            nomineeCategories = await nomineesRes.json()
+            let initGameIds = []
+            nomineeCategories.forEach(nom =>
+                initGameIds = [...initGameIds, ...nom.game_ids.filter(gid => gid!=null)])
+            let initGamesRes = await fetch('/api/igdb/games/id/' + initGameIds.toString())
+            let initGames = await initGamesRes.json()
+            nomineeCategories.forEach(nc => {
+                let fullGames = []
+                nc.game_ids.forEach(gid => fullGames.push(initGames.find(g => g.id == gid)))
+                nc.game_ids = fullGames
+                allLockedStatus = allLockedStatus && nc.locked
+            })
+        } else if (localStorage.getItem('nomineeSelections') != undefined) { // no user, but someone already played from this browser
+            let url = '/api/nomineeCategories/'
+            let nomineesRes = await fetch(url)
+            nomineeCategories = await nomineesRes.json()
+            let initGameIds = []
+            let saveData = localStorage.getItem('nomineeSelections')
+            saveData = await JSON.parse(saveData)
+            saveData.selections.forEach(sel => {
+                initGameIds = [...initGameIds, ...sel.games.filter(s => s != "null")]
+            })
+            let initGamesRes = await fetch('/api/igdb/games/id/' + initGameIds.toString())
+            let initGames = await initGamesRes.json()
+            nomineeCategories.forEach(nc => {
+                let fullGames = []
+                let ncSel = saveData.selections.find(s => s.id == nc.id)
+                ncSel.games.forEach(gid => {
+                    if (gid == 'null') {
+                        fullGames.push(null)
+                    } else {
+                        fullGames.push(initGames.find(g => g.id == gid))
+                    }
+                })
+                nc.game_ids = fullGames
+                allLockedStatus = allLockedStatus && nc.locked
+            })
+        } else {
+            let url = '/api/nomineeCategories/'
+            let nomineesRes = await fetch(url) //get everything here??
+            nomineeCategories = await nomineesRes.json()
+            nomineeCategories.forEach(nc => {
+                allLockedStatus = allLockedStatus && nc.locked
+            })
+
+        }
         setNominees(nomineeCategories)
         setAllLocked(allLockedStatus)
     }, [])
@@ -53,7 +90,7 @@ function NomineesSkeleton(props) {
 
     let MobileElement = () => {
         if (mobile) {
-            return <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+            return <meta name="viewport" content="width=device-width, initial-scale=1neon.0" />
         }
     }
 
@@ -64,7 +101,8 @@ function NomineesSkeleton(props) {
 
     return (
     <div id='new-main' class={mainClasses}>
-        <title>TGA // Nominee Guesser</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1neon.0" />
+        {/* <title>TGA // Nominee Guesser</title> */}
         <MobileElement />
         <TopMenuBar />
         <div class={flexClass}>
@@ -124,10 +162,10 @@ function LeftSide(props) {
                 <GamePicker mobile={props.mobile} />
             </div>
             <div class={tabContentClass} ref={tabs[1]}>
-                Official TGA nominees will go here (when I get around to it sometime after they're posted)
+                <OfficialNomineesRoll />
             </div>
             <div class={tabContentClass} ref={tabs[2]}>
-                The funny numbers on the back of your credit card (ai is a wonderful tool)
+                <ScoreRoll />
             </div>
         </div>
     </div>
@@ -188,8 +226,34 @@ function GamePicker(props) {
                     <DatabaseBox game={g} mobile={mobileui}/>
                 )}
             </div>
-            {/* <GamePicker games={pickerData} /> */}
         </div>
+    )
+}
+
+function OfficialNomineesRoll(props) {
+    return <div>Official TGA nominees will go here (when I get around to it sometime after they're posted)</div>
+}
+
+function ScoreRoll(props) {
+    let text = `Percentage correct is a fairly normal way to determine how well you guessed, 
+        but we can do better! Inspired by strange arcade scoring, also intended to create variance
+        among participants.`
+    let text2 = `Oftentimes, there are universally acclaimed 'frontrunners,' which show up in many categories.
+        But there are 6 times 16 for 96 slots required. If you guess a game in a category that's not
+        one of the frontrunners, you get a bonus.`
+    return (
+    <div class='score-roll-info-box'>
+        <h3>How to play</h3>
+        <h4>or, get a High Score</h4>
+        <div>{text}</div>
+        <ul>
+            <li>Make sure you guess at least one game for each category.</li>
+            <li>You get a bonus for getting a game right in each category.</li>
+            <li>If you correctly guess all the games in one category, you get a bonus.</li>
+            <li>{text2}</li>
+            <li>There are 10 slots for your guesses, but only ever six nominees. There's a penalty for each guess over six you make.</li>
+        </ul>
+    </div>
     )
 }
 
@@ -226,13 +290,18 @@ function DatabaseBox(props) {
 
     let click = (e) => {
         if (pickerHighlight.value != undefined) {
-            pickerHighlight.value.style.background = ''
+            pickerHighlight.value.classList.remove('picker-highlight')
         }
         if (props.mobile && displayedRemoveMobile.value != undefined) {
             displayedRemoveMobile.value.style.display = 'none'
         }
+        if (selectedGame.value == game) {
+            selectedGame.value = undefined
+            return
+        }
         pickerHighlight.value = frameEle.current
-        pickerHighlight.value.style.background = 'red'
+        pickerHighlight.value.classList.add('picker-highlight')
+        // pickerHighlight.value.style.background = 'red'
         selectedGame.value = game
     }
 
@@ -299,7 +368,7 @@ function NomineesRoll(props) {
         props.update()
     }
 
-    let removeGameLocal = (e) => {
+    let removeGame = (e) => {
         gameList[e.target.parentElement.getAttribute('position')] = undefined
         setGameList([...gameList])
         props.update()
@@ -307,7 +376,7 @@ function NomineesRoll(props) {
 
     let Fill = () => gameList.map((g, idx) => {
         if (g != undefined) {
-            return <GameBox game={gameList[idx]} position={idx} remove={removeGameLocal} categoryLocked={props.category.locked} mobile={props.mobile}/>
+            return <GameBox game={gameList[idx]} position={idx} remove={removeGame} categoryLocked={props.category.locked} mobile={props.mobile}/>
         } else {
             return <Bookend position={idx} mobile={props.mobile} locked={props.category.locked} />
         }
@@ -398,19 +467,19 @@ function GameBox(props) {
     }
 
     let click = (e) => {
-        if (pickerHighlight.value != undefined) {
-            pickerHighlight.value.style.background = ''
-        }
-        if (props.mobile) {
-            if (displayedRemoveMobile.value != undefined) {
-                displayedRemoveMobile.value.style.display = 'none'
-            }
-            displayedRemoveMobile.value = removeEle.current
-            displayedRemoveMobile.value.style.display = 'block'
-        }
-        pickerHighlight.value = frameEle.current
-        pickerHighlight.value.style.background = 'white'
-        selectedGame.value = game
+        // if (pickerHighlight.value != undefined) {
+        //     pickerHighlight.value.style.background = ''
+        // }
+        // if (props.mobile) {
+        //     if (displayedRemoveMobile.value != undefined) {
+        //         displayedRemoveMobile.value.style.display = 'none'
+        //     }
+        //     displayedRemoveMobile.value = removeEle.current
+        //     displayedRemoveMobile.value.style.display = 'block'
+        // }
+        // pickerHighlight.value = frameEle.current
+        // pickerHighlight.value.style.background = 'white'
+        // selectedGame.value = game
     }
     
     let gameViewClasses = 'game-view'
@@ -443,6 +512,38 @@ function GameBox(props) {
     )
 }
 
+async function calculateScore() {
+    let officialRolls = {}
+    // compile offical rolls
+    // put the games less than three noms in a list, those are 'unpopular picks'
+    // 
+    let guessRolls = $$$('.nominee-roll, .nominee-roll-mobile')
+    let totalScore = 0
+    let categoryScore = 0
+    let numCorrectInCategory = 0
+    let allCategoriesHaveAGuess = true
+    let allCategoriesHaveOneCorrect = true
+    let perfectCategory = false
+    let unpopularGamePickBonus = 1.1
+    guessRolls.forEach(cat => {
+        let categoryName = cat.getAttribute('name')
+        let choices = cat.querySelectorAll('.game-grid > div, .game-grid-mobile > div')
+        choices.forEach(g => {
+            if (g.getAttribute('name') != null) {
+                // found a guess, check it against official nominees
+                // check off official nominiee so you can't get extra points from guessing e33 six times
+                // if its correct
+                //   highlight the element somehow
+                //   update stats
+            }
+        })
+        // display numCorrectInCategory and categoryScore in approipate boxes
+        // update totalScore
+        // 
+    })
+
+}
+
 function swapTrack() {
     console.log('swapping track')
     // let trackToggle = $('.divider-toggle')
@@ -452,13 +553,10 @@ function swapTrack() {
 }
 
 async function save() {
-    if (localStorage.getItem('id') == null) {
-        return
-    }
     let saveData = {}
     let cats = $$$('.nominee-roll, .nominee-roll-mobile')
     saveData.selections = []
-    saveData.userId = localStorage.getItem('id')
+
     cats.forEach(cat => {
         let saveRow = {}
         saveRow.id = cat.getAttribute('name')
@@ -473,15 +571,20 @@ async function save() {
         })
         saveData.selections.push(saveRow)
     })
-    
+
     console.log(JSON.stringify(saveData))
-    fetch('/api/saveNominees', {
-        method: 'post',
-        headers: {
-            "Content-Type": "application/json",
-        },
-        body: JSON.stringify(saveData)
-    })
+    if (localStorage.getItem('id') != undefined) {
+        saveData.userId = localStorage.getItem('id')
+        fetch('/api/saveNominees', {
+            method: 'post',
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(saveData)
+        })
+    } else {
+        localStorage.setItem('nomineeSelections', JSON.stringify(saveData))
+    }
 }
 
 export default function() {

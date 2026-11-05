@@ -9,6 +9,7 @@ export default function Home() {
     return (
     <>
     <title>TGA DOT ZONE</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1neon.0" />
     <link rel="icon" href="../img/favicon25.ico" />
     {/* <TopMenuBar /> */}
     <div id="main" className="container widener">
@@ -40,14 +41,6 @@ export default function Home() {
                         </div>
                     </a>
                 </div>
-                {/* <div class='link-card'>
-                    <a href='/gamelist'>
-                        <img src='https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQN_vdlibCnMbPh3tsYfb4yXcsjM5ikyAjrzxKkCXhdHCQdbgd7paLGRG0&s=10' />
-                        <div>
-                            GUESS NOMINEES
-                        </div>
-                    </a>
-                </div> */}
             </div>
             {/* <a href='/newtile'>SUBMIT NEW TILE</a> */}
         </div>

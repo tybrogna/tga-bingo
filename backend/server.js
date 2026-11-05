@@ -22,9 +22,9 @@ const __dirname = dirname(__filename);
 const job = new CronJob('0 0 * * 1,4', updateDBWithThisWeeksGames)
 
 export function log(message) {
-    message = new Date().toLocaleString({timeZone: 'est'}).concat(' ', message).concat('\n')
+    message = new Date().toLocaleString({timeZone: 'est'}).concat(' ', message)
     console.log(message)
-    fs.appendFile('log/log.txt', message, (err) => { if (err) { throw err } })
+    fs.appendFile('log/log.txt', message.concat('\n'), (err) => { if (err) { throw err } })
 }
 
 let app = express()
@@ -58,12 +58,13 @@ app.get('/igdb/games/id/:list?', async (req, res) => {
     res.json(await db.getGamesByIds(req.params.list))
 })
 
-app.get('/nomineeCategories/:id?', async (req, res) => {
+app.get('/nomineeCategories/:id?/:eventId?', async (req, res) => {
     res.json(await db.getUserNominations(req.params.id))
 })
 
 app.post('/saveNominees', async (req,res) => {
     await db.saveUserNominations(req.body)
+    res.text('yep')
 })
 
 app.get('/dbAccess/:token/getTables', async (req, res) => {
@@ -134,7 +135,7 @@ app.get('/addThisGame/:gameId/:password', async (req, res) => {
         let igdb = new IGDBJob()
         await igdb.connect()
         let compiledGames = await igdb.organizeGameDetails([req.params.gameId])
-        igdb.updateGamesTable(compiledGames)
+        await igdb.updateGamesTable(compiledGames)
         await igdb.disconnect()
         res.send('added it')
     }
@@ -153,7 +154,7 @@ async function initIGDB() {
         utcOrigin = nextWeek
         await delay(10000)
     }
-    igdb.disconnect()
+    await igdb.disconnect()
 }
 
 async function updateDBWithThisWeeksGames() {
@@ -182,7 +183,7 @@ async function updateDBWithThisWeeksGames() {
     compiledGames = await igdb.organizeGameDetails(rawWeeklyGames)
     await igdb.updateGamesTable(compiledGames)
 
-    igdb.disconnect()
+    await igdb.disconnect()
 }
 
 app.post('/registerUser', async (req, res) => {
@@ -209,9 +210,10 @@ app.post('/registerUser', async (req, res) => {
 
     try {
         let hashedPass = await bcrypt.hash(password, 10)
-        let dbUser = await db.createUser(email, username, hashedPass)
+        await db.createUser(email, username, hashedPass)
+        let dbUser = await db.retrieveUser(email, username)
         let token = jwt.sign({id: dbUser.id}, process.env.JWT_SECRET, {expiresIn: '200 days'})
-        log(`user ${dbUser.username} was created with email ${dbUser.email}`)
+        log(`USER CREATION // ${dbUser.username}, ${dbUser.email}`)
         res.json({ token: token, id: dbUser.id, username: dbUser.username })
     } catch(err) {
         console.log(err)
@@ -231,7 +233,7 @@ app.post('/login', async (req, res) => {
     try {
         let match = await bcrypt.compare(password, dbUser.password_hash)
         if (match) {
-            let token = jwt.sign({id: dbUser.id}, process.env.JWT_SECRET, {expiresIn: '8h'})
+            let token = jwt.sign({id: dbUser.id}, process.env.JWT_SECRET, {expiresIn: '200 days'})
             log(`${dbUser.username} was issued a token`)
             res.json({ token: token, id: dbUser.id, username: dbUser.username })
         } else {
@@ -252,9 +254,10 @@ app.post('/verifyTokenActive', async (req, res) => {
             }
             console.log('i dont know what this token is')
             res.send('false')
+        } else {
+            console.log(req.body.username + ' token ok (or idc)')
+            res.send(true)
         }
-        console.log(req.body.username + ' token ok (or idc)')
-        res.send(true)
     })
 })
 
@@ -286,7 +289,7 @@ app.post('/SubmitTile', imageUpload, async(req, res) => {
         betterName = betterName.trim()
         betterName = betterName.toLowerCase()
         betterName = betterName.split(' ').reduce((acc, word) => acc += word[0], "")
-        betterName += (new Date().valueOf() % 100000).toString().padStart(5, '0')
+        betterName += (new Date().valueOf() % 1000000).toString().padStart(5, '0')
         betterName += ".jpg"
         console.log(betterName)
         sharp(file)

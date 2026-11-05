@@ -75,7 +75,7 @@ function BingoSkeleton(props) {
             localStorage.setItem('seed', cardSeed)
         }
 
-        let tiles = await newFetchShuffledTiles(cardSeed, props.eventName, props.eventYear)
+        let tiles = await fetchShuffledTiles(cardSeed, props.eventName, props.eventYear)
         setTiles(tiles)
         sortTiles()
         revealTiles()
@@ -99,9 +99,6 @@ function BingoSkeleton(props) {
         if (viewerDisplayed) {
             $("#viewer-overlay").style.display = "block"
             $("#tile-list-zone").style.display = "block"
-            // if (!viewerWasRendered) {
-                // renderTileViewer($('tile-list-zone'), path, eventName, eventYear)
-            // }
         } else {
             $("#viewer-overlay").style.display = "none"
             $("#tile-list-zone").style.display = "none"
@@ -110,7 +107,7 @@ function BingoSkeleton(props) {
 
     return (
     <>
-    <title>Bingo: The Game Awards 2024</title>
+    <title>TGA // Bingo 2026</title>
     {/* <link rel="icon" href={favicon} /> */}
     <div id="main" className="container widener">
         <TopMenuBar />
@@ -126,11 +123,9 @@ function BingoSkeleton(props) {
                 <div class="col">
                     <span class='pr-2'>Card Seed</span>
                     <input type='text' id="seed-box" class='mr-2' value={cardSeed}></input>
-                    {/* <button id="regen" onClick={() => regenerateCard($('#tile-zone'))}>Regenerate</button> */}
-                    <button id="new-regen" onClick={regenerateClicked}>Regenerate</button>
+                    <button id="regen" onClick={regenerateClicked}>Regenerate</button>
                 </div>
                 <div class="col justify-content-end d-flex">
-                    {/* <button id="listTiles" onClick={displayViewerOverlay}>List tiles</button> */}
                     <button id="listTiles" onClick={e => setViewerDisplayed(!viewerDisplayed)}>List tiles</button>
                 </div>
             </div>
@@ -216,7 +211,7 @@ function HelperOverlay() {
     )
 }
 
-async function newFetchShuffledTiles(seed,event,year) {
+async function fetchShuffledTiles(seed,event,year) {
     let shuffledRes, shuffled
 
     if (event != undefined && year != undefined) {
@@ -289,12 +284,11 @@ function BingoRow(props) {
 
 function BingoTile(props) {
     let { id, tileClasses, imgClasses, tileData } = props.items
-    let imgUrl = (isLocal ? 'http://localhost:3001/' : '/') + tileData.img_loc
     bingoDesc[id] = tileData.description
     return (
         <div id={id} class={tileClasses} onclick={swapTickVisibility}>
             <div class="helper-target" onclick={showDescription}>?</div>
-            <img id='imgbox' class={imgClasses} src={imgUrl} />
+            <img id='imgbox' class={imgClasses} src={'/uploads/' + tileData.img_loc} />
             <div id='title-text-box' class='tile-text'>{tileData.title}</div>
             <div id='checkbox'>
                 <img id='tick' class='tick-standard tick-hidden' src={correctImg} />

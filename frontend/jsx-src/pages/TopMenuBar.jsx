@@ -39,7 +39,6 @@ export default function TopMenuBar(props) {
             console.log('at', activeToken)
             if (activeToken) {
                 console.log('still logged in')
-                // localStorage.setItem('signedIn', true)
                 labels.push({text: localStorage.getItem('username'), link: '/accounts', image: icon})
             } else {
                 labels.push({text: 'Account', link: '/accounts', image: icon})

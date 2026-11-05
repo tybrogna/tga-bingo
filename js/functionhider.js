@@ -43,13 +43,16 @@ export function unsqlize(str) {
  * Jquery style $
  * @param {string} cssSelector - CSS selector string
  * @return {Element} - first matching Element
- * should probably just use jquery, its small enough. im just not clear on the other benefits
- * i just remembered i used it in the nominees portion, so itll be in later anyways
- * TODO delete this
  */
 export function $(cssSelector) {
     return document.querySelector(cssSelector)
 }
+
+/***
+ * Jquery style $, but its multiselect, hence the fat stacks
+ * @param {string} cssSelector - CSS selector string
+ * @return {Element} - all matching Element
+ */
 
 export function $$$(cssSelector) {
     return document.querySelectorAll(cssSelector)
@@ -68,7 +71,7 @@ export function range(from, to = null) {
     return retArr
 }
 
-// Claude AI helped me with this one
+// Claude AI helped me with this one, didnt end up using it
 export function urlToPNGFile(dataUrl) {
     let [ header, body ] = dataUrl.split(',')
     let mime = header.match(/:.*?;/)[0];
