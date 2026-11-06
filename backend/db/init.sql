@@ -98,9 +98,9 @@ CREATE TABLE user_event_scores (
     score INTEGER
 );
 
+DROP TABLE IF EXISTS final_nominees;
 CREATE TABLE final_nominees (
     id SERIAL PRIMARY KEY,
-    user_id INTEGER REFERENCES users(id),
     category_id INTEGER REFERENCES nominee_categories(id),
     game_ids INTEGER[]
 );

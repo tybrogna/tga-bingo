@@ -201,7 +201,7 @@ function HelperOverlay() {
         <>
         <div id='helper-overlay' onClick={hideHelperOverlay}>
             <img id='overlay-image' />
-            <div id='helper-overlay-box'>
+            <div id='helper-overlay-box' class='force-font-color'>
                 Some bingo boxes have mutually exclusive events ("X game wins" vs "Y game wins").
                 <br />
                 In that case, you can submit multiple tiles (up to three) that can't appear on the same board with each other.

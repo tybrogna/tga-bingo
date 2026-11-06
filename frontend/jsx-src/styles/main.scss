@@ -96,11 +96,16 @@ a {
 input[type=text], input[type=textbox] {
     border-style: none;
     background-color: var(--color-3);
+    color: var(--color-1);
     border-top-left-radius: 10px;
     border-bottom-right-radius: 10px;
     padding-left: 5px;
     padding-right: 5px;
     border: 1px var(--color-1) solid;
+}
+
+::placeholder {
+    color: var(--color-1);
 }
 
 button, input[type=button] {

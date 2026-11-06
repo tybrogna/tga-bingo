@@ -317,4 +317,9 @@ export default class Database {
         // let rows = await this.#runCmd(cmd)
         // return rows
     }
+
+    async getFinalNominees(eventId) {
+        let cmd = `select * from final_nominees join nominee_categories on 
+            nominee_categories.id=final_nominees.category_id where nominee_categories.event_id=${eventId}`
+    }
 }

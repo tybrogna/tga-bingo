@@ -28,7 +28,8 @@
 .db-tile-grid-options {
     display: grid;
     grid-template-columns: 110px 110px 110px 110px;
-    overflow: scroll;
+    overflow: overlay;
+    scrollbar-width: none;
     max-height: 800px;
     margin-top: 1em;
     background-color: var(--color-3);
@@ -37,7 +38,8 @@
 
 .db-tile-grid-options-mobile {
     display: flex;
-    overflow: scroll;
+    overflow: overlay;
+    scrollbar-width: none;
     height: 8.5em;
 }
 
@@ -61,7 +63,9 @@
 .nominees-box {
     display: flex;
     flex-direction: column;
-    overflow: scroll;
+    overflow: overlay;
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-3) var(--color-2);
     height: 90vh;
     margin-bottom: 2%;
 }
@@ -69,7 +73,9 @@
 .nominees-box-mobile {
     width: 94%;
     flex-direction: column;
-    overflow: scroll;
+    overflow: overlay;
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-3) var(--color-2);
     height: 50%;
     padding-top: 48%;
     margin-bottom: 5%;
@@ -78,7 +84,7 @@
 }
 
 .nominee-roll {
-    min-height: 21%;
+    min-height: 230px;
     max-width: inherit;
 }
 
@@ -90,7 +96,8 @@
     height: 82%;
     text-align: center;
     display: flex;
-    overflow: scroll;
+    overflow: overlay;
+    scrollbar-width: none;
     min-width: 860px;
     max-width: 860px;
     border-radius: 0 40px 40px 0;
@@ -100,7 +107,8 @@
     display: grid;
     grid-template-columns: repeat(5, 24%);
     grid-template-rows: repeat(2, 7em);
-    overflow: scroll;
+    overflow: overlay;
+    scrollbar-width: none;
     text-align: center;
     background-color: var(--color-2);
     grid-gap: 1px 8%;
