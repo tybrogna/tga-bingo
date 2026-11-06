@@ -59,12 +59,16 @@ app.get('/igdb/games/id/:list?', async (req, res) => {
 })
 
 app.get('/nomineeCategories/:id?/:eventId?', async (req, res) => {
-    res.json(await db.getUserNominations(req.params.id))
+    res.json(await db.getUserNominations(req.params.id, req.params.eventId))
+})
+
+app.get('/officialNominees/:eventId?', async (req, res) => {
+    res.json(await db.getOfficialNominees(req.params.eventId))
 })
 
 app.post('/saveNominees', async (req,res) => {
     await db.saveUserNominations(req.body)
-    res.text('yep')
+    res.send('yep')
 })
 
 app.get('/dbAccess/:token/getTables', async (req, res) => {

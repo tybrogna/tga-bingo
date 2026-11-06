@@ -6,6 +6,7 @@ import TopMenuBar from './TopMenuBar.jsx'
 
 import '../styles/nominees.scss'
 
+const officialNominees = signal([])
 const draggingGame = signal({})
 const selectedGame = signal()
 const pickerHighlight = signal()
@@ -162,10 +163,10 @@ function LeftSide(props) {
                 <GamePicker mobile={props.mobile} />
             </div>
             <div class={tabContentClass} ref={tabs[1]}>
-                <OfficialNomineesRoll />
+                <OfficialNomineesRoll mobile={props.mobile}/>
             </div>
             <div class={tabContentClass} ref={tabs[2]}>
-                <ScoreRoll />
+                <ScoreRoll mobile={props.mobile}/>
             </div>
         </div>
     </div>
@@ -231,10 +232,68 @@ function GamePicker(props) {
 }
 
 function OfficialNomineesRoll(props) {
-    return <div>Official TGA nominees will go here (when I get around to it sometime after they're posted)</div>
+    let officialClass = 'official-noms'
+    if (props.mobile) {
+        officialClass += '-mobile'
+    }
+
+    // useEffect(async () => {
+    //     let officialNomsRes = await fetch('/api/officialNominees/')
+    //     let onoms = await officialNomsRes.json()
+    //     if (onoms.length > 0) {
+    //         officialNominees.value = onoms
+    //         console.log(officialNominees.value)
+    //     }
+    // }, [])
+
+    // useEffect(async () => {
+    //     if (officialNominees.value.length <= 0) {
+    //         return
+    //     }
+    //     let nomineeGamesIds = []
+    //     officialNominees.value.forEach(on => nomineeGamesIds.concat(on.game_ids))
+    //     nomineeGamesIds = [...new Set(nomineeGames)] // unique games only
+    //     let nomGameDataRes = await fetch('/api/igdb/games/id/' + nomineeGamesIds.toString())
+    // }, [officialNominees])
+
+    let OfficialRoll = (props) => {
+        
+    }
+
+    if (officialNominees.value.length > 0) {
+        return (
+            <div>
+                {officialNominees.value.map(on => OfficialRoll(on))}
+            </div>
+        )
+    } else {
+        return <div>Official TGA nominees will go here (when I get around to it sometime after they're posted)</div>
+    }
+
 }
 
 function ScoreRoll(props) {
+    let [ scoreReady, setScoreReady ] = useState()
+
+    useEffect(() => {
+        if (officialNominees.value.length > 0) {
+            calculateScore()
+            setScoreReady(true)
+        }
+    }, [officialNominees])
+
+    if (scoreReady) {
+
+    } else {
+        return ScoreRules(props)
+    }
+}
+
+function ScoreRules(props) {
+    let scoreRollClass = 'score-roll-info-box'
+    if (props.mobile) {
+        scoreRollClass += '-mobile'
+    }
     let text = `Percentage correct is a fairly normal way to determine how well you guessed, 
         but we can do better! Inspired by strange arcade scoring, also intended to create variance
         among participants.`
@@ -242,7 +301,7 @@ function ScoreRoll(props) {
         But there are 6 times 16 for 96 slots required. If you guess a game in a category that's not
         one of the frontrunners, you get a bonus.`
     return (
-    <div class='score-roll-info-box'>
+    <div class={scoreRollClass}>
         <h3>How to play</h3>
         <h4>or, get a High Score</h4>
         <div>{text}</div>
@@ -470,13 +529,17 @@ function GameBox(props) {
         // if (pickerHighlight.value != undefined) {
         //     pickerHighlight.value.style.background = ''
         // }
-        // if (props.mobile) {
-        //     if (displayedRemoveMobile.value != undefined) {
-        //         displayedRemoveMobile.value.style.display = 'none'
-        //     }
-        //     displayedRemoveMobile.value = removeEle.current
-        //     displayedRemoveMobile.value.style.display = 'block'
-        // }
+        if (props.mobile) {
+            if (displayedRemoveMobile.value != undefined) {
+                displayedRemoveMobile.value.style.display = 'none'
+                if (displayedRemoveMobile.value == removeEle.current) {
+                    displayedRemoveMobile.value = undefined
+                    return
+                }
+            }
+            displayedRemoveMobile.value = removeEle.current
+            displayedRemoveMobile.value.style.display = 'block'
+        }
         // pickerHighlight.value = frameEle.current
         // pickerHighlight.value.style.background = 'white'
         // selectedGame.value = game
@@ -513,19 +576,32 @@ function GameBox(props) {
 }
 
 async function calculateScore() {
-    let officialRolls = {}
+    // let officialRolls = {}
     // compile offical rolls
     // put the games less than three noms in a list, those are 'unpopular picks'
-    // 
+    let frontrunners = {}
+    officialNominees.value.forEach(on => {
+         on.game_ids.forEach(g => {
+            if (frontrunners[g] == undefined) {
+                frontrunners[g] = 0
+            }
+            frontrunners[g] += 1
+         })
+    })
+    frontrunners = Object.entries(frontrunners)
+        .filter(([k,v]) => fr > 3)
+        .map(([k,v]) => k)
     let guessRolls = $$$('.nominee-roll, .nominee-roll-mobile')
     let totalScore = 0
-    let categoryScore = 0
-    let numCorrectInCategory = 0
-    let allCategoriesHaveAGuess = true
-    let allCategoriesHaveOneCorrect = true
-    let perfectCategory = false
-    let unpopularGamePickBonus = 1.1
+    let categoryScore = {}
+    let aNumCorrectInCategory = 0
+    let aAllCategoriesHaveAGuessBonus = 250
+    let aAllCategoriesHaveOneCorrectBonus = 250
+    let aPerfectCategoryBonus = 250
+    let mUnpopularGamePickBonus = .1
+    let mOverPickPenalty = -.05
     guessRolls.forEach(cat => {
+        // categoryScore[catId] = 0
         let categoryName = cat.getAttribute('name')
         let choices = cat.querySelectorAll('.game-grid > div, .game-grid-mobile > div')
         choices.forEach(g => {
@@ -572,7 +648,6 @@ async function save() {
         saveData.selections.push(saveRow)
     })
 
-    console.log(JSON.stringify(saveData))
     if (localStorage.getItem('id') != undefined) {
         saveData.userId = localStorage.getItem('id')
         fetch('/api/saveNominees', {

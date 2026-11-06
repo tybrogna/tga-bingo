@@ -58,9 +58,9 @@ export default class Database {
     async retrieveUser(email="", username="") {
         let cmd
         if (email != "") {
-            cmd = `select * from users where email='${email}'`
+            cmd = `select * from users where email='${email}';`
         } else if (username != "") {
-            cmd = `select * from users where username='${username}'`
+            cmd = `select * from users where username='${username}';`
         }
         let res = await this.#runCmd(cmd)
         return res.rows[0]
@@ -305,21 +305,28 @@ export default class Database {
                 rows[idx].game_ids = noms[idx].game_ids
             })
         } else {
-            console.log('the stupid thing with mismatched category and user nominations has happened')
+            range(rows.length).forEach(idx => {
+                if (noms[idx] && noms[idx].hasOwnProperty('game_ids')) {
+                    rows[idx].game_ids = noms[idx].game_ids
+                } else {
+                    rows[idx].game_ids = []
+                }
+            })
         }
-        // console.log(rows)
         return rows
 
-        // cmd = `user_nominations.category_id, nominee_categories.name, user_nominations.game_ids from nominee_categories `
-        // cmd = cmd.concat(`inner join user_nominations on nominee_categories.id=user_nominations.category_id `)
-        // cmd = cmd.concat(`where nominee_categories.event_id=${eventId} and `)
-        // cmd = cmd.concat(`user_nominations.user_id=${userId};`)
-        // let rows = await this.#runCmd(cmd)
-        // return rows
     }
 
-    async getFinalNominees(eventId) {
-        let cmd = `select * from final_nominees join nominee_categories on 
-            nominee_categories.id=final_nominees.category_id where nominee_categories.event_id=${eventId}`
+    async getOfficialNominees(eventId) {
+        let cmd = `select final_nominees.category_id, nominee_categories.name, final_nominees.game_ids 
+            from final_nominees join nominee_categories on 
+            nominee_categories.id=final_nominees.category_id where nominee_categories.event_id=`
+        if (eventId == undefined) {
+            cmd = cmd.concat(`( select id from events where events.active = true );`)
+        } else {
+            cmd = cmd.concat(eventId + ';')
+        }
+        let res = await this.#runCmd(cmd)
+        return res.rows
     }
 }

@@ -425,10 +425,34 @@
     display:flex;
     flex-direction:column;
     align-items:center;
-}
-
-.score-roll-info-box {
     margin-left: 1em;
     margin-right: 1em;
     margin-top: 4px;
+}
+
+.score-roll-info-box-mobile {
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    margin-left: 1em;
+    margin-right: 1em;
+    margin-top: 4px;
+    height: 10em;
+    overflow: scroll;
+}
+
+.score-roll-info-box-mobile h3 {
+    font-size: 1.1rem;
+}
+.score-roll-info-box-mobile h4 {
+    font-size: 1.1rem;
+}
+
+.official-noms {
+
+}
+
+.official-noms-mobile {
+    overflow: scroll;
+    height: 8.5em;
 }
