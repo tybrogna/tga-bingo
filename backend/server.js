@@ -138,7 +138,7 @@ app.get('/addThisGame/:gameId/:password', async (req, res) => {
     if (req.params.password == process.env.INITALIZE_IGDB_FROM_2025) {
         let igdb = new IGDBJob()
         await igdb.connect()
-        let compiledGames = await igdb.organizeGameDetails([req.params.gameId])
+        let compiledGames = await igdb.organizeGameDetails([req.params.gameId], true)
         await igdb.updateGamesTable(compiledGames)
         await igdb.disconnect()
         res.send('added it')

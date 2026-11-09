@@ -1,4 +1,4 @@
-import { $, $$$, range, checkMobile } from "../../js/functionhider.js"
+import { $, $$$, range, checkMobile, objIsEmpty, delay } from "../../js/functionhider.js"
 import { signal, computed } from '@preact/signals';
 import { useState, useEffect, useRef } from 'preact/hooks'
 import { render } from 'preact'
@@ -6,11 +6,15 @@ import TopMenuBar from './TopMenuBar.jsx'
 
 import '../styles/nominees.scss'
 
-const officialNominees = signal([])
+// const officialNominees = signal([])
 const draggingGame = signal({})
+const dragPickUpGame = signal({})
 const selectedGame = signal()
 const pickerHighlight = signal()
 const displayedRemoveMobile = signal()
+
+const picksFilled = signal(false)
+const officialsFilled = signal(false)
 
 let displayStyle = 0
 
@@ -76,6 +80,7 @@ function NomineesSkeleton(props) {
         }
         setNominees(nomineeCategories)
         setAllLocked(allLockedStatus)
+        picksFilled.value = true
     }, [])
 
 
@@ -89,11 +94,6 @@ function NomineesSkeleton(props) {
         return () => clearTimeout(saveout)
     }
 
-    let MobileElement = () => {
-        if (mobile) {
-            return <meta name="viewport" content="width=device-width, initial-scale=1neon.0" />
-        }
-    }
 
     let mainClasses = mobile ? 'container-mobile' : "noms-container widener"
     let contentClasses = mobile ? "" : "shell pl-1 pr-1"
@@ -102,9 +102,7 @@ function NomineesSkeleton(props) {
 
     return (
     <div id='new-main' class={mainClasses}>
-        <meta name="viewport" content="width=device-width, initial-scale=1neon.0" />
-        {/* <title>TGA // Nominee Guesser</title> */}
-        <MobileElement />
+        <title>TGA // Nominee Guesser</title>
         <TopMenuBar />
         <div class={flexClass}>
             <LeftSide mobile={mobile} />
@@ -125,6 +123,7 @@ function NomineesSkeleton(props) {
 
 function LeftSide(props) {
     let [ selectedTab, setSelectedTab] = useState(0)
+    let [ officialNominees, setOfficialNominees ] = useState([])
     let tabs = [useRef(null), useRef(null), useRef(null)]
 
     let tabsClass = 'tab-buttons'
@@ -151,6 +150,23 @@ function LeftSide(props) {
         })
     }, [selectedTab])
 
+    useEffect(async () => {
+        let officialNomsRes = await fetch('/api/officialNominees/')
+        let onoms = await officialNomsRes.json()
+        console.log(onoms)
+        if (onoms.length > 0) {
+            let nomineeGamesIds = []
+            setOfficialNominees(onoms)
+        }
+        officialsFilled.value = true
+    }, [])
+
+    // useEffect(async () => {
+    //     if (officialNominees.length <= 0) {
+    //         return
+    //     }
+    // }, [officialNominees])
+
     return (
     <div>
         <div class={tabsClass}>
@@ -163,10 +179,10 @@ function LeftSide(props) {
                 <GamePicker mobile={props.mobile} />
             </div>
             <div class={tabContentClass} ref={tabs[1]}>
-                <OfficialNomineesRoll mobile={props.mobile}/>
+                <OfficialNomineesRoll official={officialNominees} mobile={props.mobile}/>
             </div>
             <div class={tabContentClass} ref={tabs[2]}>
-                <ScoreRoll mobile={props.mobile}/>
+                <ScoreRoll official={officialNominees} mobile={props.mobile}/>
             </div>
         </div>
     </div>
@@ -237,6 +253,14 @@ function OfficialNomineesRoll(props) {
         officialClass += '-mobile'
     }
 
+    useEffect(async () => {
+        let nomineeGamesIds = []
+        props.official.forEach(on => nomineeGamesIds.concat(on.game_ids))
+        nomineeGamesIds = [...new Set(nomineeGamesIds)] // unique games only
+        let officialDetailsRes = await fetch('/api/igdb/games/id/' + nomineeGamesIds.toString())
+        let officialDetails = officialDetailsRes.json()
+    }, [props.official])
+
     // useEffect(async () => {
     //     let officialNomsRes = await fetch('/api/officialNominees/')
     //     let onoms = await officialNomsRes.json()
@@ -260,7 +284,7 @@ function OfficialNomineesRoll(props) {
         
     }
 
-    if (officialNominees.value.length > 0) {
+    if (props.official.length > 0) {
         return (
             <div>
                 {officialNominees.value.map(on => OfficialRoll(on))}
@@ -275,12 +299,13 @@ function OfficialNomineesRoll(props) {
 function ScoreRoll(props) {
     let [ scoreReady, setScoreReady ] = useState()
 
-    useEffect(() => {
-        if (officialNominees.value.length > 0) {
-            calculateScore()
+    useEffect(async () => {
+        if (officialsFilled.value && picksFilled.value && props.official.length > 0) {
+            await delay(5000) //this waits for the right side to load, fix later if i care
+            calculateScore(props.official)
             setScoreReady(true)
         }
-    }, [officialNominees])
+    }, [officialsFilled.value, picksFilled.value])
 
     if (scoreReady) {
 
@@ -383,7 +408,6 @@ function DatabaseBox(props) {
 
 function NomineesRoll(props) {
     let [ gameList, setGameList ] = useState([])
-    let filledSpots = 0
 
     useEffect(async () => {
         range(10).forEach(idx => {
@@ -408,8 +432,10 @@ function NomineesRoll(props) {
         e.preventDefault()
 
         gameList[droppedPos] = draggingGame.value
-        filledSpots += 1
         setGameList([...gameList])
+        if (!objIsEmpty(dragPickedUpFromRemoveButton.value)) {
+            dragPickedUpFromRemoveButton.value.click()
+        }
         props.update()
     }
 
@@ -422,7 +448,6 @@ function NomineesRoll(props) {
             return
         }
         gameList[position] = selectedGame.value
-        filledSpots += 1
         setGameList([...gameList])
         props.update()
     }
@@ -503,6 +528,8 @@ function GameBox(props) {
 
     let dragStart = (e) => {
         draggingGame.value = game
+        console.log(props)
+        dragPickedUpFromRemoveButton.value = removeEle.current
     }
 
     let dragEnd = (e) => {
@@ -575,12 +602,9 @@ function GameBox(props) {
     )
 }
 
-async function calculateScore() {
-    // let officialRolls = {}
-    // compile offical rolls
-    // put the games less than three noms in a list, those are 'unpopular picks'
+async function calculateScore(official) {
     let frontrunners = {}
-    officialNominees.value.forEach(on => {
+    official.forEach(on => {
          on.game_ids.forEach(g => {
             if (frontrunners[g] == undefined) {
                 frontrunners[g] = 0
@@ -589,34 +613,62 @@ async function calculateScore() {
          })
     })
     frontrunners = Object.entries(frontrunners)
-        .filter(([k,v]) => fr > 3)
+        .filter(([k,v]) => v >= 3)
         .map(([k,v]) => k)
-    let guessRolls = $$$('.nominee-roll, .nominee-roll-mobile')
+    let guessRolls = document.querySelectorAll('.nominee-roll, .nominee-roll-mobile')
     let totalScore = 0
-    let categoryScore = {}
-    let aNumCorrectInCategory = 0
-    let aAllCategoriesHaveAGuessBonus = 250
-    let aAllCategoriesHaveOneCorrectBonus = 250
-    let aPerfectCategoryBonus = 250
-    let mUnpopularGamePickBonus = .1
-    let mOverPickPenalty = -.05
+    let categoryScores = {}
+    let allCategoriesHaveAGuessBonus = 250
+    let allCategoriesHaveOneCorrectBonus = 250
+    let allCategoriesHaveOne = true
+    let perfectCategoryBonus = 250
+    let unpopularGamePickMulti = .1
+    let overPickMulti = .1
     guessRolls.forEach(cat => {
-        // categoryScore[catId] = 0
-        let categoryName = cat.getAttribute('name')
-        let choices = cat.querySelectorAll('.game-grid > div, .game-grid-mobile > div')
-        choices.forEach(g => {
-            if (g.getAttribute('name') != null) {
-                // found a guess, check it against official nominees
-                // check off official nominiee so you can't get extra points from guessing e33 six times
-                // if its correct
-                //   highlight the element somehow
-                //   update stats
+        console.log(cat)
+        let numCorrectInCategory = 0
+        let curCategoryScore = 0
+        let curUnpopMulti = 0
+        let catId = cat.getAttribute('name')
+        let officialRoll = official.find(o => o.category_id == catId)
+        let picks = cat.querySelectorAll('.game-grid > div.game-view, .game-grid-mobile > div.game-view-mobile')
+        console.log(picks)
+        picks.forEach(choice => {
+            let choiceGameId = choice.getAttribute('name')
+            let idxOfGuess = officialRoll.game_ids.findIndex(orgid => orgid == choiceGameId)
+            if (idxOfGuess >= 0) {
+                officialRoll.game_ids[idxOfGuess] = -1 //remove game from official so it cant be guessed again
+                let guessScore = 50 + (10 * numCorrectInCategory)
+                if (!frontrunners.includes(choiceGameId)) {
+                    curUnpopMulti += unpopularGamePickMulti
+                }
+                numCorrectInCategory += 1
+                curCategoryScore += guessScore
+                // TODO: highlight the element somehow
             }
         })
-        // display numCorrectInCategory and categoryScore in approipate boxes
-        // update totalScore
-        // 
+        curCategoryScore *= 1 + curUnpopMulti
+
+        if (numCorrectInCategory == officialRoll.game_ids.length) {
+            curCategoryScore += perfectCategoryBonus
+        }
+
+        if (picks.length > officialRoll.game_ids.length) { // minus 10% per pick over
+            curCategoryScore *= 1 - ((picks.length - officialRoll.game_ids.length) * overPickMulti)
+        }
+
+        if (picks.length == 0) {
+            allCategoriesHaveOne = false
+        }
+        categoryScores[catId] = curCategoryScore
+        totalScore += curCategoryScore
     })
+
+    if (allCategoriesHaveOne) {
+        totalScore += 250
+    }
+
+    console.log(totalScore)
 
 }
 

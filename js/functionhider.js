@@ -85,6 +85,22 @@ export function urlToPNGFile(dataUrl) {
     return new File([u8arr], 'image.png', { type: mime });
 }
 
+export function objIsEmpty(obj) {
+    if (obj == null) {
+        return true
+    }
+
+    if (typeof obj !== 'object') {
+        return true
+    }
+
+    if (Object.keys(obj).length == 0) {
+        return true
+    }
+
+    return false
+}
+
 export function objectSort(obj, member) {
     obj.sort((a, b) => {
         const nameA = a[member].toUpperCase(); // ignore upper and lowercase

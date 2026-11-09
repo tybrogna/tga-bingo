@@ -291,10 +291,9 @@ export class IGDBJob {
     /**
      * does the heavy lifting, grabbing details and popularity numbers for the int array of game ids
      * @param {int[]} gameList int[]
-     * @param {boolean} doParents probably useless, but speeds up the processing by not checking parents or their popularity
      * @returns {UpdateStruct} obj with 4 objs inside, one dictionary for games, parents, updates, and update parents
      */
-    async organizeGameDetails(gameList, doParents = true) {
+    async organizeGameDetails(gameList, force = true) {
         let detailsMap = {}
         let parentGamesToScan = [] // ids of games that were released sometime in the past, and are related to games that were released
             // dlc, seasons, and updates will not be in the database, but parent games will
@@ -373,6 +372,10 @@ export class IGDBJob {
                 }
 
                 this.normalizeData(game, reducedPopularity[game.id])
+                if (force) { // only happening if i use the /addThisGame route
+                    compiledToAdd[game.id] = game
+                    return
+                }
                 if (game.first_release_date != undefined && game.notability_score > 5) {
                     // console.log('  ' + game.name +' -- score ' + game.notability_score)
                     compiledToAdd[game.id] = game
