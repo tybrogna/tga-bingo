@@ -217,22 +217,35 @@ export default class Database {
     async getGames(term, thisYearOnly=false, notableOnly=false, vrOnly=false, remasterOnly=false, mobileOnly=false) {
         let cmd = 'select id,name,igdb_cover_id from games '
         let adds = []
-        if (term != undefined) {
-            term = term.replaceAll('\'', '')
-            term = term.replaceAll(' ', '%')
-            adds.push(` name ilike '%${term}%'`)
-        }
-        // if (thisYearOnly) {
-        //     adds.push(``)
+        // if (term != undefined) {
+        term = term.replaceAll('\'', '')
+        term = term.replaceAll(' ', '%')
+        adds.push(` name ilike '%${term}%'`)
         // }
+        if (thisYearOnly) {
+            adds.push(` release_date>='Nov 25, 2025' and release_date<='Dec 25, 2026'`)
+        }
+        if (notableOnly) {
+            adds.push(` notability_score > 10`)
+        }
+        if (vrOnly) {
+            adds.push(` is_vr=true`)
+        }
+        if (mobileOnly) {
+            adds.push(` is_mobile=true`)
+        }
 
         if (adds.length > 0) {
             cmd = cmd.concat(' where')
             adds.forEach(a => {
                 cmd = cmd.concat(a)
+                cmd = cmd.concat(` and`)
             })
+            cmd = cmd.slice(0, -4)
         }
-        cmd = cmd.concat(` limit 100;`)
+        cmd = cmd.concat(` order by release_date desc`)
+        cmd = cmd.concat(` limit 100`)
+        cmd = cmd.concat(`;`)
         let res = await this.#runCmd(cmd)
         return res.rows
     }

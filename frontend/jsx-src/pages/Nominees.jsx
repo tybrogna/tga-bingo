@@ -16,6 +16,12 @@ const displayedRemoveMobile = signal()
 const picksFilled = signal(false)
 const officialsFilled = signal(false)
 
+const filterNotable = signal(false)
+const filterYear = signal(false)
+const filterVR = signal(false)
+const filterMobile = signal(false)
+const filterEarlyAccess = signal(true)
+
 let displayStyle = 0
 
 // TODO: scoring system
@@ -116,9 +122,9 @@ function NomineesSkeleton(props) {
             </div>
             </>
         </div>
+        <HelperOverlay />
     </div>
     )
-
 }
 
 function LeftSide(props) {
@@ -193,11 +199,6 @@ function LeftSide(props) {
 function GamePicker(props) {
     let mobileui = props.mobile
     let [ search, setSearch ] = useState('')
-    let [ notable, setNotable ] = useState(false)
-    let [ thisYear, setThisYear ] = useState(false)
-    let [ vr, setVr ] = useState(false)
-    let [ remaster, setRemaster ] = useState(false)
-    let [ mobile, setMobile ] = useState(false)
     let [ pickerData, setPickerData ] = useState([])
 
     let typeout
@@ -205,7 +206,7 @@ function GamePicker(props) {
         clearTimeout(typeout)
         typeout = setTimeout(() => {
             let url = `/api/igdb/games/search` +
-                    `/${thisYear},${notable},${vr},${remaster},${mobile}` +
+                    `/${filterYear.value},${filterNotable.value},${filterVR.value},false,${filterMobile.value}` +
                     `/${search}`
 
             fetch(url).then(res => {
@@ -219,7 +220,7 @@ function GamePicker(props) {
             })
         }, 1000)
         return () => clearTimeout(typeout)
-    }, [search])
+    }, [search, filterYear.value, filterNotable.value, filterVR.value, filterMobile.value])
 
     let majorClass = 'games-db-grid'
     let gridOptions = 'db-tile-grid-options'
@@ -232,12 +233,7 @@ function GamePicker(props) {
         <div class={majorClass}>
             {/* <input type='button' value='hide' onClick={e => {e.target.parentElement.style='display:none;'}} /> */}
             <input id='search-db' type='text' defaultValue={search} placeholder='search...' onInput={e => setSearch(e.currentTarget.value)}/>
-            {/* <div>
-                <label>notable?</label>
-                <input id='notable-checkbox' type='checkbox' onInput={e => {setNotable(e.target.value)}}/>
-                <label>this year?</label>
-                <input id='year-checkbox' type='checkbox' onInput={e => {setThisYear(e.target.checked)}}/>
-            </div> */}
+            <input id='filters' type='button' value='Filters...' onClick={e => displayFiltersOverlay()}/>
             <div class={gridOptions}>
                 {pickerData.map(g => 
                     <DatabaseBox game={g} mobile={mobileui}/>
@@ -245,6 +241,14 @@ function GamePicker(props) {
             </div>
         </div>
     )
+}
+
+function displayFiltersOverlay(event) {
+    $(".helper-overlay").style.display = "block"
+}
+
+function hideFiltersOverlay(event) {
+    $(".helper-overlay").style.display = "none"
 }
 
 function OfficialNomineesRoll(props) {
@@ -287,7 +291,7 @@ function OfficialNomineesRoll(props) {
     if (props.official.length > 0) {
         return (
             <div>
-                {officialNominees.value.map(on => OfficialRoll(on))}
+                {props.official.map(on => OfficialRoll(on))}
             </div>
         )
     } else {
@@ -302,8 +306,8 @@ function ScoreRoll(props) {
     useEffect(async () => {
         if (officialsFilled.value && picksFilled.value && props.official.length > 0) {
             await delay(5000) //this waits for the right side to load, fix later if i care
-            calculateScore(props.official)
-            setScoreReady(true)
+            // calculateScore(props.official)
+            // setScoreReady(true)
         }
     }, [officialsFilled.value, picksFilled.value])
 
@@ -599,6 +603,34 @@ function GameBox(props) {
         <img ref={imgEle} class="game-cover" src={art} />
     </div>
     </>
+    )
+}
+
+function HelperOverlay(props) {
+    return (
+    <div class='helper-overlay'>
+        <div>
+            <div>
+                <input type='checkbox' onChange={e => filterYear.value = e.target.checked} />
+                <label>Only games released this year, 2026</label>
+            </div>
+            <div>
+                <input type='checkbox' onChange={e => filterNotable.value = e.target.checked} />
+                <label>Only show notable games</label>
+            </div>
+            <div>
+                <input type='checkbox' onChange={e => filterNotable.value = e.target.checked} />
+                <label>Only show games tagged with VR in IGDB</label>
+            </div>
+            <div>
+                <input type='checkbox' onChange={e => filterMobile.value = e.target.checked} />
+                <label>Only show games tagged with Mobile in IGDB</label>
+            </div>
+            <div class='exit-button'>
+                <input type='button' value='Exit' onClick={e => hideFiltersOverlay()} />
+            </div>
+        </div>
+    </div>
     )
 }
 

@@ -51,7 +51,14 @@ app.get('/igdb/games/search/', async (req, res) => {
 })
 
 app.get('/igdb/games/search/:year,:notable,:vr,:remaster,:mobile/:term?', async (req, res) => {
-    res.json(await db.getGames(req.params.term))
+    res.json(await db.getGames(
+        req.params.term == undefined ? '' : req.params.term,
+        req.params.year == 'true',
+        req.params.notable == 'true',
+        req.params.vr == 'true',
+        false,
+        req.params.mobile == 'true'
+    ))
 })
 
 app.get('/igdb/games/id/:list?', async (req, res) => {
