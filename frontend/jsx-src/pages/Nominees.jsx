@@ -433,9 +433,9 @@ function NomineesRoll(props) {
 
         gameList[droppedPos] = draggingGame.value
         setGameList([...gameList])
-        if (!objIsEmpty(dragPickedUpFromRemoveButton.value)) {
-            dragPickedUpFromRemoveButton.value.click()
-        }
+        // if (!objIsEmpty(dragPickedUpFromRemoveButton.value)) {
+        //     dragPickedUpFromRemoveButton.value.click()
+        // }
         props.update()
     }
 
@@ -529,7 +529,7 @@ function GameBox(props) {
     let dragStart = (e) => {
         draggingGame.value = game
         console.log(props)
-        dragPickedUpFromRemoveButton.value = removeEle.current
+        // dragPickedUpFromRemoveButton.value = removeEle.current
     }
 
     let dragEnd = (e) => {
@@ -653,7 +653,7 @@ async function calculateScore(official) {
             curCategoryScore += perfectCategoryBonus
         }
 
-        if (picks.length > officialRoll.game_ids.length) { // minus 10% per pick over
+        if (picks.length > Math.max(6, officialRoll.game_ids.length)) { // minus 10% per pick over
             curCategoryScore *= 1 - ((picks.length - officialRoll.game_ids.length) * overPickMulti)
         }
 
@@ -669,7 +669,6 @@ async function calculateScore(official) {
     }
 
     console.log(totalScore)
-
 }
 
 function swapTrack() {
