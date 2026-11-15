@@ -1,4 +1,4 @@
-import { $, $$$, range, checkMobile, objIsEmpty, delay } from "../../js/functionhider.js"
+import { $, $$$, range, checkMobile, objIsEmpty, delay, elementExists } from "../../js/functionhider.js"
 import { signal, computed } from '@preact/signals';
 import { useState, useEffect, useRef } from 'preact/hooks'
 import { render } from 'preact'
@@ -82,8 +82,8 @@ function NomineesSkeleton(props) {
             nomineeCategories.forEach(nc => {
                 allLockedStatus = allLockedStatus && nc.locked
             })
-
         }
+        await delay(1000)
         setNominees(nomineeCategories)
         setAllLocked(allLockedStatus)
         picksFilled.value = true
@@ -94,8 +94,9 @@ function NomineesSkeleton(props) {
     let update = () => {
         clearTimeout(saveout)
         saveout = setTimeout(() => {
-            // console.log('saveout')
-            save()
+            if (!allLocked) {
+                save()
+            }
         }, 3000)
         return () => clearTimeout(saveout)
     }
@@ -159,7 +160,6 @@ function LeftSide(props) {
     useEffect(async () => {
         let officialNomsRes = await fetch('/api/officialNominees/')
         let onoms = await officialNomsRes.json()
-        console.log(onoms)
         if (onoms.length > 0) {
             let nomineeGamesIds = []
             setOfficialNominees(onoms)
@@ -301,18 +301,51 @@ function OfficialNomineesRoll(props) {
 }
 
 function ScoreRoll(props) {
-    let [ scoreReady, setScoreReady ] = useState()
+    let [ scoreReady, setScoreReady ] = useState({})
 
     useEffect(async () => {
         if (officialsFilled.value && picksFilled.value && props.official.length > 0) {
-            await delay(5000) //this waits for the right side to load, fix later if i care
-            // calculateScore(props.official)
-            // setScoreReady(true)
+            await elementExists('.nominees-box >:last-child > :last-child > :last-child')
+            // await delay(5000) //this waits for the right side to load, fix later if i care
+            let scores = await calculateScore(props.official)
+            setScoreReady(scores)
         }
     }, [officialsFilled.value, picksFilled.value])
 
-    if (scoreReady) {
+    let EachCategoryScore = (props) => 
+        Object.entries(scoreReady.categoryScores).map(([key, value]) => {
+            let txt = $(`.nominee-roll[name='${key}'] > div`).innerHTML
+            return (
+                <>
+                {value >= 0 ? <div>+</div> : <div>-</div>}
+                <div style='text-align:end;'>{value}</div>
+                <div>{txt}</div>
+                </>
+            )
+        })
 
+    if (scoreReady.hasOwnProperty('total')) {
+        let percentage = 100 * (scoreReady.correctPicks/scoreReady.gamesNominated) + '%'
+        return (
+            <div>
+                <div class='percentage-score-grid'>
+                    <h4>{scoreReady.correctPicks}</h4>
+                    <h4>/</h4>
+                    <h4>{scoreReady.gamesNominated}</h4>
+                </div>
+                <h2 style='text-align:center'>{percentage}</h2>
+                <h4 style='text-align:center'>SCORE {scoreReady.total}</h4>
+                <div class='sorted-score-grid'>
+                    <div>+</div>
+                    <div style='text-align: end'>{scoreReady.allCategoriesHaveGuessBonus}</div>
+                    <div>One Guess per Category Bonus</div>
+                    <div>+</div>
+                    <div style='text-align: end'>{scoreReady.allCategoriesHaveCorrectBonus}</div>
+                    <div>One Correct per Category Bonus</div>
+                    <EachCategoryScore />
+                </div>
+            </div>
+        )
     } else {
         return ScoreRules(props)
     }
@@ -532,7 +565,6 @@ function GameBox(props) {
 
     let dragStart = (e) => {
         draggingGame.value = game
-        console.log(props)
         // dragPickedUpFromRemoveButton.value = removeEle.current
     }
 
@@ -635,6 +667,15 @@ function HelperOverlay(props) {
 }
 
 async function calculateScore(official) {
+    let scoreObj = {
+        total: 0,
+        allCategoriesHaveGuessBonus: 0,
+        allCategoriesHaveCorrectBonus: 0,
+        perfectCategories: 0,
+        categoryScores: {},
+        gamesNominated: 0,
+        correctPicks: 0
+    }
     let frontrunners = {}
     official.forEach(on => {
          on.game_ids.forEach(g => {
@@ -648,23 +689,20 @@ async function calculateScore(official) {
         .filter(([k,v]) => v >= 3)
         .map(([k,v]) => k)
     let guessRolls = document.querySelectorAll('.nominee-roll, .nominee-roll-mobile')
-    let totalScore = 0
-    let categoryScores = {}
-    let allCategoriesHaveAGuessBonus = 250
-    let allCategoriesHaveOneCorrectBonus = 250
-    let allCategoriesHaveOne = true
+    let allCategoriesHaveGuess = true
+    let minGuessBonus = 250
+    let allCategoriesHaveCorrect = true
+    let oneCorrectBonus = 250
     let perfectCategoryBonus = 250
     let unpopularGamePickMulti = .1
     let overPickMulti = .1
     guessRolls.forEach(cat => {
-        console.log(cat)
         let numCorrectInCategory = 0
         let curCategoryScore = 0
         let curUnpopMulti = 0
         let catId = cat.getAttribute('name')
         let officialRoll = official.find(o => o.category_id == catId)
         let picks = cat.querySelectorAll('.game-grid > div.game-view, .game-grid-mobile > div.game-view-mobile')
-        console.log(picks)
         picks.forEach(choice => {
             let choiceGameId = choice.getAttribute('name')
             let idxOfGuess = officialRoll.game_ids.findIndex(orgid => orgid == choiceGameId)
@@ -676,31 +714,51 @@ async function calculateScore(official) {
                 }
                 numCorrectInCategory += 1
                 curCategoryScore += guessScore
-                // TODO: highlight the element somehow
+                choice.classList.add('correct-guess')
+            } else {
+                choice.classList.add('incorrect-guess')
             }
+
         })
         curCategoryScore *= 1 + curUnpopMulti
+        scoreObj.gamesNominated += officialRoll.game_ids.length
+        scoreObj.correctPicks += numCorrectInCategory
 
         if (numCorrectInCategory == officialRoll.game_ids.length) {
             curCategoryScore += perfectCategoryBonus
+            scoreObj.perfectCategories += 1
         }
 
-        if (picks.length > Math.max(6, officialRoll.game_ids.length)) { // minus 10% per pick over
-            curCategoryScore *= 1 - ((picks.length - officialRoll.game_ids.length) * overPickMulti)
+        let cap = Math.max(6, officialRoll.game_ids.length)
+        if (picks.length > cap) { // minus 10% per pick over
+            curCategoryScore *= 1 - ((picks.length - cap) * overPickMulti)
         }
 
         if (picks.length == 0) {
-            allCategoriesHaveOne = false
+            allCategoriesHaveGuess = false
+            allCategoriesHaveCorrect = false
         }
-        categoryScores[catId] = curCategoryScore
-        totalScore += curCategoryScore
+
+        if (curCategoryScore == 0) {
+            allCategoriesHaveCorrect = false
+        }
+
+        scoreObj.categoryScores[catId] = curCategoryScore
+        scoreObj.categoryScores[catId] = curCategoryScore
+        scoreObj.total += curCategoryScore
     })
 
-    if (allCategoriesHaveOne) {
-        totalScore += 250
+    if (allCategoriesHaveGuess) {
+        scoreObj.allCategoriesHaveGuessBonus += minGuessBonus
+        scoreObj.total += minGuessBonus
     }
 
-    console.log(totalScore)
+    if (allCategoriesHaveCorrect) {
+        scoreObj.allCategoriesHaveCorrectBonus += oneCorrectBonus
+        scoreObj.total += oneCorrectBonus
+    }
+
+    return scoreObj
 }
 
 function swapTrack() {

@@ -156,6 +156,15 @@
     background-color: var(--color-4);
 }
 
+.incorrect-guess[position='0'] {
+    background-image: conic-gradient(
+        rgba(0,0,0,.0255) 65deg,
+        rgba(255, 217, 0, 0.308) 155deg,
+        rgba(255, 255, 0, 0.308) 180deg,
+        rgba(255, 217, 0, 0.308) 205deg,
+        rgba(0,0,0,.0255) 295deg)
+}
+
 .incorrect-guess {
     background-color: var(--color-1);
 }
@@ -494,4 +503,18 @@
 .helper-overlay label {
     color:var(--color-1);
     margin-left: .5em;
+}
+
+.sorted-score-grid {
+    display: grid;
+    grid-template-columns: 5% 15% 85%;
+    column-gap: 1em;
+    row-gap: 3px;
+}
+
+.percentage-score-grid {
+    display: grid;
+    grid-template-columns: 47% 6% 47%;
+    column-gap: 1em;
+    text-align: center;
 }
