@@ -130,9 +130,11 @@ app.get('/dbAccess/:password', async (req, res) => {
     console.log("its wrong")
 })
 
-// app.get('/maxDb', async (req, res) => {
-//     updateDBWithThisWeeksGames()
-// })
+app.get('/manuallyActivateGameScan/:password', async (req, res) => {
+    if (req.params.password == process.env.INITALIZE_IGDB_FROM_2025) {
+        updateDBWithThisWeeksGames()
+    }
+})
 
 app.get('/pullFullGamesPasswordOnly/:password', async (req,res) => {
     if (req.params.password == process.env.INITALIZE_IGDB_FROM_2025) {
@@ -194,6 +196,7 @@ async function updateDBWithThisWeeksGames() {
     compiledGames = await igdb.organizeGameDetails(rawWeeklyGames)
     await igdb.updateGamesTable(compiledGames)
 
+    // TODO: Make a database connection pool
     await igdb.disconnect()
 }
 

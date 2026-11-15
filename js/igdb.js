@@ -246,7 +246,6 @@ export class IGDBJob {
         dbStr = dbStr.slice(0, -1) // remove trailing comma
         dbStr = dbStr.concat(';')
         this.#runCmd(dbStr)
-
     }
 
     /**
@@ -293,7 +292,7 @@ export class IGDBJob {
      * @param {int[]} gameList int[]
      * @returns {UpdateStruct} obj with 4 objs inside, one dictionary for games, parents, updates, and update parents
      */
-    async organizeGameDetails(gameList, force = true) {
+    async organizeGameDetails(gameList, force = false) {
         let detailsMap = {}
         let parentGamesToScan = [] // ids of games that were released sometime in the past, and are related to games that were released
             // dlc, seasons, and updates will not be in the database, but parent games will
@@ -331,7 +330,7 @@ export class IGDBJob {
                 }
 
                 this.normalizeData(game, reducedPopularity[game.id])
-                if (game.notability_score > 5) {
+                if (game.first_release_date != undefined && game.notability_score > 5) {
                     // console.log('  ' + game.name +' -- score ' + game.notability_score)
                     compiledToUpdate[game.id] = game
                 }
@@ -421,7 +420,7 @@ export class IGDBJob {
             let compiledParentUpdate = {}
             await detailsJson.forEach(async game => {
                 this.normalizeData(game, reducedPopularity[game.id])
-                if (game.notability_score > 5) {
+                if (game.first_release_date != undefined && game.notability_score > 5) {
                     // console.log('  ' + game.name +' -- score ' + game.notability_score)
                     compiledParentUpdate[game.id] = game
                 }
@@ -455,7 +454,7 @@ export class IGDBJob {
             let compiledAddParents = {}
             await detailsJson.forEach(async game => {
                 this.normalizeData(game, reducedPopularity[game.id])
-                if (game.notability_score > 5) {
+                if (game.first_release_date != undefined && game.notability_score > 5) {
                     // console.log('  ' + game.name +' -- score ' + game.notability_score)
                     compiledAddParents[game.id] = game
                 }
@@ -533,6 +532,10 @@ export class IGDBJob {
             game.containsEAAndFullRelease = [3,6].every(v => releaseIds.includes(v))
         } else {
             game.containsEAAndFullRelease = false
+        }
+
+        if (!game.hasOwnProperty('platforms')) {
+            game.platforms = []
         }
 
         game.cover = {}

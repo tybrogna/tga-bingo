@@ -6,7 +6,6 @@ import TopMenuBar from './TopMenuBar.jsx'
 
 import '../styles/nominees.scss'
 
-// const officialNominees = signal([])
 const draggingGame = signal({})
 const dragPickUpGame = signal({})
 const selectedGame = signal()
@@ -22,9 +21,6 @@ const filterVR = signal(false)
 const filterMobile = signal(false)
 const filterEarlyAccess = signal(true)
 
-let displayStyle = 0
-
-// TODO: scoring system
 // TODO: animations
 
 function NomineesSkeleton(props) {
@@ -589,9 +585,6 @@ function GameBox(props) {
     }
 
     let click = (e) => {
-        // if (pickerHighlight.value != undefined) {
-        //     pickerHighlight.value.style.background = ''
-        // }
         if (props.mobile) {
             if (displayedRemoveMobile.value != undefined) {
                 displayedRemoveMobile.value.style.display = 'none'
@@ -603,11 +596,8 @@ function GameBox(props) {
             displayedRemoveMobile.value = removeEle.current
             displayedRemoveMobile.value.style.display = 'block'
         }
-        // pickerHighlight.value = frameEle.current
-        // pickerHighlight.value.style.background = 'white'
-        // selectedGame.value = game
     }
-    
+
     let gameViewClasses = 'game-view'
     let bookendClasses = 'bookend'
     if (props.mobile) {
@@ -651,7 +641,7 @@ function HelperOverlay(props) {
                 <label>Only show notable games</label>
             </div>
             <div>
-                <input type='checkbox' onChange={e => filterNotable.value = e.target.checked} />
+                <input type='checkbox' onChange={e => filterVR.value = e.target.checked} />
                 <label>Only show games tagged with VR in IGDB</label>
             </div>
             <div>
