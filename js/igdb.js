@@ -331,7 +331,6 @@ export class IGDBJob {
 
                 this.normalizeData(game, reducedPopularity[game.id])
                 if (game.first_release_date != undefined && game.notability_score > 5) {
-                    // console.log('  ' + game.name +' -- score ' + game.notability_score)
                     compiledToUpdate[game.id] = game
                 }
             })
@@ -376,7 +375,6 @@ export class IGDBJob {
                     return
                 }
                 if (game.first_release_date != undefined && game.notability_score > 5) {
-                    // console.log('  ' + game.name +' -- score ' + game.notability_score)
                     compiledToAdd[game.id] = game
                 }
             })
@@ -657,38 +655,10 @@ export class IGDBJob {
                 continue
             }
 
-            reduced[pr.game_id] += 2
+            reduced[pr.game_id] += 1
         }
 
         return reduced
     }
 
-    async getGamePopularity(idBall) {
-        let popIdList = ''
-        for (id of idBall) {
-            popIdList += 'id=' + id + '|'
-        }
-        popIdList = popIdList.slice(0, -1)
-        let popFields = ''
-        popFields += 'game_id,'
-        popFields += 'popularity_type.name,'
-        popFields += 'value,'
-        popFields += 'external_popularity_source.name'
-        let popRes = await apicalypse(this.apiConfig)
-            .fields(popFields)
-            .where(popIdList)
-            .sort('game_id','asc')
-            .limit(500)
-            .request('https://api.igdb.com/v4/popularity_primitives/')
-        await delay(1000)
-        let popJson = await popRes.json()
-        let reduced = []
-        for (pr of popJson) {
-            if (reduced[pr.game_id] == undefined) {
-                reduced[pr.game_id] = 0
-            }
-            reduced[pr.game_id] += 2
-        }
-        return reduced
-    }
 }
