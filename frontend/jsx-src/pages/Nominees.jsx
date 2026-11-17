@@ -113,7 +113,7 @@ function NomineesSkeleton(props) {
             <div>
                 <div class={nomineesBoxClasses}>
                     {nominees.map(n => 
-                        <NomineesRoll category={n} update={update} mobile={mobile} />
+                        <NomineesRoll category={n} update={update} mobile={mobile} allLocked={allLocked} />
                     )}
                 </div>
             </div>
@@ -301,8 +301,11 @@ function ScoreRoll(props) {
 
     useEffect(async () => {
         if (officialsFilled.value && picksFilled.value && props.official.length > 0) {
-            await elementExists('.nominees-box >:last-child > :last-child > :last-child')
-            // await delay(5000) //this waits for the right side to load, fix later if i care
+            if (props.mobile) {
+                await elementExists('.nominees-box-mobile >:last-child > :last-child > :last-child')
+            } else {
+                await elementExists('.nominees-box >:last-child > :last-child > :last-child')
+            }
             let scores = await calculateScore(props.official)
             setScoreReady(scores)
         }
@@ -310,7 +313,11 @@ function ScoreRoll(props) {
 
     let EachCategoryScore = (props) => 
         Object.entries(scoreReady.categoryScores).map(([key, value]) => {
-            let txt = $(`.nominee-roll[name='${key}'] > div`).innerHTML
+            let cssSel = `.nominee-roll[name='${key}'] > div`
+            if (props.mobile) {
+                cssSel = `.nominee-roll-mobile[name='${key}'] > div`
+            }
+            let txt = $(cssSel).innerHTML
             return (
                 <>
                 {value >= 0 ? <div>+</div> : <div>-</div>}
@@ -338,7 +345,7 @@ function ScoreRoll(props) {
                     <div>+</div>
                     <div style='text-align: end'>{scoreReady.allCategoriesHaveCorrectBonus}</div>
                     <div>One Correct per Category Bonus</div>
-                    <EachCategoryScore />
+                    <EachCategoryScore mobile={props.mobile} />
                 </div>
             </div>
         )
@@ -571,7 +578,7 @@ function GameBox(props) {
     let mouseOver = (e) => {
         textEle.current.style.visibility = 'visible'
         imgEle.current.style.opacity = '.33'
-        if (!props.mobile) {
+        if (!props.mobile && !props.categoryLocked) {
             removeEle.current.style.display = 'block'
         }
     }
@@ -579,7 +586,7 @@ function GameBox(props) {
     let mouseLeave = (e) => {
         textEle.current.style.visibility = 'hidden'
         imgEle.current.style.opacity = ''
-        if (!props.mobile) {
+        if (!props.mobile && !props.categoryLocked) {
             removeEle.current.style.display = 'none'
         }
     }
@@ -733,8 +740,7 @@ async function calculateScore(official) {
             allCategoriesHaveCorrect = false
         }
 
-        scoreObj.categoryScores[catId] = curCategoryScore
-        scoreObj.categoryScores[catId] = curCategoryScore
+        scoreObj.categoryScores[catId] = Math.floor(curCategoryScore)
         scoreObj.total += curCategoryScore
     })
 
@@ -747,6 +753,8 @@ async function calculateScore(official) {
         scoreObj.allCategoriesHaveCorrectBonus += oneCorrectBonus
         scoreObj.total += oneCorrectBonus
     }
+
+    scoreObj.total = scoreObj.total.toFixed(1)
 
     return scoreObj
 }
