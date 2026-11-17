@@ -9,7 +9,7 @@ services:
       - ./postgres:/var/lib/postgresql/data
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "pg_isready", "-U", "postgres"]
+      test: ["CMD", "pg_isready", "-U", "postgres", "-d", "bingo-db"]
       interval: 5s
       timeout: 3s
       retries: 10

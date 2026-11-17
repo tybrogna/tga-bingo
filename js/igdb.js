@@ -109,7 +109,7 @@ export class IGDBJob {
             this.db = new Client({
                 user: process.env.POSTGRES_USER,
                 password: process.env.POSTGRES_PASSWORD,
-                host: 'tga-database',
+                host: process.env.POSTGRES_HOST,
                 port: process.env.POSTGRES_PORT,
                 database: "bingo-db"
             })
@@ -322,14 +322,14 @@ export class IGDBJob {
             let compiledToUpdate = {}
 
             // apply the notability score based on igdb pre-release hype, igdb reviews, and pop score
-            // for (let row of chunk) {
-            // for (let game of detailsJson) {
             await detailsJson.forEach(async game => {
                 if (game.hasOwnProperty('parent_game')) {
                     parentGamesToScan.push(game.parent_game)
                 }
 
+                // console.log('before', game.name, reducedPopularity[game.id])
                 this.normalizeData(game, reducedPopularity[game.id])
+                // console.log('after', game.name, game.notability_score)
                 if (game.first_release_date != undefined && game.notability_score > 5) {
                     compiledToUpdate[game.id] = game
                 }
@@ -466,6 +466,7 @@ export class IGDBJob {
 
     normalizeData(game, popularity) {
         game.name = sqlize(game.name)
+        let logInfo = game.name
 
         // date normalizing
         if (game.hasOwnProperty('first_release_date')) {
@@ -475,14 +476,21 @@ export class IGDBJob {
         }
 
         game.notability_score = popularity
+        logInfo += ' initial popularity: ' + game.hypes + ' --'
         if (game.hasOwnProperty('hypes')) {
+            logInfo += ' hypes: ' + game.hypes + ' --'
             game.notability_score += game.hypes
         }
         if (game.hasOwnProperty('rating_count')) {
+            logInfo += ' ratings: ' + Math.floor(game.rating_count / 10)
             game.notability_score += Math.floor(game.rating_count / 10)
         }
         if (game.notability_score == undefined) {
             game.notability_score = 0
+        }
+
+        if (game.notability_score >= 5) {
+            log(logInfo)
         }
 
         if (game.keywords == undefined) {

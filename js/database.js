@@ -1,6 +1,6 @@
 import 'dotenv/config'
 import pg from 'pg'
-import { sqlize, unsqlize, range } from './functionhider.js'
+import { sqlize, unsqlize, range, delay } from './functionhider.js'
 const Client = pg.Client
 
 /**
@@ -9,13 +9,14 @@ const Client = pg.Client
 export default class Database {
     constructor() {
         console.log(process.env.POSTGRES_USER, process.env.POSTGRES_HOST, process.env.POSTGRES_PORT)
-        this.client = new Client({
-            user: process.env.POSTGRES_USER,
-            password: process.env.POSTGRES_PASSWORD,
-            host: 'tga-database',
-            port: process.env.POSTGRES_PORT,
-            database: "bingo-db"
-        })
+        this.client = null
+        // this.client = new Client({
+        //     user: process.env.POSTGRES_USER,
+        //     password: process.env.POSTGRES_PASSWORD,
+        //     host: process.env.POSTGRES_HOST,
+        //     port: process.env.POSTGRES_PORT,
+        //     database: "bingo-db"
+        // })
     }
 
     async #runCmd(cmd) {
@@ -25,14 +26,38 @@ export default class Database {
     }
 
     async connect() {
-        await this.client.connect()
-        let res = await this.#runCmd('select now()')
-        console.log(res.rows)
+        for (let a = 1; a <= 30; a++) {
+            let tryClient = new Client({
+                user: process.env.POSTGRES_USER,
+                password: process.env.POSTGRES_PASSWORD,
+                host: process.env.POSTGRES_HOST,
+                port: process.env.POSTGRES_PORT,
+                database: "bingo-db"
+            })
+            try {
+                await tryClient.connect()
+                tryClient.on('error', err => {
+                    log(process.env.POSTGRES_HOST + ' DISCONNECTED')
+                    log(err.message)
+                    process.exit()
+                })
+                this.client = tryClient
+                let res = await this.#runCmd('select now()')
+                console.log(res.rows)
+                return
+            } catch (err) {
+                await tryClient.end().catch(() => {})
+                console.log(`attempt ${a} of connecting to database failed`)
+                await delay(1000)
+            }
+        }
+        // await this.client.connect()
+        // let res = await this.#runCmd('select now()')
+        // console.log(res.rows)
     }
 
     async disconnect() {
         await this.client.end()
-        // let res = await client.query('select now()')
     }
 
     async getTables() {
